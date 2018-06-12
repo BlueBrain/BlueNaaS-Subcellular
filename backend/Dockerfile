@@ -1,11 +1,10 @@
 
-FROM python:3.6-alpine
+FROM python:3.6-slim-stretch
 
 LABEL maintainer="BlueBrain NSE(Neuroscientific Software Engineering)"
 
 ARG circuit_path
 
-ENV DEBIAN_FRONTEND=noninteractive
 ENV CIRCUIT_PATH=$circuit_path
 
 WORKDIR /opt/subcellular-experiment

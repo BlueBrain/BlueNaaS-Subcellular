@@ -12,7 +12,10 @@ setup(
     author='NSE(Neuroscientific Software Engineering)',
     author_email='bbp-ou-nse@groupes.epfl.ch',
 
-    install_requires=[],
+    install_requires=[
+        'tornado',
+        'bluepy'
+    ],
     tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=[]),
     scripts=[],
