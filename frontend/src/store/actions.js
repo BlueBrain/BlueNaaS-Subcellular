@@ -3,7 +3,6 @@ import socket from '@/services/websocket';
 import storage from '@/services/storage';
 
 
-const actions = {};
 const actions = {
   async loadCircuit(store) {
     const { circuit } = store.state;
