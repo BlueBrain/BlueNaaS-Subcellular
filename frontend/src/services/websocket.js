@@ -60,8 +60,8 @@ class Ws {
   }
 
   async request(message, data) {
-    const currentCmdId = this.cmdId;
     this.cmdId += 1;
+    const currentCmdId = this.cmdId;
 
     const response = new Promise((resolve) => {
       this.requestResolvers.set(currentCmdId, resolve);
