@@ -26,7 +26,7 @@
 
 <style lang="scss">
   $header-height: 28px;
-  $footer-height: 44px;
+  $footer-height: 46px;
 
   $main-height-delta: calc(#{$header-height} + #{$footer-height});
 
