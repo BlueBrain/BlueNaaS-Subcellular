@@ -2,6 +2,7 @@
 <template>
   <main>
     <canvas ref="canvas"></canvas>
+    <circuit-loading-modal/>
   </main>
 </template>
 
@@ -10,8 +11,13 @@
   import store from '@/store';
   import NeuronRenderer from '@/services/neuron-renderer';
 
+  import CircuitLoadingModal from './modals/circuit-loading.vue';
+
   export default {
     name: 'main-view',
+    components: {
+      'circuit-loading-modal': CircuitLoadingModal,
+    },
     mounted() {
       const { canvas } = this.$refs;
       this.renderer = new NeuronRenderer(canvas, {
