@@ -1,8 +1,8 @@
-.PHONY: docker_build_version docker_build_latest docker_push_version docker_push_latest help
+.PHONY: docker_build_version docker_build_latest docker_push_version docker_push_latest help copy_circuit_data generate_morphology_list install_bluepy
 
 VERSION?=$(shell cat ../VERSION)
 
-VENV_DIR:=venv
+TOOLS_VENV_DIR:=tools_venv
 
 CIRCUIT_PATH ?= /gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
 CIRCUIT_NAME ?= mouse-o1
@@ -24,11 +24,15 @@ export HELPTEXT
 help:
 	@echo "$$HELPTEXT"
 
-$(VENV_DIR):
-	virtualenv --no-site-packages -p python3.6 $@
+$(TOOLS_VENV_DIR):
+	virtualenv --no-site-packages -p python3.7 $@
 
-python_build: | $(VENV_DIR)
-	$(VENV_DIR)/bin/python setup.py sdist
+install_bluepy: | $(TOOLS_VENV_DIR)
+	source $(TOOLS_VENV_DIR)/bin/activate && \
+	pip install -i 'https://bbpteam.epfl.ch/repository/devpi/bbprelman/dev/+simple/' bluepy
+
+python_build: | $(TOOLS_VENV_DIR)
+	$(TOOLS_VENV_DIR)/bin/python setup.py sdist
 
 run_dev:
 	docker run \
@@ -36,7 +40,7 @@ run_dev:
 		-it \
 		-v /gpfs:/gpfs:ro \
 		-e DEBUG=True \
-		-v $$(pwd)/subcellular_experiment:/usr/local/lib/python3.6/site-packages/subcellular_experiment \
+		-v $$(pwd)/subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment \
 		-p 8888:8000 \
 		sc-svc-$(CIRCUIT_NAME)
 
@@ -64,3 +68,15 @@ docker_push_latest: docker_build_latest
 	docker push docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-svc-$(CIRCUIT_NAME):latest
 	@echo 'backend latest version pushed to OpenShift registry.'
 	@echo 'backend release done'
+
+copy_circuit_data: generate_morphology_list
+	./copy-circuit-data.sh \
+		$(CIRCUIT_PATH) \
+		$(shell oc get pods -o custom-columns=:.metadata.name | grep sc-svc-$(CIRCUIT_NAME))
+
+generate_morphology_list: install_bluepy
+	mkdir -p tmp && \
+	cd tmp && \
+	CIRCUIT_PATH=$(CIRCUIT_PATH) \
+		../$(TOOLS_VENV_DIR)/bin/python \
+		../tools/generate-morphology-list.py
