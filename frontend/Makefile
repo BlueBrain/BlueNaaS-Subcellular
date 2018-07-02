@@ -3,11 +3,14 @@
 VERSION?=$(shell cat ../VERSION)
 
 NODE_MODULES:=node_modules
-CIRCUIT_NAME?=mouse-o1
 
-SERVER_HOST:=sc-svc-$(CIRCUIT_NAME).ocp.bbp.epfl.ch
-SERVER_PORT:=80
+APP_NAME_PREFIX?=sc
+APP_DNS_BASE?=ocp.bbp.epfl.ch
+OO_PROJECT?=bbp-ou-nse
+DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 
+CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj64/circuits/test/CircuitConfig
+CIRCUIT_NAME?=test-circuit
 
 define HELPTEXT
 Makefile usage
@@ -33,8 +36,6 @@ run_dev: | $(NODE_MODULES)
 	npm run serve
 
 build: | $(NODE_MODULES)
-	VUE_APP_SERVER_HOST=$(SERVER_HOST) \
-	VUE_APP_SERVER_PORT=$(SERVER_PORT) \
 	VUE_APP_CIRCUIT_NAME=$(CIRCUIT_NAME) \
 	npm run build
 
@@ -51,12 +52,20 @@ docker_build_latest: build
 		.
 
 docker_push_version: docker_build_version
-	docker tag sc-$(CIRCUIT_NAME):$(VERSION) docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-$(CIRCUIT_NAME):$(VERSION)
-	docker push docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-$(CIRCUIT_NAME):$(VERSION)
+	docker tag \
+		$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION) \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION)
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION)
+
 	@echo 'frontend version($(VERSION)) pushed to OpenShift registy'
 
 docker_push_latest: docker_build_latest
-	docker tag sc-$(CIRCUIT_NAME):latest docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-$(CIRCUIT_NAME):latest
-	docker push docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-$(CIRCUIT_NAME):latest
+	docker tag \
+		$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest
+
 	@echo 'frontend latest version pushed to OpenShift registry.'
 	@echo 'frontend release done'

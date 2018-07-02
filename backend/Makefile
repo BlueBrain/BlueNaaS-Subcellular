@@ -4,8 +4,13 @@ VERSION?=$(shell cat ../VERSION)
 
 TOOLS_VENV_DIR:=tools_venv
 
-CIRCUIT_PATH ?= /gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
-CIRCUIT_NAME ?= mouse-o1
+APP_NAME_PREFIX?=sc
+APP_DNS_BASE?=ocp.bbp.epfl.ch
+OO_PROJECT?=bbp-ou-nse
+DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
+
+CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj64/circuits/test/CircuitConfig
+CIRCUIT_NAME?=test-circuit
 
 define HELPTEXT
 Makefile usage
@@ -59,13 +64,21 @@ docker_build_latest: python_build | $(NEURON_SRC_DIR)
 		.
 
 docker_push_version: docker_build_version
-	docker tag sc-svc:$(VERSION) docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-svc-$(CIRCUIT_NAME):$(VERSION)
-	docker push docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-svc-$(CIRCUIT_NAME):$(VERSION)
+	docker tag \
+		$(APP_NAME_PREFIX)-svc:$(VERSION) \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):$(VERSION)
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):$(VERSION)
+
 	@echo 'backend version($(VERSION)) pushed to OpenShift registy'
 
 docker_push_latest: docker_build_latest
-	docker tag sc-svc-$(CIRCUIT_NAME):latest docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-svc-$(CIRCUIT_NAME):latest
-	docker push docker-registry-default.ocp.bbp.epfl.ch/bbp-ou-nse/sc-svc-$(CIRCUIT_NAME):latest
+	docker tag \
+		$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
+
 	@echo 'backend latest version pushed to OpenShift registry.'
 	@echo 'backend release done'
 

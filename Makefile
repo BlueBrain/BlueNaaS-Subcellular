@@ -1,21 +1,27 @@
-.PHONY: help test build release run_dev_backend run_dev_frontend docker_push_latest deploy
+.PHONY: help test build release run_dev_backend run_dev_frontend docker_push_latest create_oo_deployment
 
 VERSION:=$(shell cat VERSION)
 export VERSION
 
-CIRCUIT_PATH ?= /gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
-CIRCUIT_NAME ?= mouse-o1
+APP_NAME_PREFIX?=sc
+APP_DNS_BASE?=ocp.bbp.epfl.ch
+OO_PROJECT?=bbp-ou-nse
+DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
+
+CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj64/circuits/test/CircuitConfig
+CIRCUIT_NAME?=test-circuit
 
 define HELPTEXT
 Makefile usage
  Targets:
-    run_dev_backend   Run development instance of the backend.
-    run_dev_frontend  Run development instance of the frontend.
-    test              Test and compile packages, rebuild docker images locally(latest tag).
-    build             Same as test. If VERSION has not been previously git tagged:
-                        git tag it and push this version to docker registry.
-    release           Same as build. Push the latest tag to the docker registy.
-                        This will result in updated app in prod.
+    run_dev_backend       Run development instance of the backend.
+    run_dev_frontend      Run development instance of the frontend.
+    test                  Test and compile packages, rebuild docker images locally(latest tag).
+    create_oo_deployment  Create OpenShift deployment.
+    build                 Same as test. If VERSION has not been previously git tagged:
+                            git tag it and push this version to docker registry.
+    release               Same as build. Push the latest tag to the docker registy.
+                            This will result in updated app in prod.
 endef
 export HELPTEXT
 
@@ -62,3 +68,20 @@ docker_push_latest:
 		$(MAKE) -C backend docker_push_latest
 	CIRCUIT_NAME=$(CIRCUIT_NAME) \
 		$(MAKE) -C frontend docker_push_latest
+
+create_oo_deployment:
+	oc project $(OO_PROJECT)
+
+	oc new-app \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME)
+
+	oc expose service $(APP_NAME_PREFIX)-$(CIRCUIT_NAME) \
+		--hostname=$(APP_NAME_PREFIX)-$(CIRCUIT_NAME).$(APP_DNS_BASE) \
+		--port=8000
+
+	oc new-app \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME)
+
+	oc expose service $(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME) \
+		--hostname=$(APP_NAME_PREFIX)-$(CIRCUIT_NAME).$(APP_DNS_BASE) \
+		--path=/ws
