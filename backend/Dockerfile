@@ -12,6 +12,8 @@ WORKDIR /opt/subcellular-experiment
 COPY dist/* ./dist/
 COPY entrypoint.sh .
 
+RUN apt-get update && apt-get install -yq rsync
+
 RUN pip install \
     --no-cache-dir \
     -i https://bbpteam.epfl.ch/repository/devpi/simple \
