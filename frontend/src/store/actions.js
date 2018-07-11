@@ -166,6 +166,36 @@ const actions = {
     store.$emit('hideCircuit');
 
     store.$emit('hideGlobalSpinner');
+
+    store.$dispatch('initSynapses');
+  },
+
+  async initSynapses(store) {
+    const { gid } = store.state.neuron;
+
+    const res = await socket.request('get_syn_connections', gid);
+    const synapseProps = res.synapse_properties;
+    const synapsesRaw = res.synapses;
+
+    const synapsePropIndex = synapseProps
+      .reduce((propIndexObj, propName, propIndex) => Object.assign(propIndexObj, {
+        [propName]: propIndex,
+      }), {});
+
+    const synapses = synapsesRaw.map((synVals, synIndex) => {
+      const synObject = synapseProps.reduce((synObj, synProp) => Object.assign(synObj, {
+        [synProp]: synVals[synapsePropIndex[synProp]],
+      }), {});
+      const extendedSynObject = Object.assign(synObject, { gid, index: synIndex, visible: true });
+      return extendedSynObject;
+    });
+
+    store.state.synapses = synapses;
+    store.state.synapseProps = synapseProps;
+
+    store.$emit('initSynapseCloud');
+    store.$emit('initSynapsePropFilter');
+  },
   },
 
 };

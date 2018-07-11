@@ -19,6 +19,10 @@ const getters = {
       neurons[index][neuronPropIndex.z],
     ];
   },
+
+  synapse(store, synapseIndex) {
+    return store.state.synapses[synapseIndex];
+  },
 };
 
 export default getters;

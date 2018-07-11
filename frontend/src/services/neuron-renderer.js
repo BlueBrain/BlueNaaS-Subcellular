@@ -26,6 +26,9 @@ const AMBIENT_LIGHT_COLOR = 0x555555;
 const CAMERA_LIGHT_COLOR = 0xcacaca;
 const BACKGROUND_COLOR = 0xf8f8f9;
 
+const EXC_SYN_COLOR = 0xfc1501;
+const INH_SYN_COLOR = 0x0080ff;
+
 const HOVERED_NEURON_GL_COLOR = new Color(0xf26d21).toArray();
 
 const ALL_SEC_TYPES = [
@@ -80,6 +83,9 @@ class NeuronRenderer {
 
     this.cellMorphologyObj = new Object3D();
     this.scene.add(this.cellMorphologyObj);
+    this.synapseObj = new Object3D();
+    this.scene.add(this.synapseObj);
+
     this.onHoverExternalHandler = config.onHover;
     this.onHoverEndExternalHandler = config.onHoverEnd;
     this.onClickExternalHandler = config.onClick;
@@ -139,6 +145,33 @@ class NeuronRenderer {
     this.scene.add(this.highlightedNeuron);
   }
 
+  initSynapseCloud() {
+    const { synapses } = store.state;
+    const { synapseSize } = store.state.circuit;
+
+    const synapseGeometry = new SphereBufferGeometry(synapseSize, 16, 16);
+    const excSynapseMaterial = new MeshPhongMaterial({ color: EXC_SYN_COLOR });
+    const inhSynapseMaterial = new MeshPhongMaterial({ color: INH_SYN_COLOR });
+
+    synapses.forEach((synapse, synapseIndex) => {
+      const material = synapse.type >= 100 ? excSynapseMaterial : inhSynapseMaterial;
+      const synMesh = new Mesh(synapseGeometry, material);
+      synMesh.name = 'synapse';
+      synMesh.userData.synapseIndex = synapseIndex;
+      synMesh.updateMatrix();
+      synMesh.matrixAutoUpdate = false;
+
+      const obj = new Object3D();
+      obj.position.set(synapse.postXCenter, synapse.postYCenter, synapse.postZCenter);
+      obj.add(synMesh);
+      obj.updateMatrix();
+      obj.matrixAutoUpdate = false;
+      obj.visible = false;
+
+      this.synapseObj.add(obj);
+    });
+  }
+
   alignCamera() {
     this.neuronCloud.points.geometry.computeBoundingSphere();
     const { center, radius } = this.neuronCloud.points.geometry.boundingSphere;
@@ -151,12 +184,38 @@ class NeuronRenderer {
     this.controls.target = center;
   }
 
+  updateSynapses() {
+    const { synapses } = store.state;
+
+    synapses.forEach((synapse, synapseIndex) => {
+      this.synapseObj.children[synapseIndex].visible = synapse.visible;
+    });
+  }
+
   showNeuronCloud() {
     this.neuronCloud.points.visible = true;
   }
 
   hideNeuronCloud() {
     this.neuronCloud.points.visible = false;
+  }
+
+  removeCellMorphologies(filterFunction) {
+    const cellMorphObjsToRemove = [];
+    this.cellMorphologyObj.children.forEach((obj) => {
+      if (filterFunction(obj.userData)) cellMorphObjsToRemove.push(obj);
+    });
+
+    // TODO: refactor
+    cellMorphObjsToRemove.forEach((obj) => {
+      this.cellMorphologyObj.remove(obj);
+      const toRemove = obj.children.map(child => child);
+      toRemove.forEach(o => utils.disposeMesh(o));
+    });
+  }
+
+  hideCellMorphology() {
+    this.cellMorphologyObj.visible = false;
   }
 
   showMorphology(secTypes = ALL_SEC_TYPES.filter(defaultSecRenderFilter)) {

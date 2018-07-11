@@ -46,6 +46,12 @@
 
       store.$on('hideCircuit', () => this.renderer.hideNeuronCloud());
 
+      store.$on('initSynapseCloud', () => {
+        this.renderer.initSynapseCloud();
+        this.renderer.updateSynapses();
+      });
+      store.$on('updateSynapses', () => this.renderer.updateSynapses());
+
       store.$on('setSomaSize', size => this.renderer.setNeuronCloudPointSize(size));
       store.$on('hideViewer', () => {
         this.viewerVisible = false;

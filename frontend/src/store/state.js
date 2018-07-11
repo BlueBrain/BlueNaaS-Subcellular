@@ -7,6 +7,7 @@ const state = {
     neuronPropIndex: {},
     neuronProps: [],
     somaSize: 10,
+    synapseSize: 1,
     globalFilterIndex: [],
     color: {
       neuronProp: '',
@@ -15,6 +16,8 @@ const state = {
       palette: {},
     },
   },
+  synapses: [],
+  synapseProps: [],
   neuron: null,
   morphology: {},
   view: {

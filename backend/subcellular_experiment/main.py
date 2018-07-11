@@ -10,6 +10,7 @@ import tornado.websocket
 import tornado.web
 
 from tornado.log import enable_pretty_logging
+from bluepy.v2.enums import Synapse
 
 from subcellular_experiment.utils import NumpyAwareJSONEncoder
 
@@ -114,6 +115,65 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self.send_message('cell_morphology', {
                 'cells': cells,
                 'cmdid': cmdid
+            })
+
+        if cmd == 'get_syn_connections':
+            gid = msg['data']
+
+            L.debug('getting syn connections for %s', gid)
+
+            props = [
+                Synapse.POST_X_CENTER,
+                Synapse.POST_Y_CENTER,
+                Synapse.POST_Z_CENTER,
+                Synapse.TYPE,
+                Synapse.PRE_GID,
+                Synapse.PRE_SECTION_ID,
+                Synapse.POST_GID,
+                Synapse.POST_SECTION_ID,
+                Synapse.POST_NEURITE_DISTANCE,
+                Synapse.POST_SECTION_DISTANCE,
+                Synapse.AXONAL_DELAY,
+                Synapse.D_SYN,
+                Synapse.DTC,
+                Synapse.F_SYN,
+                Synapse.G_SYNX,
+                Synapse.NRRP,
+                Synapse.U_SYN,
+                Synapse.TOUCH_DISTANCE
+            ]
+
+            props_str = [
+                'postXCenter',
+                'postYCenter',
+                'postZCenter',
+                'type',
+                'preGid',
+                'preSectionGid',
+                'postGid',
+                'postSectionId',
+                'postNeuriteDistance',
+                'postSectionDistance',
+                'axonalDelay',
+                'dSyn',
+                'dtc',
+                'fSyn',
+                'gSynx',
+                'nrrp',
+                'uSyn',
+                'touchDistance'
+            ]
+
+            L.debug('getting afferent synapses for %s', gid)
+            synapses = CIRCUIT.v2.connectome.afferent_synapses(gid, properties=props).values.tolist()
+
+            L.debug('getting syn connections for %s done', gid)
+
+            self.send_message('syn_connections', {
+                'synapses': synapses,
+                'synapse_properties': props_str,
+                'cmdid': cmdid
+
             })
 
     def on_close(self):
