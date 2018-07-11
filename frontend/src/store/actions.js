@@ -145,6 +145,17 @@ const actions = {
   neuronHoverEnded(store) {
     store.$emit('hideHoverObjectInfo');
   },
+
+  neuronClicked(store, neuron) {
+    store.$emit('setNeuron', neuron);
+  },
+
+  async neuronSelected(store, neuron) {
+    store.$emit('showGlobalSpinner', 'Loading morphology');
+
+    store.state.neuron = neuron;
+  },
+
 };
 
 export default actions;

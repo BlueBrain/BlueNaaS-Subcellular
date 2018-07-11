@@ -48,6 +48,7 @@ class NeuronRenderer {
     this.mouseNative = new Vector2();
 
     this.raycaster = new Raycaster();
+    this.raycaster.params.Points.threshold = 2;
 
     this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 1, 100000);
     this.scene.add(this.camera);
@@ -138,6 +139,11 @@ class NeuronRenderer {
 
   hideNeuronCloud() {
     this.neuronCloud.points.visible = false;
+  }
+
+  setNeuronCloudPointSize(size) {
+    this.neuronCloud.points.material.size = size;
+    this.raycaster.params.Points.threshold = size / 5;
   }
 
   updateNeuronCloud() {

@@ -1,8 +1,14 @@
 
 <template>
   <main>
-    <canvas ref="canvas"></canvas>
-    <circuit-loading-modal/>
+    <div class="canvas-container">
+      <canvas ref="canvas"></canvas>
+      <circuit-loading-modal/>
+    </div>
+
+    <div class="side-panel" :class="{'full-width': !viewerVisible}">
+      <side-panel/>
+    </div>
   </main>
 </template>
 
@@ -12,22 +18,38 @@
   import NeuronRenderer from '@/services/neuron-renderer';
 
   import CircuitLoadingModal from './modals/circuit-loading.vue';
+  import SidePanel from './main/side-panel.vue';
 
   export default {
     name: 'main-view',
     components: {
       'circuit-loading-modal': CircuitLoadingModal,
+      'side-panel': SidePanel,
+    },
+    data() {
+      return {
+        viewerVisible: true,
+      };
     },
     mounted() {
       const { canvas } = this.$refs;
       this.renderer = new NeuronRenderer(canvas, {
-        onClick: () => {},
         onHover: this.onHover.bind(this),
         onHoverEnd: this.onHoverEnd.bind(this),
+        onClick: this.onClick.bind(this),
       });
 
       store.$on('circuitLoaded', () => this.initRenderer());
       store.$on('redrawCircuit', () => this.redrawNeurons());
+
+
+      store.$on('setSomaSize', size => this.renderer.setNeuronCloudPointSize(size));
+      store.$on('hideViewer', () => {
+        this.viewerVisible = false;
+        this.renderer.stopRenderLoop();
+      });
+
+      store.$on('showViewer', () => this.renderer.animate());
 
       store.$dispatch('loadCircuit');
     },
@@ -91,14 +113,42 @@
         }
         }
       },
+      onClick(obj) {
+        switch (obj.type) {
+        case 'neuronCloud': {
+          const neuron = store.$get('neuron', obj.index);
+          store.$dispatch('neuronClicked', neuron);
+          break;
+        }
+        default: {
+          break;
+        }
+        }
+      },
     },
   };
 </script>
 
 
 <style lang="scss" scoped>
-  #canvas {
-    height: 100%;
-    width: 100%;
+  .canvas-container {
+    overflow: hidden;
+    flex: 1 0;
+  }
+
+  .side-panel {
+    flex: 0 0 50%;
+    overflow-x: hidden;
+    border-left: 1px solid #dddee1;
+    transition: flex-basis 0.3s ease-in-out;
+
+    &.full-width {
+      flex-basis: 100%;
+    }
+  }
+
+  .hover-object-info {
+    position: absolute;
+    bottom: -60px;
   }
 </style>
