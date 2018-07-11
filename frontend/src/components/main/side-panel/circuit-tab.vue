@@ -1,5 +1,6 @@
 <template>
   <div>
+    <neuron-prop-filter/>
     <div v-if="neuron">
       <neuron-info-table :neuron="neuron"/>
       <div class="text-right mt-12">
@@ -20,7 +21,8 @@
 <script>
   import store from '@/store';
 
-  import NeuronInfoTable from './../../shared/neuron-info-table.vue';
+  import NeuronPropFilter from './neuron-prop-filter.vue';
+  import NeuronInfoTable from '@/components/shared/neuron-info-table.vue';
 
   export default {
     name: 'circuit-tab',
@@ -30,6 +32,7 @@
       };
     },
     components: {
+      'neuron-prop-filter': NeuronPropFilter,
       'neuron-info-table': NeuronInfoTable,
     },
     mounted() {

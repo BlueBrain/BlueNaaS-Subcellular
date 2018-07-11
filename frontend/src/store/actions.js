@@ -121,6 +121,10 @@ const actions = {
     store.$emit('redrawCircuit');
   },
 
+  propFilterUpdated(store) {
+    store.$emit('redrawCircuit');
+  },
+
   setSomaSize(store, size) {
     store.state.circuit.somaSize = size;
     store.$emit('setSomaSize', size);
