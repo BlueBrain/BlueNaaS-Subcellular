@@ -6,8 +6,10 @@ import iView from 'iview';
 import locale from 'iview/dist/locale/en-US';
 
 import App from './App.vue';
+import initFilters from './filters';
 
 Vue.use(iView, { locale });
+initFilters();
 
 Vue.config.productionTip = true;
 
