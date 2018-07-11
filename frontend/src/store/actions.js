@@ -126,6 +126,25 @@ const actions = {
     store.$emit('setSomaSize', size);
   },
 
+
+  neuronHovered(store, neuron) {
+    // we don't need all properties of neuron to be shown,
+    // for example x, y, z can be skipped.
+    // TODO: move visible property selection to app config page
+    const propsToSkip = ['x', 'y', 'z', 'me_combo', 'morphology'];
+
+    store.$emit('showHoverObjectInfo', {
+      header: 'Neuron',
+      items: [{
+        type: 'table',
+        data: pickBy(neuron, (val, prop) => !propsToSkip.includes(prop)),
+      }],
+    });
+  },
+
+  neuronHoverEnded(store) {
+    store.$emit('hideHoverObjectInfo');
+  },
 };
 
 export default actions;

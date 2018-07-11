@@ -21,9 +21,9 @@
     mounted() {
       const { canvas } = this.$refs;
       this.renderer = new NeuronRenderer(canvas, {
-        onHover: () => {},
-        onHoverEnd: () => {},
         onClick: () => {},
+        onHover: this.onHover.bind(this),
+        onHoverEnd: this.onHoverEnd.bind(this),
       });
 
       store.$on('circuitLoaded', () => this.initRenderer());
@@ -65,6 +65,31 @@
         });
 
         this.renderer.updateNeuronCloud();
+      },
+
+      onHover(obj) {
+        switch (obj.type) {
+        case 'cloudNeuron': {
+          const neuron = store.$get('neuron', obj.neuronIndex);
+          store.$dispatch('neuronHovered', neuron);
+          break;
+        }
+        default: {
+          break;
+        }
+        }
+      },
+      onHoverEnd(obj) {
+        switch (obj.type) {
+        case 'cloudNeuron': {
+          const neuron = store.$get('neuron', obj.neuronIndex);
+          store.$dispatch('neuronHoverEnded', neuron);
+          break;
+        }
+        default: {
+          break;
+        }
+        }
       },
     },
   };

@@ -12,12 +12,16 @@
         <soma-size-ctrl/>
       </div>
     </div>
+    <div class="hover-object-info">
+      <hover-object-info/>
+    </div>
   </footer>
 </template>
 
 
 <script>
   import SomaColorCtrl from './footer/soma-color-ctrl.vue';
+  import HoverObjectInfo from './footer/hover-object-info.vue';
   import SomaColorPalette from './footer/soma-color-palette.vue';
 
   export default {
@@ -25,6 +29,7 @@
     components: {
       'soma-color-ctrl': SomaColorCtrl,
       'soma-size-ctrl': SomaSizeCtrl,
+      'hover-object-info': HoverObjectInfo,
       'soma-color-palette': SomaColorPalette,
     },
     data() {
@@ -57,5 +62,11 @@
     position: absolute;
     right: 12px;
     top: -224px;
+  }
+
+  .hover-object-info {
+    position: absolute;
+    top: -224px;
+    left: 12px;
   }
 </style>
