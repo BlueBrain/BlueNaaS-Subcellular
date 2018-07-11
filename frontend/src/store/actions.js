@@ -90,6 +90,7 @@ const actions = {
     }, {});
 
     store.state.circuit.color.palette = colorPalette;
+    store.$emit('updateColorPalette');
   },
 
   updateColorProp(store, colorProp) {
@@ -111,7 +112,6 @@ const actions = {
     store.$dispatch('initCircuitColorPalette');
     store.$emit('initNeuronColorCtrl');
 
-    store.$emit('updateColorPalette');
     store.$emit('initNeuronPropFilter');
     store.$emit('circuitLoaded');
     store.$emit('hideCircuitLoadingModal');
@@ -119,6 +119,11 @@ const actions = {
 
   colorUpdated(store) {
     store.$emit('redrawCircuit');
+  },
+
+  setSomaSize(store, size) {
+    store.state.circuit.somaSize = size;
+    store.$emit('setSomaSize', size);
   },
 
 };
