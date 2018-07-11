@@ -53,6 +53,8 @@
       store.$on('updateSynapses', () => this.renderer.updateSynapses());
 
       store.$on('setSomaSize', size => this.renderer.setNeuronCloudPointSize(size));
+      store.$on('setSynapseSize', size => this.renderer.setSynapseSize(size));
+
       store.$on('hideViewer', () => {
         this.viewerVisible = false;
         this.renderer.stopRenderLoop();

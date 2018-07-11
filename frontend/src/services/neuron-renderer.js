@@ -5,8 +5,10 @@ import difference from 'lodash/difference';
 
 import {
   Color, TextureLoader, WebGLRenderer, Scene, Fog, AmbientLight, PointLight, Vector2,
-  Raycaster, PerspectiveCamera, BufferAttribute, BufferGeometry,
+  Raycaster, PerspectiveCamera, Object3D, BufferAttribute, BufferGeometry,
   PointsMaterial, VertexColors, Geometry, Points, Vector3,
+  Mesh, LineSegments, LineBasicMaterial, EdgesGeometry, SphereBufferGeometry,
+  MeshPhongMaterial,
 } from 'three';
 
 // TODO: consider to use trackball ctrl instead
@@ -25,6 +27,7 @@ const FAR = 50000;
 const AMBIENT_LIGHT_COLOR = 0x555555;
 const CAMERA_LIGHT_COLOR = 0xcacaca;
 const BACKGROUND_COLOR = 0xf8f8f9;
+const HOVER_BOX_COLOR = 0xffdf00;
 
 const EXC_SYN_COLOR = 0xfc1501;
 const INH_SYN_COLOR = 0x0080ff;
@@ -78,6 +81,7 @@ class NeuronRenderer {
 
     this.hoveredMesh = null;
     this.hoveredNeuron = null;
+    this.hoveredSynapse = null;
     this.highlightedNeuron = null;
     this.mousePressed = false;
 
@@ -271,6 +275,13 @@ class NeuronRenderer {
     this.raycaster.params.Points.threshold = size / 5;
   }
 
+  setSynapseSize(size) {
+    this.synapseObj.children.forEach((child) => {
+      child.scale.set(size, size, size);
+      child.updateMatrix();
+    });
+  }
+
   updateNeuronCloud() {
     this.neuronCloud.points.geometry.attributes.position.needsUpdate = true;
     this.neuronCloud.points.geometry.attributes.color.needsUpdate = true;
@@ -339,8 +350,8 @@ class NeuronRenderer {
       this.onMorphSectionHover(mesh);
       break;
     }
-    case 'synapseCloud': {
-      this.onSynapseHover(mesh.index);
+    case 'synapse': {
+      this.onSynapseHover(mesh);
       break;
     }
     default: {
@@ -359,8 +370,8 @@ class NeuronRenderer {
       this.onMorphSectionHoverEnd(mesh);
       break;
     }
-    case 'synapseCloud': {
-      this.onSynapseHoverEnd(mesh.index);
+    case 'synapse': {
+      this.onSynapseHoverEnd(mesh);
       break;
     }
     default: {
@@ -394,6 +405,71 @@ class NeuronRenderer {
     this.neuronCloud.colorBufferAttr.setXYZ(...this.hoveredNeuron);
     this.neuronCloud.points.geometry.attributes.color.needsUpdate = true;
     this.hoveredNeuron = null;
+  }
+
+  onSynapseHover(mesh) {
+    const { synapseSize } = store.state.circuit;
+
+    this.onHoverExternalHandler({
+      synapseIndex: mesh.object.userData.synapseIndex,
+      type: 'synapse',
+    });
+
+    const geometry = new EdgesGeometry(mesh.object.geometry);
+    geometry.scale(synapseSize, synapseSize, synapseSize);
+    const material = new LineBasicMaterial({
+      color: HOVER_BOX_COLOR,
+      linewidth: 2,
+    });
+    this.hoverBox = new LineSegments(geometry, material);
+
+    mesh.object.getWorldPosition(this.hoverBox.position);
+    mesh.object.getWorldQuaternion(this.hoverBox.rotation);
+    this.hoverBox.name = mesh.object.name;
+    this.hoverBox.userData = Object.assign({ skipHoverDetection: true }, mesh.object.userData);
+    this.scene.add(this.hoverBox);
+  }
+
+  onSynapseHoverEnd(mesh) {
+    this.scene.remove(this.hoverBox);
+    utils.disposeMesh(this.hoverBox);
+    this.hoverBox = null;
+
+    this.onHoverEndExternalHandler({
+      synapseIndex: mesh.object.userData.synapseIndex,
+      type: 'synapse',
+    });
+  }
+
+  onMorphSectionHover(mesh) {
+    const geometry = new EdgesGeometry(mesh.object.geometry);
+    const material = new LineBasicMaterial({
+      color: HOVER_BOX_COLOR,
+      linewidth: 2,
+    });
+    this.hoverBox = new LineSegments(geometry, material);
+
+    mesh.object.getWorldPosition(this.hoverBox.position);
+    mesh.object.getWorldQuaternion(this.hoverBox.rotation);
+    this.hoverBox.name = mesh.object.name;
+    this.hoverBox.userData = Object.assign({ skipHoverDetection: true }, mesh.object.userData);
+    this.scene.add(this.hoverBox);
+
+    this.onHoverExternalHandler({
+      type: 'morphSection',
+      data: mesh.object.userData,
+    });
+  }
+
+  onMorphSectionHoverEnd(mesh) {
+    this.scene.remove(this.hoverBox);
+    utils.disposeMesh(this.hoverBox);
+    this.hoverBox = null;
+
+    this.onHoverEndExternalHandler({
+      type: 'morphSection',
+      data: mesh.object.userData,
+    });
   }
 
   onResize() {

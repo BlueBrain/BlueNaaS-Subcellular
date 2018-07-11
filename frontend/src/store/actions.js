@@ -130,6 +130,10 @@ const actions = {
     store.$emit('setSomaSize', size);
   },
 
+  setSynapseSize(store, size) {
+    store.state.circuit.synapseSize = size;
+    store.$emit('setSynapseSize', size);
+  },
 
   neuronHovered(store, neuron) {
     // we don't need all properties of neuron to be shown,
