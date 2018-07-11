@@ -9,6 +9,7 @@
       <Step title="Cell selection"></Step>
       <Step title="Synapse selection"></Step>
       <Step title="Proteins selection"></Step>
+      <Step title="Protein concentrations"></Step>
     </Steps>
 
     <Tabs v-model="currentStep" class="tabs-header--hidden">
@@ -21,6 +22,9 @@
       <TabPane label="">
         <protein-tab/>
       </TabPane>
+      <TabPane label="">
+        <protein-concentration-tab/>
+      </TabPane>
     </Tabs>
   </div>
 </template>
@@ -32,6 +36,7 @@
   import CircuitTab from './side-panel/circuit-tab.vue';
   import SynapseTab from './side-panel/synapse-tab.vue';
   import ProteinTab from './side-panel/protein-tab.vue';
+  import ProteinConcentrationTab from './side-panel/protein-concentration-tab.vue';
 
   export default {
     name: 'side-panel',
@@ -39,6 +44,7 @@
       'circuit-tab': CircuitTab,
       'synapse-tab': SynapseTab,
       'protein-tab': ProteinTab,
+      'protein-concentration-tab': ProteinConcentrationTab,
     },
     data() {
       return {
@@ -48,6 +54,7 @@
     mounted() {
       store.$on('setSynapseSelectionState', () => { this.currentStep = 1; });
       store.$on('setProteinSelectionState', () => { this.currentStep = 2; });
+      store.$on('setProteinConcentrationState', () => { this.currentStep = 3 });
     },
   };
 </script>

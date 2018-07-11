@@ -240,6 +240,11 @@ const actions = {
     store.$emit('setProteinSelectionState');
   },
 
+  proteinsSelected(store, proteins) {
+    store.state.proteins = proteins;
+    store.$emit('setProteinConcentrationState');
+  },
+
   synapsePropFilterUpdated(store) {
     store.$emit('updateSynapses');
   },
