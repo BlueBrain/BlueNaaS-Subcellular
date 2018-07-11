@@ -9,8 +9,8 @@ APP_DNS_BASE?=ocp.bbp.epfl.ch
 OO_PROJECT?=bbp-ou-nse
 DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 
-CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj64/circuits/test/CircuitConfig
-CIRCUIT_NAME?=test-circuit
+CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
+CIRCUIT_NAME?=o1
 
 define HELPTEXT
 Makefile usage
