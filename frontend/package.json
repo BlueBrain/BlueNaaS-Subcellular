@@ -36,7 +36,7 @@
     "@vue/cli-plugin-eslint": "^3.0.0-rc.3",
     "@vue/cli-service": "^3.0.0-rc.3",
     "@vue/eslint-config-airbnb": "^3.0.0-rc.3",
-    "node-sass": "^4.9.0",
+    "node-sass": "^4.9.2",
     "sass-loader": "^7.0.3",
     "vue-template-compiler": "^2.5.16"
   },
@@ -47,6 +47,9 @@
   },
   "eslintConfig": {
     "root": true,
+    "env": {
+      "node": true
+    },
     "extends": [
       "plugin:vue/essential",
       "@vue/airbnb"
@@ -60,6 +63,9 @@
           "baseIndent": 1
         }
       ]
+    },
+    "parserOptions": {
+      "parser": "babel-eslint"
     }
   },
   "postcss": {
