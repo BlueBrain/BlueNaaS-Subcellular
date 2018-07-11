@@ -79,7 +79,8 @@
         neurons.forEach((neuron, neuronIndex) => {
           if (!globalFilterIndex[neuronIndex]) {
             // TODO: find a better way to hide part of the cloud
-            return positionBufferAttr.setXYZ(neuronIndex, 10000, 10000, 10000);
+            positionBufferAttr.setXYZ(neuronIndex, 10000, 10000, 10000);
+            return;
           }
 
           const neuronPosition = store.$get('neuronPosition', neuronIndex);
