@@ -140,6 +140,10 @@
           store.$dispatch('neuronClicked', neuron);
           break;
         }
+        case 'synapse': {
+          store.$dispatch('synapseClicked', obj.data.synapseIndex);
+          break;
+        }
         default: {
           break;
         }

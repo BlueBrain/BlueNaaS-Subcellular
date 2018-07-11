@@ -226,6 +226,21 @@ const actions = {
   synapseHoverEnded(store) {
     store.$emit('hideHoverObjectInfo');
   },
+
+  synapseClicked(store, synapseIndex) {
+    const synapse = store.$get('synapse', synapseIndex);
+    store.$emit('setSynapse', synapse);
+  },
+
+  synapseSelected(store, synapse) {
+    store.state.synapse = synapse;
+    store.$emit('hideHoverObjectInfo');
+    store.$emit('hideViewer');
+    store.$emit('setProteinSelectionState');
+  },
+
+  synapsePropFilterUpdated(store) {
+    store.$emit('updateSynapses');
   },
 
 };

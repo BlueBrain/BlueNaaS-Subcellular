@@ -8,6 +8,7 @@
     >
       <Step title="Cell selection"></Step>
       <Step title="Synapse selection"></Step>
+      <Step title="Proteins selection"></Step>
     </Steps>
 
     <Tabs v-model="currentStep" class="tabs-header--hidden">
@@ -16,6 +17,8 @@
       </TabPane>
       <TabPane label="">
         <synapse-tab/>
+      </TabPane>
+      <TabPane label="">
       </TabPane>
     </Tabs>
   </div>
@@ -41,6 +44,7 @@
     },
     mounted() {
       store.$on('setSynapseSelectionState', () => { this.currentStep = 1; });
+      store.$on('setProteinSelectionState', () => { this.currentStep = 2; });
     },
   };
 </script>
