@@ -1,5 +1,6 @@
 
 import * as DistinctColors from 'distinct-colors';
+import pickBy from 'lodash/pickBy';
 
 import socket from '@/services/websocket';
 import storage from '@/services/storage';

@@ -40,22 +40,22 @@ class Ws {
 
   send(message, data, cmdId = null) {
     switch (this.socket.readyState) {
-      case socketState.OPEN: {
-        this.socket.send(JSON.stringify({
-          data,
-          cmd: message,
-          cmdid: cmdId,
-          timestamp: Date.now(),
-        }));
-        break;
-      }
-      case socketState.CONNECTING:
-      case socketState.CLOSING:
-      case socketState.CLOSED:
-      default: {
-        this.messageQueue.push([message, data, cmdId]);
-        break;
-      }
+    case socketState.OPEN: {
+      this.socket.send(JSON.stringify({
+        data,
+        cmd: message,
+        cmdid: cmdId,
+        timestamp: Date.now(),
+      }));
+      break;
+    }
+    case socketState.CONNECTING:
+    case socketState.CLOSING:
+    case socketState.CLOSED:
+    default: {
+      this.messageQueue.push([message, data, cmdId]);
+      break;
+    }
     }
   }
 
