@@ -45,7 +45,7 @@ run_dev:
 		-it \
 		-v /gpfs:/gpfs:ro \
 		-e DEBUG=True \
-		-v $$(pwd)/subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment \
+		-v $$(pwd)/subcellular_experiment:/usr/local/lib/python3.6/site-packages/subcellular_experiment \
 		-p 8888:8000 \
 		sc-svc-$(CIRCUIT_NAME)
 

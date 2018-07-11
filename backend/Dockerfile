@@ -12,7 +12,9 @@ WORKDIR /opt/subcellular-experiment
 COPY dist/* ./dist/
 COPY entrypoint.sh .
 
-RUN apt-get update && apt-get install -yq rsync
+RUN apt-get update && \
+    apt-get install -y rsync && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
     --no-cache-dir \
