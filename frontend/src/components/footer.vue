@@ -12,6 +12,17 @@
         <soma-size-ctrl/>
       </div>
     </div>
+
+    <div
+      class="footer-morphology"
+      v-if="state === 'synapseSelection'"
+    >
+      <div class="synapse-size-ctrl">
+        <synapse-size-ctrl/>
+      </div>
+      <synapse-color-palette/>
+    </div>
+
     <div class="hover-object-info">
       <hover-object-info/>
     </div>
@@ -20,17 +31,24 @@
 
 
 <script>
+  import store from '@/store';
+
   import SomaColorCtrl from './footer/soma-color-ctrl.vue';
+  import SomaSizeCtrl from './footer/soma-size-ctrl.vue';
+  import SynapseSizeCtrl from './footer/synapse-size-ctrl.vue';
   import HoverObjectInfo from './footer/hover-object-info.vue';
   import SomaColorPalette from './footer/soma-color-palette.vue';
+  import SynapseColorPalette from './footer/synapse-color-palette.vue';
 
   export default {
     name: 'footer-component',
     components: {
       'soma-color-ctrl': SomaColorCtrl,
       'soma-size-ctrl': SomaSizeCtrl,
+      'synapse-size-ctrl': SynapseSizeCtrl,
       'hover-object-info': HoverObjectInfo,
       'soma-color-palette': SomaColorPalette,
+      'synapse-color-palette': SynapseColorPalette,
     },
     data() {
       return {
