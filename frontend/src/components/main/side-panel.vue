@@ -19,6 +19,7 @@
         <synapse-tab/>
       </TabPane>
       <TabPane label="">
+        <protein-tab/>
       </TabPane>
     </Tabs>
   </div>
@@ -30,12 +31,14 @@
 
   import CircuitTab from './side-panel/circuit-tab.vue';
   import SynapseTab from './side-panel/synapse-tab.vue';
+  import ProteinTab from './side-panel/protein-tab.vue';
 
   export default {
     name: 'side-panel',
     components: {
       'circuit-tab': CircuitTab,
       'synapse-tab': SynapseTab,
+      'protein-tab': ProteinTab,
     },
     data() {
       return {

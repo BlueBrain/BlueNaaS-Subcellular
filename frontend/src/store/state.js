@@ -20,6 +20,7 @@ const state = {
   synapseProps: [],
   neuron: null,
   synapse: null,
+  proteins: [],
   morphology: {},
   view: {
     axonVisible: false,

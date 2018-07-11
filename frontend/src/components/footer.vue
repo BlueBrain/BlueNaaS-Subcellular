@@ -57,6 +57,7 @@
     },
     mounted() {
       store.$on('setSynapseSelectionState', () => { this.state = 'synapseSelection'; });
+      store.$on('setProteinSelectionState', () => { this.state = 'proteionSelection'; });
     },
   };
 </script>

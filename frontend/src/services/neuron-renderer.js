@@ -95,6 +95,8 @@ class NeuronRenderer {
     this.onClickExternalHandler = config.onClick;
 
     this.initEventHandlers();
+
+    this.shoudStopRenderLoop = false;
     this.animate();
   }
 
@@ -489,7 +491,16 @@ class NeuronRenderer {
     return intersections.find(mesh => !mesh.object.userData.skipHoverDetection);
   }
 
+  stopRenderLoop() {
+    this.shoudStopRenderLoop = true;
+  }
+
   animate() {
+    if (this.shoudStopRenderLoop) {
+      this.shoudStopRenderLoop = false;
+      return;
+    }
+
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.animate.bind(this));
