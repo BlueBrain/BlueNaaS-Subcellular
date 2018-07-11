@@ -106,6 +106,10 @@
           store.$dispatch('neuronHovered', neuron);
           break;
         }
+        case 'synapse': {
+          store.$dispatch('synapseHovered', obj.synapseIndex);
+          break;
+        }
         default: {
           break;
         }
@@ -116,6 +120,10 @@
         case 'cloudNeuron': {
           const neuron = store.$get('neuron', obj.neuronIndex);
           store.$dispatch('neuronHoverEnded', neuron);
+          break;
+        }
+        case 'synapse': {
+          store.$dispatch('synapseHoverEnded', obj.synapseIndex);
           break;
         }
         default: {

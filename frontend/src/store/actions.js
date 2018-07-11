@@ -197,6 +197,31 @@ const actions = {
     store.$emit('initSynapseCloud');
     store.$emit('initSynapsePropFilter');
   },
+
+  synapseHovered(store, synapseIndex) {
+    const synapse = store.$get('synapse', synapseIndex);
+    const neuron = store.$get('neuron', synapse.preGid - 1);
+    store.$emit('showHoverObjectInfo', {
+      header: 'Synapse',
+      items: [{
+        type: 'table',
+        data: {
+          id: `(${synapse.gid}, ${synapse.index})`,
+          pre_gid: synapse.preGid,
+          post_gid: synapse.gid,
+          type: `${synapse.type} (${synapse.type >= 100 ? 'EXC' : 'INH'})`,
+        },
+      }, {
+        subHeader: 'Pre-synaptic cell:',
+        type: 'table',
+        data: pickBy(neuron, (val, prop) => ['etype', 'mtype'].includes(prop)),
+      }],
+    });
+  },
+
+  synapseHoverEnded(store) {
+    store.$emit('hideHoverObjectInfo');
+  },
   },
 
 };
