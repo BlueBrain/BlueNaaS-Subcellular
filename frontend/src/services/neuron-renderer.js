@@ -1,5 +1,7 @@
 
 import throttle from 'lodash/throttle';
+import get from 'lodash/get';
+import difference from 'lodash/difference';
 
 import {
   Color, TextureLoader, WebGLRenderer, Scene, Fog, AmbientLight, PointLight, Vector2,
@@ -13,6 +15,9 @@ import OrbitControls from 'orbit-controls-es6';
 // TODO: refactor to remove store operations
 // and move them to vue viewport component
 import store from '@/store';
+import eachAsync from '@/tools/each-async';
+import utils from '@/tools/neuron-renderer-utils';
+
 
 const FOG_COLOR = 0xffffff;
 const NEAR = 1;
@@ -23,7 +28,18 @@ const BACKGROUND_COLOR = 0xf8f8f9;
 
 const HOVERED_NEURON_GL_COLOR = new Color(0xf26d21).toArray();
 
+const ALL_SEC_TYPES = [
+  'axon',
+  'soma',
+  'axon',
+  'apic',
+  'dend',
+  'myelin',
+];
+
 const neuronTexture = new TextureLoader().load('/neuron-texture.png');
+
+const defaultSecRenderFilter = t => store.state.view.axonsVisible || t !== 'axon';
 
 
 class NeuronRenderer {
@@ -62,6 +78,8 @@ class NeuronRenderer {
     this.highlightedNeuron = null;
     this.mousePressed = false;
 
+    this.cellMorphologyObj = new Object3D();
+    this.scene.add(this.cellMorphologyObj);
     this.onHoverExternalHandler = config.onHover;
     this.onHoverEndExternalHandler = config.onHoverEnd;
     this.onClickExternalHandler = config.onClick;
@@ -139,6 +157,54 @@ class NeuronRenderer {
 
   hideNeuronCloud() {
     this.neuronCloud.points.visible = false;
+  }
+
+  showMorphology(secTypes = ALL_SEC_TYPES.filter(defaultSecRenderFilter)) {
+    const { neuron } = store.state;
+    const { gid } = neuron;
+
+    const { morphology } = store.state;
+
+    let cellObj3d = this.cellMorphologyObj.children.find(cell => get(cell, 'userData.gid') === gid);
+
+    if (!cellObj3d) {
+      cellObj3d = new Object3D();
+      cellObj3d.userData = {
+        gid,
+        secTypes: [],
+      };
+      this.cellMorphologyObj.add(cellObj3d);
+    }
+
+    const secTypesToAdd = difference(secTypes, cellObj3d.userData.secTypes);
+    if (!secTypesToAdd.length) return;
+
+    cellObj3d.userData.secTypes.push(...secTypesToAdd);
+
+    const { sections } = morphology[gid];
+
+    const materialMap = utils.generateSecMaterialMap();
+
+    const addSecOperation = eachAsync(sections, (section) => {
+      const pts = section.points;
+
+      const secMesh = section.type === 'soma' ?
+        utils.createSomaMeshFromPoints(pts, materialMap[section.type].clone()) :
+        utils.createSecMeshFromPoints(pts, materialMap[section.type].clone());
+
+      secMesh.name = 'morphSection';
+      secMesh.userData = {
+        neuron,
+        type: section.type,
+        id: section.id,
+        name: section.name,
+      };
+
+      cellObj3d.add(secMesh);
+    }, sec => secTypesToAdd.includes(sec.type));
+
+    addSecOperation.then(() => store.$dispatch('morphRenderFinished'));
+    this.cellMorphologyObj.visible = true;
   }
 
   setNeuronCloudPointSize(size) {

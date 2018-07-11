@@ -29,6 +29,13 @@ CIRCUIT = bluepy.Circuit(CIRCUIT_PATH)
 L.debug('bluepy circuit has been created')
 CELLS = CIRCUIT.v2.cells.get().drop(['orientation', 'synapse_class'], 1, errors='ignore')
 
+SEC_SHORT_TYPE_DICT = {
+    'soma': 'soma',
+    'basal_dendrite': 'dend',
+    'apical_dendrite': 'apic',
+    'axon': 'axon'
+}
+
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     closed = False
@@ -81,6 +88,33 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     tornado.ioloop.IOLoop.current().add_callback(send)
 
             tornado.ioloop.IOLoop.current().add_callback(send)
+
+        if cmd == 'get_cell_morphology':
+            gids = msg['data']
+            L.debug('getting cell morph for %s', gids)
+            cells = {}
+            for gid in gids:
+                cell = CIRCUIT.v2.morph.get(gid, transform=True)
+                morphology = [
+                    {
+                        'points': [point[:4] for point in section.points],
+                        'id': section.id,
+                        'type': SEC_SHORT_TYPE_DICT[section.type.name]
+                    }
+                    for section in cell.sections]
+
+
+                orientation = CIRCUIT.v2.cells.get(gid)['orientation']
+
+                cells[gid] = {
+                    'sections': morphology,
+                    'orientation': orientation
+                }
+            L.debug('getting cell morph for %s done', gids)
+            self.send_message('cell_morphology', {
+                'cells': cells,
+                'cmdid': cmdid
+            })
 
     def on_close(self):
         self.closed = True

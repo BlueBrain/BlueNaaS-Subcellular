@@ -158,6 +158,14 @@ const actions = {
     store.$emit('showGlobalSpinner', 'Loading morphology');
 
     store.state.neuron = neuron;
+
+    const morph = await socket.request('get_cell_morphology', [neuron.gid]);
+    Object.assign(store.state.morphology, morph.cells);
+
+    store.$emit('showCellMorphology');
+    store.$emit('hideCircuit');
+
+    store.$emit('hideGlobalSpinner');
   },
 
 };

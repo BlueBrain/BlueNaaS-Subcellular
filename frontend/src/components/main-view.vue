@@ -42,6 +42,9 @@
       store.$on('circuitLoaded', () => this.initRenderer());
       store.$on('redrawCircuit', () => this.redrawNeurons());
 
+      store.$on('showCellMorphology', () => this.renderer.showMorphology());
+
+      store.$on('hideCircuit', () => this.renderer.hideNeuronCloud());
 
       store.$on('setSomaSize', size => this.renderer.setNeuronCloudPointSize(size));
       store.$on('hideViewer', () => {
