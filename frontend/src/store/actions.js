@@ -155,6 +155,7 @@ const actions = {
   },
 
   async neuronSelected(store, neuron) {
+    store.$emit('setSynapseSelectionState');
     store.$emit('showGlobalSpinner', 'Loading morphology');
 
     store.state.neuron = neuron;

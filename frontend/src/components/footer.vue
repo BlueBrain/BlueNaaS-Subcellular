@@ -55,6 +55,9 @@
         state: 'cellSelection',
       };
     },
+    mounted() {
+      store.$on('setSynapseSelectionState', () => { this.state = 'synapseSelection'; });
+    },
   };
 </script>
 

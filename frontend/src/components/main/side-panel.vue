@@ -7,11 +7,15 @@
       :current="currentStep"
     >
       <Step title="Cell selection"></Step>
+      <Step title="Synapse selection"></Step>
     </Steps>
 
     <Tabs v-model="currentStep" class="tabs-header--hidden">
       <TabPane label="">
         <circuit-tab/>
+      </TabPane>
+      <TabPane label="">
+        <synapse-tab/>
       </TabPane>
     </Tabs>
   </div>
@@ -22,16 +26,21 @@
   import store from '@/store';
 
   import CircuitTab from './side-panel/circuit-tab.vue';
+  import SynapseTab from './side-panel/synapse-tab.vue';
 
   export default {
     name: 'side-panel',
     components: {
       'circuit-tab': CircuitTab,
+      'synapse-tab': SynapseTab,
     },
     data() {
       return {
         currentStep: 0,
       };
+    },
+    mounted() {
+      store.$on('setSynapseSelectionState', () => { this.currentStep = 1; });
     },
   };
 </script>
