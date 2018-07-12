@@ -2,6 +2,7 @@
 import throttle from 'lodash/throttle';
 import get from 'lodash/get';
 import difference from 'lodash/difference';
+import pick from 'lodash/pick';
 
 import {
   Color, TextureLoader, WebGLRenderer, Scene, Fog, AmbientLight, PointLight, Vector2,
@@ -192,6 +193,39 @@ class NeuronRenderer {
     this.controls.target = center;
   }
 
+  centerCellMorph() {
+    const controlsTargetVec = new Vector3();
+
+    this.cellMorphologyObj.traverse((child) => {
+      const childSectionName = get(child, 'userData.type');
+      if (childSectionName !== 'soma') return;
+
+      controlsTargetVec.copy(child.position);
+    });
+
+    const { gid } = store.state.neuron;
+    const { orientation } = store.state.morphology[gid];
+
+    const cellQuat = utils.quatFromArray3x3(orientation);
+
+    const cameraPositionVec = new Vector3(0, 0, 300)
+      .applyQuaternion(cellQuat)
+      .add(controlsTargetVec);
+
+    const up = new Vector3(0, 1, 0).applyQuaternion(cellQuat).normalize();
+    this.camera.up = up;
+
+    const animateCamera = () => {
+      TweenLite
+        .to(this.camera.position, 0.15, pick(cameraPositionVec, ['x', 'y', 'z']))
+        .eventCallback('onUpdate', () => { this.controls.target.copy(controlsTargetVec); });
+    };
+
+    TweenLite
+      .to(this.controls.target, 0.15, pick(controlsTargetVec, ['x', 'y', 'z']))
+      .eventCallback('onComplete', animateCamera);
+  }
+
   updateSynapses() {
     const { synapses } = store.state;
 
@@ -270,7 +304,10 @@ class NeuronRenderer {
       cellObj3d.add(secMesh);
     }, sec => secTypesToAdd.includes(sec.type));
 
-    addSecOperation.then(() => store.$dispatch('morphRenderFinished'));
+    addSecOperation.then(() => {
+      this.centerCellMorph();
+      store.$dispatch('morphRenderFinished');
+    });
     this.cellMorphologyObj.visible = true;
   }
 

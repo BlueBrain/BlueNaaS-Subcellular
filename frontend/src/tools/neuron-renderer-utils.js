@@ -10,6 +10,7 @@ import {
   MeshLambertMaterial,
   Color,
   DoubleSide,
+  Quaternion,
 } from 'three';
 
 import last from 'lodash/last';
@@ -146,6 +147,25 @@ function generateSecMaterialMap(colorDiff = 0) {
   return materialMap;
 }
 
+function rotMatrix4x4FromArray3x3(array3x3) {
+  const rotMatrix = new Matrix4();
+
+  rotMatrix.set(
+    ...array3x3.reduce((acc, row) => ([...acc, ...row, 0]), []),
+    0, 0, 0, 1,
+  );
+
+  return rotMatrix;
+}
+
+function quatFromArray3x3(array3x3) {
+  const rotationMatrix = rotMatrix4x4FromArray3x3(array3x3);
+
+  const quaternion = new Quaternion().setFromRotationMatrix(rotationMatrix);
+
+  return quaternion;
+}
+
 export default {
   createSecMeshFromPoints,
   disposeMesh,
@@ -153,4 +173,5 @@ export default {
   getSomaPositionFromPoints,
   getSomaRadiusFromPoints,
   generateSecMaterialMap,
+  quatFromArray3x3,
 };
