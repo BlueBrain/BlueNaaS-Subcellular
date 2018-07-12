@@ -245,6 +245,8 @@ const actions = {
     store.$emit('setProteinConcentrationState');
   },
 
+  morphRenderFinished(store) {},
+
   synapsePropFilterUpdated(store) {
     store.$emit('updateSynapses');
   },
