@@ -25,7 +25,6 @@
     "iview": "^2.14.3",
     "localforage": "^1.7.2",
     "lodash": "^4.17.10",
-    "orbit-controls-es6": "^1.0.12",
     "three": "^0.94.0",
     "vue": "^2.5.16",
     "vue-slider-component": "^2.7.2",

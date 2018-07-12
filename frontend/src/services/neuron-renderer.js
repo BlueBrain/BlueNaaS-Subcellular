@@ -11,8 +11,9 @@ import {
   MeshPhongMaterial,
 } from 'three';
 
-// TODO: consider to use trackball ctrl instead
-import OrbitControls from 'orbit-controls-es6';
+import { TweenLite } from 'gsap';
+
+import TrackballControls from './trackball-controls';
 
 // TODO: refactor to remove store operations
 // and move them to vue viewport component
@@ -76,8 +77,9 @@ class NeuronRenderer {
     this.scene.add(this.camera);
     this.camera.add(new PointLight(CAMERA_LIGHT_COLOR, 0.9));
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls = new TrackballControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
+    this.controls.zoomSpeed = 0.8;
 
     this.hoveredMesh = null;
     this.hoveredNeuron = null;
