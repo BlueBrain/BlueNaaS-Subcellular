@@ -10,6 +10,7 @@ class Store {
   constructor() {
     this.state = state;
     this.eventBus = eventBus;
+    this.actions = actions;
   }
 
   $get(property, args) {
@@ -19,15 +20,15 @@ class Store {
   }
 
   $dispatchAsync(action, payload) {
-    if (!actions[action]) throw new Error(`Store action ${action} is not available`);
+    if (!this.actions[action]) throw new Error(`Store action ${action} is not available`);
 
-    setTimeout(() => actions[action](this, payload), 1);
+    setTimeout(() => this.actions[action](payload), 1);
   }
 
   $dispatch(action, payload) {
-    if (!actions[action]) throw new Error(`Store action ${action} is not available`);
+    if (!this.actions[action]) throw new Error(`Store action ${action} is not available`);
 
-    actions[action](this, payload);
+    this.actions[action](payload);
   }
 
   $emit(action, payload) {

@@ -5,9 +5,10 @@ import pickBy from 'lodash/pickBy';
 import socket from '@/services/websocket';
 import storage from '@/services/storage';
 
+import store from '@/store';
 
 const actions = {
-  async loadCircuit(store) {
+  async loadCircuit() {
     const { circuit } = store.state;
     const neuronDataSet = await storage.getItem('neuronData');
 
@@ -40,7 +41,7 @@ const actions = {
     socket.send('get_circuit_cells');
   },
 
-  initCircuitColorPalette(store) {
+  initCircuitColorPalette() {
     const { neurons, neuronProps } = store.state.circuit;
     const neuronSample = neurons[0];
 
@@ -69,7 +70,7 @@ const actions = {
     store.$dispatch('generateCircuitColorPalette');
   },
 
-  generateCircuitColorPalette(store) {
+  generateCircuitColorPalette() {
     const { uniqueValuesByProp, neuronProp } = store.state.circuit.color;
 
     const currentPropValues = uniqueValuesByProp[neuronProp];
@@ -86,21 +87,19 @@ const actions = {
 
     const colors = new DistinctColors(colorConfig);
 
-    const colorPalette = currentPropValues.reduce((palette, propVal, i) => {
-      return Object.assign(palette, { [propVal.toString()]: colors[i].gl() });
-    }, {});
+    const colorPalette = currentPropValues.reduce((palette, propVal, i) => Object.assign(palette, { [propVal.toString()]: colors[i].gl() }), {});
 
     store.state.circuit.color.palette = colorPalette;
     store.$emit('updateColorPalette');
   },
 
-  updateColorProp(store, colorProp) {
+  updateColorProp(colorProp) {
     store.state.circuit.color.neuronProp = colorProp;
     store.$dispatch('generateCircuitColorPalette');
     store.$emit('redrawCircuit');
   },
 
-  initCircuit(store) {
+  initCircuit() {
     store.state.circuit.neuronPropIndex = store.state.circuit.neuronProps
       .reduce((propIndexObj, propName, propIndex) => Object.assign(propIndexObj, {
         [propName]: propIndex,
@@ -118,25 +117,25 @@ const actions = {
     store.$emit('hideCircuitLoadingModal');
   },
 
-  colorUpdated(store) {
+  colorUpdated() {
     store.$emit('redrawCircuit');
   },
 
-  propFilterUpdated(store) {
+  propFilterUpdated() {
     store.$emit('redrawCircuit');
   },
 
-  setSomaSize(store, size) {
+  setSomaSize(size) {
     store.state.circuit.somaSize = size;
     store.$emit('setSomaSize', size);
   },
 
-  setSynapseSize(store, size) {
+  setSynapseSize(size) {
     store.state.circuit.synapseSize = size;
     store.$emit('setSynapseSize', size);
   },
 
-  neuronHovered(store, neuron) {
+  neuronHovered(neuron) {
     // we don't need all properties of neuron to be shown,
     // for example x, y, z can be skipped.
     // TODO: move visible property selection to app config page
@@ -151,15 +150,15 @@ const actions = {
     });
   },
 
-  neuronHoverEnded(store) {
+  neuronHoverEnded() {
     store.$emit('hideHoverObjectInfo');
   },
 
-  neuronClicked(store, neuron) {
+  neuronClicked(neuron) {
     store.$emit('setNeuron', neuron);
   },
 
-  async neuronSelected(store, neuron) {
+  async neuronSelected(neuron) {
     store.$emit('setSynapseSelectionState');
     store.$emit('showGlobalSpinner', 'Loading morphology');
 
@@ -176,7 +175,7 @@ const actions = {
     store.$dispatch('initSynapses');
   },
 
-  async initSynapses(store) {
+  async initSynapses() {
     const { gid } = store.state.neuron;
 
     const res = await socket.request('get_syn_connections', gid);
@@ -186,7 +185,7 @@ const actions = {
     const synapsePropIndex = synapseProps
       .reduce((propIndexObj, propName, propIndex) => Object.assign(propIndexObj, {
         [propName]: propIndex,
-      }), {});
+    }), {});
 
     const synapses = synapsesRaw.map((synVals, synIndex) => {
       const synObject = synapseProps.reduce((synObj, synProp) => Object.assign(synObj, {
@@ -203,7 +202,7 @@ const actions = {
     store.$emit('initSynapsePropFilter');
   },
 
-  synapseHovered(store, synapseIndex) {
+  synapseHovered(synapseIndex) {
     const synapse = store.$get('synapse', synapseIndex);
     const neuron = store.$get('neuron', synapse.preGid - 1);
     store.$emit('showHoverObjectInfo', {
@@ -224,30 +223,30 @@ const actions = {
     });
   },
 
-  synapseHoverEnded(store) {
+  synapseHoverEnded() {
     store.$emit('hideHoverObjectInfo');
   },
 
-  synapseClicked(store, synapseIndex) {
+  synapseClicked(synapseIndex) {
     const synapse = store.$get('synapse', synapseIndex);
     store.$emit('setSynapse', synapse);
   },
 
-  synapseSelected(store, synapse) {
+  synapseSelected(synapse) {
     store.state.synapse = synapse;
     store.$emit('hideHoverObjectInfo');
     store.$emit('hideViewer');
     store.$emit('setProteinSelectionState');
   },
 
-  proteinsSelected(store, proteins) {
+  proteinsSelected(proteins) {
     store.state.proteins = proteins;
     store.$emit('setProteinConcentrationState');
   },
 
-  morphRenderFinished(store) {},
+  morphRenderFinished() {},
 
-  synapsePropFilterUpdated(store) {
+  synapsePropFilterUpdated() {
     store.$emit('updateSynapses');
   },
 

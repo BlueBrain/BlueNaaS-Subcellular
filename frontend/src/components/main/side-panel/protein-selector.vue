@@ -42,7 +42,7 @@
               </div>
               <Icon
                 class="icon ml-6"
-                type="plus"
+                type="md-add"
                 @click="addProtein(protein)"
               />
             </div>
@@ -83,7 +83,7 @@
               </div>
               <Icon
                 class="icon ml-6"
-                type="minus"
+                type="md-remove"
                 @click="removeProtein(protein)"
               />
             </div>
@@ -204,20 +204,18 @@
       createCustomProteinList() {
         const that = this;
         this.$Modal.confirm({
-          render: (h) => {
-            return h('Input', {
-              props: {
-                value: '',
-                autofocus: true,
-                placeholder: 'Protein list name',
+          render: h => h('Input', {
+            props: {
+              value: '',
+              autofocus: true,
+              placeholder: 'Protein list name',
+            },
+            on: {
+              input: (val) => {
+                that.customProteinListName = val;
               },
-              on: {
-                input: (val) => {
-                  that.customProteinListName = val;
-                },
-              },
-            });
-          },
+            },
+          }),
           onOk: () => {
             that.$set(that.proteinList, that.customProteinListName, that.customProteinListName);
           },

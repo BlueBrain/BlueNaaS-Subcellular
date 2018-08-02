@@ -7,7 +7,7 @@ const getters = {
       .reduce((nrn, prop) => {
         const propValue = neurons[index][neuronPropIndex[prop]];
         return Object.assign(nrn, { [prop]: propValue });
-      }, { gid: index + 1 });
+    }, { gid: index + 1 });
   },
 
   neuronPosition(store, index) {

@@ -54,7 +54,7 @@
     mounted() {
       store.$on('setSynapseSelectionState', () => { this.currentStep = 1; });
       store.$on('setProteinSelectionState', () => { this.currentStep = 2; });
-      store.$on('setProteinConcentrationState', () => { this.currentStep = 3 });
+      store.$on('setProteinConcentrationState', () => { this.currentStep = 3; });
     },
   };
 </script>

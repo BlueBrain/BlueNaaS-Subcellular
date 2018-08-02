@@ -9,7 +9,6 @@ import { Vector3, Vector2, Quaternion, EventDispatcher } from 'three';
 
 
 function TrackballControls(object, domElement) {
-
   const _this = this;
   const STATE = {
     NONE: -1,
@@ -60,27 +59,27 @@ function TrackballControls(object, domElement) {
 
   const EPS = 0.000001;
 
-  let lastPosition = new Vector3();
+  const lastPosition = new Vector3();
 
-  var _state = STATE.NONE,
-    _prevState = STATE.NONE,
+  let _state = STATE.NONE,
+      _prevState = STATE.NONE,
 
-    _eye = new Vector3(),
+      _eye = new Vector3(),
 
-    _movePrev = new Vector2(),
-    _moveCurr = new Vector2(),
+      _movePrev = new Vector2(),
+      _moveCurr = new Vector2(),
 
-    _lastAxis = new Vector3(),
-    _lastAngle = 0,
+      _lastAxis = new Vector3(),
+      _lastAngle = 0,
 
-    _zoomStart = new Vector2(),
-    _zoomEnd = new Vector2(),
+      _zoomStart = new Vector2(),
+      _zoomEnd = new Vector2(),
 
-    _touchZoomDistanceStart = 0,
-    _touchZoomDistanceEnd = 0,
+      _touchZoomDistanceStart = 0,
+      _touchZoomDistanceEnd = 0,
 
-    _panStart = new Vector2(),
-    _panEnd = new Vector2();
+      _panStart = new Vector2(),
+      _panEnd = new Vector2();
 
   // for reset
 
@@ -98,16 +97,15 @@ function TrackballControls(object, domElement) {
   // methods
 
   this.handleResize = function () {
-
     if (this.domElement === document) {
       this.screen.left = 0;
       this.screen.top = 0;
       this.screen.width = window.innerWidth;
       this.screen.height = window.innerHeight;
     } else {
-      var box = this.domElement.getBoundingClientRect();
+      const box = this.domElement.getBoundingClientRect();
       // adjustments come from similar code in the jquery offset() function
-      var d = this.domElement.ownerDocument.documentElement;
+      const d = this.domElement.ownerDocument.documentElement;
       this.screen.left = box.left + window.pageXOffset - d.clientLeft;
       this.screen.top = box.top + window.pageYOffset - d.clientTop;
       this.screen.width = box.width;
@@ -147,16 +145,15 @@ function TrackballControls(object, domElement) {
   }());
 
   this.rotateCamera = (function () {
-    var axis = new Vector3(),
-      quaternion = new Quaternion(),
-      eyeDirection = new Vector3(),
-      objectUpDirection = new Vector3(),
-      objectSidewaysDirection = new Vector3(),
-      moveDirection = new Vector3(),
-      angle;
+    let axis = new Vector3(),
+        quaternion = new Quaternion(),
+        eyeDirection = new Vector3(),
+        objectUpDirection = new Vector3(),
+        objectSidewaysDirection = new Vector3(),
+        moveDirection = new Vector3(),
+        angle;
 
     return function rotateCamera() {
-
       moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
       angle = moveDirection.length();
 
@@ -192,7 +189,6 @@ function TrackballControls(object, domElement) {
 
       _movePrev.copy(_moveCurr);
     };
-
   }());
 
 
@@ -200,7 +196,6 @@ function TrackballControls(object, domElement) {
     let factor;
 
     if (_state === STATE.TOUCH_ZOOM_PAN) {
-
       factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
       _touchZoomDistanceStart = _touchZoomDistanceEnd;
       _eye.multiplyScalar(factor);
@@ -220,16 +215,14 @@ function TrackballControls(object, domElement) {
   };
 
   this.panCamera = (function () {
-    var mouseChange = new Vector2(),
-      objectUp = new Vector3(),
-      pan = new Vector3();
+    let mouseChange = new Vector2(),
+        objectUp = new Vector3(),
+        pan = new Vector3();
 
     return function panCamera() {
-
       mouseChange.copy(_panEnd).sub(_panStart);
 
       if (mouseChange.lengthSq()) {
-
         mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
 
         pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
@@ -248,7 +241,6 @@ function TrackballControls(object, domElement) {
   }());
 
   this.checkDistances = function () {
-
     if (!_this.noZoom || !_this.noPan) {
       if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
         _this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
@@ -263,336 +255,272 @@ function TrackballControls(object, domElement) {
   };
 
   this.update = function () {
+    _eye.subVectors(_this.object.position, _this.target);
 
-    _eye.subVectors( _this.object.position, _this.target );
-
-    if ( ! _this.noRotate ) {
-
+    if (!_this.noRotate) {
       _this.rotateCamera();
-
     }
 
-    if ( ! _this.noZoom ) {
-
+    if (!_this.noZoom) {
       _this.zoomCamera();
-
     }
 
-    if ( ! _this.noPan ) {
-
+    if (!_this.noPan) {
       _this.panCamera();
-
     }
 
-    _this.object.position.addVectors( _this.target, _eye );
+    _this.object.position.addVectors(_this.target, _eye);
 
     _this.checkDistances();
 
-    _this.object.lookAt( _this.target );
+    _this.object.lookAt(_this.target);
 
-    if ( lastPosition.distanceToSquared( _this.object.position ) > EPS ) {
+    if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
+      _this.dispatchEvent(changeEvent);
 
-      _this.dispatchEvent( changeEvent );
-
-      lastPosition.copy( _this.object.position );
-
+      lastPosition.copy(_this.object.position);
     }
-
   };
 
   this.reset = function () {
-
     _state = STATE.NONE;
     _prevState = STATE.NONE;
 
-    _this.target.copy( _this.target0 );
-    _this.object.position.copy( _this.position0 );
-    _this.object.up.copy( _this.up0 );
+    _this.target.copy(_this.target0);
+    _this.object.position.copy(_this.position0);
+    _this.object.up.copy(_this.up0);
 
-    _eye.subVectors( _this.object.position, _this.target );
+    _eye.subVectors(_this.object.position, _this.target);
 
-    _this.object.lookAt( _this.target );
+    _this.object.lookAt(_this.target);
 
-    _this.dispatchEvent( changeEvent );
+    _this.dispatchEvent(changeEvent);
 
-    lastPosition.copy( _this.object.position );
-
+    lastPosition.copy(_this.object.position);
   };
 
   // listeners
 
-  function keydown( event ) {
+  function keydown(event) {
+    if (_this.enabled === false) return;
 
-    if ( _this.enabled === false ) return;
-
-    window.removeEventListener( 'keydown', keydown );
+    window.removeEventListener('keydown', keydown);
 
     _prevState = _state;
 
-    if ( _state !== STATE.NONE ) {
+    if (_state !== STATE.NONE) {
 
-      return;
 
-    } else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && ! _this.noRotate ) {
-
+    } else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
       _state = STATE.ROTATE;
-
-    } else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && ! _this.noZoom ) {
-
+    } else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
       _state = STATE.ZOOM;
-
-    } else if ( event.keyCode === _this.keys[ STATE.PAN ] && ! _this.noPan ) {
-
+    } else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
       _state = STATE.PAN;
-
     }
-
   }
 
-  function keyup( event ) {
-
-    if ( _this.enabled === false ) return;
+  function keyup(event) {
+    if (_this.enabled === false) return;
 
     _state = _prevState;
 
-    window.addEventListener( 'keydown', keydown, false );
-
+    window.addEventListener('keydown', keydown, false);
   }
 
-  function mousedown( event ) {
-
-    if ( _this.enabled === false ) return;
+  function mousedown(event) {
+    if (_this.enabled === false) return;
 
     event.preventDefault();
     event.stopPropagation();
 
-    if ( _state === STATE.NONE ) {
-
+    if (_state === STATE.NONE) {
       _state = event.button;
-
     }
 
-    if ( _state === STATE.ROTATE && ! _this.noRotate ) {
-
-      _moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
-      _movePrev.copy( _moveCurr );
-
-    } else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
-
-      _zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-      _zoomEnd.copy( _zoomStart );
-
-    } else if ( _state === STATE.PAN && ! _this.noPan ) {
-
-      _panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-      _panEnd.copy( _panStart );
-
+    if (_state === STATE.ROTATE && !_this.noRotate) {
+      _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+      _movePrev.copy(_moveCurr);
+    } else if (_state === STATE.ZOOM && !_this.noZoom) {
+      _zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
+      _zoomEnd.copy(_zoomStart);
+    } else if (_state === STATE.PAN && !_this.noPan) {
+      _panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
+      _panEnd.copy(_panStart);
     }
 
-    document.addEventListener( 'mousemove', mousemove, false );
-    document.addEventListener( 'mouseup', mouseup, false );
+    document.addEventListener('mousemove', mousemove, false);
+    document.addEventListener('mouseup', mouseup, false);
 
-    _this.dispatchEvent( startEvent );
-
+    _this.dispatchEvent(startEvent);
   }
 
-  function mousemove( event ) {
-
-    if ( _this.enabled === false ) return;
+  function mousemove(event) {
+    if (_this.enabled === false) return;
 
     event.preventDefault();
     event.stopPropagation();
 
-    if ( _state === STATE.ROTATE && ! _this.noRotate ) {
-
-      _movePrev.copy( _moveCurr );
-      _moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
-
-    } else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
-
-      _zoomEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-
-    } else if ( _state === STATE.PAN && ! _this.noPan ) {
-
-      _panEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-
+    if (_state === STATE.ROTATE && !_this.noRotate) {
+      _movePrev.copy(_moveCurr);
+      _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+    } else if (_state === STATE.ZOOM && !_this.noZoom) {
+      _zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
+    } else if (_state === STATE.PAN && !_this.noPan) {
+      _panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
     }
-
   }
 
-  function mouseup( event ) {
-
-    if ( _this.enabled === false ) return;
+  function mouseup(event) {
+    if (_this.enabled === false) return;
 
     event.preventDefault();
     event.stopPropagation();
 
     _state = STATE.NONE;
 
-    document.removeEventListener( 'mousemove', mousemove );
-    document.removeEventListener( 'mouseup', mouseup );
-    _this.dispatchEvent( endEvent );
-
+    document.removeEventListener('mousemove', mousemove);
+    document.removeEventListener('mouseup', mouseup);
+    _this.dispatchEvent(endEvent);
   }
 
-  function mousewheel( event ) {
+  function mousewheel(event) {
+    if (_this.enabled === false) return;
 
-    if ( _this.enabled === false ) return;
-
-    if ( _this.noZoom === true ) return;
+    if (_this.noZoom === true) return;
 
     event.preventDefault();
     event.stopPropagation();
 
-    switch ( event.deltaMode ) {
+    switch (event.deltaMode) {
+    case 2:
+      // Zoom in pages
+      _zoomStart.y -= event.deltaY * 0.025;
+      break;
 
-      case 2:
-        // Zoom in pages
-        _zoomStart.y -= event.deltaY * 0.025;
-        break;
+    case 1:
+      // Zoom in lines
+      _zoomStart.y -= event.deltaY * 0.01;
+      break;
 
-      case 1:
-        // Zoom in lines
-        _zoomStart.y -= event.deltaY * 0.01;
-        break;
-
-      default:
-        // undefined, 0, assume pixels
-        _zoomStart.y -= event.deltaY * 0.00025;
-        break;
-
+    default:
+      // undefined, 0, assume pixels
+      _zoomStart.y -= event.deltaY * 0.00025;
+      break;
     }
 
-    _this.dispatchEvent( startEvent );
-    _this.dispatchEvent( endEvent );
-
+    _this.dispatchEvent(startEvent);
+    _this.dispatchEvent(endEvent);
   }
 
-  function touchstart( event ) {
+  function touchstart(event) {
+    if (_this.enabled === false) return;
 
-    if ( _this.enabled === false ) return;
+    switch (event.touches.length) {
+    case 1:
+      _state = STATE.TOUCH_ROTATE;
+      _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+      _movePrev.copy(_moveCurr);
+      break;
 
-    switch ( event.touches.length ) {
+    default: // 2 or more
+      _state = STATE.TOUCH_ZOOM_PAN;
+      var dx = event.touches[0].pageX - event.touches[1].pageX;
+      var dy = event.touches[0].pageY - event.touches[1].pageY;
+      _touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
 
-      case 1:
-        _state = STATE.TOUCH_ROTATE;
-        _moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-        _movePrev.copy( _moveCurr );
-        break;
-
-      default: // 2 or more
-        _state = STATE.TOUCH_ZOOM_PAN;
-        var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-        var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-        _touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
-
-        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-        _panStart.copy( getMouseOnScreen( x, y ) );
-        _panEnd.copy( _panStart );
-        break;
-
+      var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+      var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+      _panStart.copy(getMouseOnScreen(x, y));
+      _panEnd.copy(_panStart);
+      break;
     }
 
-    _this.dispatchEvent( startEvent );
-
+    _this.dispatchEvent(startEvent);
   }
 
-  function touchmove( event ) {
-
-    if ( _this.enabled === false ) return;
+  function touchmove(event) {
+    if (_this.enabled === false) return;
 
     event.preventDefault();
     event.stopPropagation();
 
-    switch ( event.touches.length ) {
+    switch (event.touches.length) {
+    case 1:
+      _movePrev.copy(_moveCurr);
+      _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+      break;
 
-      case 1:
-        _movePrev.copy( _moveCurr );
-        _moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-        break;
+    default: // 2 or more
+      var dx = event.touches[0].pageX - event.touches[1].pageX;
+      var dy = event.touches[0].pageY - event.touches[1].pageY;
+      _touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
 
-      default: // 2 or more
-        var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-        var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-        _touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
-
-        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-        _panEnd.copy( getMouseOnScreen( x, y ) );
-        break;
-
+      var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+      var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+      _panEnd.copy(getMouseOnScreen(x, y));
+      break;
     }
-
   }
 
-  function touchend( event ) {
+  function touchend(event) {
+    if (_this.enabled === false) return;
 
-    if ( _this.enabled === false ) return;
+    switch (event.touches.length) {
+    case 0:
+      _state = STATE.NONE;
+      break;
 
-    switch ( event.touches.length ) {
-
-      case 0:
-        _state = STATE.NONE;
-        break;
-
-      case 1:
-        _state = STATE.TOUCH_ROTATE;
-        _moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-        _movePrev.copy( _moveCurr );
-        break;
-
+    case 1:
+      _state = STATE.TOUCH_ROTATE;
+      _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+      _movePrev.copy(_moveCurr);
+      break;
     }
 
-    _this.dispatchEvent( endEvent );
-
+    _this.dispatchEvent(endEvent);
   }
 
-  function contextmenu( event ) {
-
-    if ( _this.enabled === false ) return;
+  function contextmenu(event) {
+    if (_this.enabled === false) return;
 
     event.preventDefault();
-
   }
 
   this.dispose = function () {
+    this.domElement.removeEventListener('contextmenu', contextmenu, false);
+    this.domElement.removeEventListener('mousedown', mousedown, false);
+    this.domElement.removeEventListener('wheel', mousewheel, false);
 
-    this.domElement.removeEventListener( 'contextmenu', contextmenu, false );
-    this.domElement.removeEventListener( 'mousedown', mousedown, false );
-    this.domElement.removeEventListener( 'wheel', mousewheel, false );
+    this.domElement.removeEventListener('touchstart', touchstart, false);
+    this.domElement.removeEventListener('touchend', touchend, false);
+    this.domElement.removeEventListener('touchmove', touchmove, false);
 
-    this.domElement.removeEventListener( 'touchstart', touchstart, false );
-    this.domElement.removeEventListener( 'touchend', touchend, false );
-    this.domElement.removeEventListener( 'touchmove', touchmove, false );
+    document.removeEventListener('mousemove', mousemove, false);
+    document.removeEventListener('mouseup', mouseup, false);
 
-    document.removeEventListener( 'mousemove', mousemove, false );
-    document.removeEventListener( 'mouseup', mouseup, false );
-
-    window.removeEventListener( 'keydown', keydown, false );
-    window.removeEventListener( 'keyup', keyup, false );
-
+    window.removeEventListener('keydown', keydown, false);
+    window.removeEventListener('keyup', keyup, false);
   };
 
-  this.domElement.addEventListener( 'contextmenu', contextmenu, false );
-  this.domElement.addEventListener( 'mousedown', mousedown, false );
-  this.domElement.addEventListener( 'wheel', mousewheel, false );
+  this.domElement.addEventListener('contextmenu', contextmenu, false);
+  this.domElement.addEventListener('mousedown', mousedown, false);
+  this.domElement.addEventListener('wheel', mousewheel, false);
 
-  this.domElement.addEventListener( 'touchstart', touchstart, false );
-  this.domElement.addEventListener( 'touchend', touchend, false );
-  this.domElement.addEventListener( 'touchmove', touchmove, false );
+  this.domElement.addEventListener('touchstart', touchstart, false);
+  this.domElement.addEventListener('touchend', touchend, false);
+  this.domElement.addEventListener('touchmove', touchmove, false);
 
-  window.addEventListener( 'keydown', keydown, false );
-  window.addEventListener( 'keyup', keyup, false );
+  window.addEventListener('keydown', keydown, false);
+  window.addEventListener('keyup', keyup, false);
 
   this.handleResize();
 
   // force an update at start
   this.update();
+}
 
-};
-
-TrackballControls.prototype = Object.create( EventDispatcher.prototype );
+TrackballControls.prototype = Object.create(EventDispatcher.prototype);
 TrackballControls.prototype.constructor = TrackballControls;
 
 export default TrackballControls;
