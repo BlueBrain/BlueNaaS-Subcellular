@@ -36,14 +36,19 @@
         v-if="ctrl.currentPropValueType === 'string'"
         span="12"
       >
-        <AutoComplete
-          size="small"
+        <i-select
           v-model="ctrl.currentValueObj.exactValue"
-          :data="ctrl.values"
-          :filter-method="valueFilterMethod"
           :transfer="true"
+          size="small"
+          filterable
           placeholder="Value"
-        ></AutoComplete>
+        >
+          <i-option
+            v-for="value in ctrl.values"
+            :key="value"
+            :value="value"
+          >{{ value }}</i-option>
+        </i-select>
       </i-col>
 
       <i-col
@@ -69,15 +74,20 @@
             <div
               v-if="ctrl.currentValueObj.compareOperator === 'equal'"
             >
-              <AutoComplete
+              <i-select
                 v-if="ctrl.values.length < 30"
-                size="small"
                 v-model="ctrl.currentValueObj.exactValue"
-                :data="ctrl.values"
-                :filter-method="valueFilterMethod"
                 :transfer="true"
+                size="small"
+                filterable
                 placeholder="Value"
-              ></AutoComplete>
+              >
+                <i-option
+                  v-for="value in ctrl.values"
+                  :key="value"
+                  :value="value"
+                >{{ value }}</i-option>
+              </i-select>
               <InputNumber
                 v-else
                 class="full-width"
@@ -428,15 +438,6 @@
         }
         this.ctrl.currentValueObj.from = this.ctrl.minValue;
         this.ctrl.currentValueObj.to = this.ctrl.maxValue;
-      },
-      valueFilterMethod(value, option) {
-        if (!option) return false;
-        if (!value) return true;
-
-        return option
-          .toString()
-          .toUpperCase()
-          .includes(value.toString().toUpperCase());
       },
       updateSynapseVisibility() {
         // TODO: move to webworker or async separate module
