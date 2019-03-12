@@ -9,6 +9,7 @@ import './services/sentry';
 
 import App from './App.vue';
 import initFilters from './filters';
+import storex from './storex';
 
 Vue.use(iView, { locale });
 initFilters();
@@ -17,4 +18,5 @@ Vue.config.productionTip = true;
 
 new Vue({
   render: h => h(App),
+  store: storex,
 }).$mount('#app');
