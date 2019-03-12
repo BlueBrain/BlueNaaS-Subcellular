@@ -1,0 +1,35 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    volumes:
+      - ./tmp/mongo_data:/data/db
+    ports:
+      - "27017:27017"
+  backend:
+    image: sc-svc-o1
+    volumes:
+      - /gpfs:/gpfs:ro
+      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
+      - ./tmp/geometries:/data/geometries
+    ports:
+      - "8888:8000"
+    environment:
+      - DEBUG=True
+      - DB_HOST=mongo
+    depends_on:
+      - 'mongo'
+    entrypoint: ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "-m", "subcellular_experiment.main"]
+  sim_worker:
+    image: sc-svc-o1
+    depends_on:
+      - backend
+    volumes:
+      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
+      - ./tmp/geometries:/data/geometries
+    environment:
+      - MASTER_HOST=backend
+      - DEBUG=True
+    depends_on:
+      - "backend"
+    entrypoint: ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "-m", "subcellular_experiment.main"]

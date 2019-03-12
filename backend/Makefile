@@ -8,6 +8,9 @@ APP_NAME_PREFIX?=sc
 APP_DNS_BASE?=ocp.bbp.epfl.ch
 OO_PROJECT?=bbp-ou-nse
 DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
+DB_HOST?=mongo
+
+BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioNetGen-2.4.0/BioNetGen-2.4.0-Linux.tgz
 
 CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
 CIRCUIT_NAME?=o1
@@ -16,7 +19,7 @@ define HELPTEXT
 Makefile usage
   Targets:
     python_build                  Build and package python.
-    run_dev                       Run development instance of the backend, requires:
+    run_dev                       Run development setup which includes backend, sim_worker and mongo_db, requires:
                                    docker engine and /gpfs mounted volume.
     docker_build_version          Build backend local docker image with the version tag.
     docker_build_latest           Build backend local docker image with the latest tag.
@@ -40,27 +43,24 @@ python_build: | $(TOOLS_VENV_DIR)
 	$(TOOLS_VENV_DIR)/bin/python setup.py sdist
 
 run_dev:
-	docker run \
-		--rm \
-		-it \
-		-v /gpfs:/gpfs:ro \
-		-e DEBUG=True \
-		-v $$(pwd)/subcellular_experiment:/usr/local/lib/python3.6/site-packages/subcellular_experiment \
-		-p 8888:8000 \
-		sc-svc-$(CIRCUIT_NAME)
+	docker-compose up --scale sim_worker=1
 
-docker_build_version: python_build | $(NEURON_SRC_DIR)
+docker_build_version: python_build
 	docker build -t sc-svc-$(CIRCUIT_NAME):$(VERSION) \
 		--build-arg=circuit_path=$(CIRCUIT_PATH) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
+		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
+		--build-arg=db_host=$(DB_HOST) \
 		.
 
-docker_build_latest: python_build | $(NEURON_SRC_DIR)
+docker_build_latest: python_build
 	docker build -t sc-svc-$(CIRCUIT_NAME):latest \
 		--build-arg=circuit_path=$(CIRCUIT_PATH) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
+		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
+		--build-arg=db_host=$(DB_HOST) \
 		.
 
 docker_push_version: docker_build_version
@@ -72,7 +72,7 @@ docker_push_version: docker_build_version
 
 	@echo 'backend version($(VERSION)) pushed to OpenShift registy'
 
-docker_push_latest: docker_build_latest
+docker_push_latest:
 	docker tag \
 		$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest \
 		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest

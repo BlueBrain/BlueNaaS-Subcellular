@@ -13,8 +13,15 @@ setup(
     author_email='bbp-ou-nse@groupes.epfl.ch',
 
     install_requires=[
-        'tornado',
-        'bluepy'
+        'tornado < 6',
+        'websocket-client',
+        'bluepy',
+        'pandas',
+        'numpy',
+        'pymongo',
+        'pysb',
+        'python-libsbml',
+        'cython'
     ],
     tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=[]),
