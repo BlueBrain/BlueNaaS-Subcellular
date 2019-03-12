@@ -1,0 +1,652 @@
+[
+  {
+    "name": "",
+    "description": "Binding of Ca to N lobe of Calmodoulin",
+    "bioNetGenDef": "Ca(x) + CaM(ck,n1,n2) <-> Ca(x!1).CaM(ck,n1!1,n2)    kr1f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CaM(ck,n1!1,n2) <-> Ca(x) + CaM(ck,n1,n2)    k1Noff, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x) + CaM(ck,n1!+,n2) <-> Ca(x!1).CaM(ck,n1!+,n2!1)    kr3f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CaM(ck,n1!+,n2!1) <-> Ca(x) + CaM(ck,n1!+,n2)    k1Noff, k_0"
+  },
+  {
+    "name": "",
+    "description": "Binding of Ca to C lobe of Calmodulin",
+    "bioNetGenDef": "Ca(x) + CaM(ck,c1,c2) <-> Ca(x!1).CaM(ck,c1!1,c2)    kr4f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CaM(ck,c1!1,c2) <-> Ca(x) + CaM(ck,c1,c2)    k1Coff, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x) + CaM(ck,c1!+,c2) <-> Ca(x!1).CaM(ck,c1!+,c2!1)    kr6f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CaM(ck,c1!+,c2!1) <-> Ca(x) + CaM(ck,c1!+,c2)    kr7f, k_0"
+  },
+  {
+    "name": "",
+    "description": "Binding of Ca to four eqally reactive CB domains",
+    "bioNetGenDef": "Ca(x) + CB(ca1) <-> Ca(x!1).CB(ca1!1)    kr8f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CB(ca1!1) <-> Ca(x) + CB(ca1)    kCBoff, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x) + CB(ca2) <-> Ca(x!1).CB(ca2!1)    kr8f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CB(ca2!1) <-> Ca(x) + CB(ca2)    kCBoff, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x) + CB(ca3) <-> Ca(x!1).CB(ca3!1)    kr8f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CB(ca3!1) <-> Ca(x) + CB(ca3)    kCBoff, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x) + CB(ca4) <-> Ca(x!1).CB(ca4!1)    kr8f, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "Ca(x!1).CB(ca4!1) <-> Ca(x) + CB(ca4)    kCBoff, k_0"
+  },
+  {
+    "name": "",
+    "description": "Binding of CaM to CaMKII",
+    "bioNetGenDef": "CaM(ck,n1!+,n2!+,c1!+,c2!+) + CaMKII(cam) <-> CaM(ck!1,n1!+,n2!+,c1!+,c2!+).CaMKII(cam!1)    kf_camkii_cam_014, k_0"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "CaM(ck!1,n1!+,n2!+,c1!+,c2!+).CaMKII(cam!1) <-> CaM(ck,n1!+,n2!+,c1!+,c2!+) + CaMKII(cam)    kf_camkii_cam_013, k_0"
+  },
+  {
+    "name": "",
+    "description": "Phosphorylation of CaMKII by CaM",
+    "bioNetGenDef": "CaM(ck!1).CaM(ck!2).CaMKII(a!3,cam!1,s~u).CaMKII(b!3,cam!2,s~u) <-> CaM(ck!1).CaM(ck!2).CaMKII(a!3,cam!1,s~u).CaMKII(b!3,cam!2,s~p)    kr18p, kr18m"
+  },
+  {
+    "name": "",
+    "description": "Spontaneous Dephosphorylation of CaMKII",
+    "bioNetGenDef": "CaMKII(s~p) <-> CaMKII(s~u)    kr19p, kr19m"
+  },
+  {
+    "name": "",
+    "description": "Auto phosphorylation of CaMKII with bound CaM",
+    "bioNetGenDef": "CaM(ck!1).CaMKII(a!2,cam,s~p).CaMKII(b!2,cam!1,s~u) <-> CaM(ck!1).CaMKII(a!2,cam,s~p).CaMKII(b!2,cam!1,s~u)    kr20p, kr20m"
+  },
+  {
+    "name": "",
+    "description": "Auto phosphorylation of CaMKII without CaM bound",
+    "bioNetGenDef": "CaMKII(a!1,cam,s~p).CaMKII(b!1,cam,s~u) <-> CaMKII(a!1,cam,s~p).CaMKII(b!1,cam,s~p)    kr21p, kr21m"
+  },
+  {
+    "name": "PP3_Ca",
+    "description": "Binding of Ca to PP3 (Calcineurin)",
+    "bioNetGenDef": "PP3(ca) + Ca(x) <-> PP3(ca!1).Ca(x!1)    kr22p, kr22m"
+  },
+  {
+    "name": "",
+    "description": "",
+    "bioNetGenDef": "PP3(ca!1).Ca(x!1) <-> PP3(ca) + Ca(x)    kr23p, kr23m"
+  },
+  {
+    "name": "I1_PP3_U",
+    "description": "Dephosphorylation of I1 by Ca.PP3",
+    "bioNetGenDef": "I1(pp3~p) + PP3(ca!1).Ca(x!1) <-> I1(pp3~u) + PP3(ca!1).Ca(x!1)    kr24p, kr24m"
+  },
+  {
+    "name": "I1_PKA_P",
+    "description": "Phosphorylation of I1",
+    "bioNetGenDef": "I1(pp3~u) <-> I1(pp3~p)    kr25p, kr25m"
+  },
+  {
+    "name": "I1_PP1_un",
+    "description": "Unbinding of dephosphorylated I1 from PP1",
+    "bioNetGenDef": "I1(pp3~u,pp1!1).PP1(i1!1) <-> I1(pp3~u,pp1) + PP1(i1)    kr26p, kr26m"
+  },
+  {
+    "name": "I1_PP1",
+    "description": "Rebinding of phosphorylated I1 to PP1",
+    "bioNetGenDef": "I1(pp3~p,pp1) + PP1(i1) <-> I1(pp3~p,pp1!1).PP1(i1!1)    kr27p, kr27m"
+  },
+  {
+    "name": "CAMKII_PP1_U",
+    "description": "Dephosphorylation of CaMKII by unbound PP1",
+    "bioNetGenDef": "PP1(i1) + CaMKII(s~p) <-> PP1(i1) + CaMKII(s~u)    kr28p, kr28m"
+  },
+  {
+    "name": "stargazin_CAMKII_P",
+    "description": "Phosphorylation of stargazin by phosphorlylated CaMKII",
+    "bioNetGenDef": "CaMKII(s~p) + stargazin(c~u) <-> CaMKII(s~p) + stargazin(c~p)    kr29p, kr29m"
+  },
+  {
+    "name": "stargazin_PSD95",
+    "description": "Binding of phosphorylated stargazin to PSD-95",
+    "bioNetGenDef": "stargazin(c~p,c__17) + PSD95(PDZ1) <-> stargazin(c~p,c__17!1).PSD95(PDZ1!1)    kr30p, kr30m"
+  },
+  {
+    "name": "stargazin_PSD93",
+    "description": "Binding of phosphorylated stargazin to PSD-93",
+    "bioNetGenDef": "stargazin(c~p,c__17) + PSD93(PDZ1) <-> stargazin(c~p,c__17!1).PSD93(PDZ1!1)    kr31p, kr31m"
+  },
+  {
+    "name": "stargazin_U",
+    "description": "Spontaneous Dephosphorylyation of unbound stargazin",
+    "bioNetGenDef": "stargazin(c~p) <-> stargazin(c~u)    kr32p, kr32m"
+  },
+  {
+    "name": "PSD95_oligo",
+    "description": "PSD95 oligomerisation",
+    "bioNetGenDef": "PSD95(NH2) + PSD95(NH2) <-> PSD95(NH2!1).PSD95(NH2!1)    kr33p, kr33m"
+  },
+  {
+    "name": "PSD95_SynGAP",
+    "description": "Binding od PSD95 to SynGAP",
+    "bioNetGenDef": "PSD95(PDZ3) + SynGAP(c) <-> PSD95(PDZ3!1).SynGAP(c!1)    kr34p, kr34m"
+  },
+  {
+    "name": "PSD95_GKAP",
+    "description": "Binding of PSD95 to GKAP",
+    "bioNetGenDef": "PSD95(GK) + GKAP(GKBD) <-> PSD95(GK!1).GKAP(GKBD!1)    kr35p, kr35m"
+  },
+  {
+    "name": "PSD95_Kalirin",
+    "description": "Binding of PSD95 to Kalirin",
+    "bioNetGenDef": "PSD95(PDZ3) + kalirin(c) <-> PSD95(PDZ3!1).kalirin(c!1)    kr36p, kr36m"
+  },
+  {
+    "name": "PSD95_AKAP",
+    "description": "Binding of PSD95 to AKAP",
+    "bioNetGenDef": "PSD95(SH3) + AKAP(sh3) <-> PSD95(SH3!1).AKAP(sh3!1)    kr37p, kr37m"
+  },
+  {
+    "name": "PSD95_SPAR",
+    "description": "Binding of PSD95 to SPAR",
+    "bioNetGenDef": "PSD95(GK) + SPAR(GKBD) <-> PSD95(GK!1).SPAR(GKBD!1)    kr38p, kr38m"
+  },
+  {
+    "name": "PSD95_NOS",
+    "description": "Binding PSD95 to NOS",
+    "bioNetGenDef": "PSD95(PDZ2) + NOS(PDZ) <-> PSD95(PDZ2!1).NOS(PDZ!1)    kr39p, kr39m"
+  },
+  {
+    "name": "PSD95_SAP102",
+    "description": "Binding of PSD95 to SAP102",
+    "bioNetGenDef": "SAP102(H!+,SH3) + PSD95(GK) <-> SAP102(H!+,SH3!0).PSD95(GK!0)    kr40p, kr40m"
+  },
+  {
+    "name": "PSD93_oligo",
+    "description": "PSD93 oligomerisation",
+    "bioNetGenDef": "PSD93(NH2) + PSD93(NH2) <-> PSD93(NH2!1).PSD93(NH2!1)    kr41p, kr41m"
+  },
+  {
+    "name": "PSD93_SynGAP",
+    "description": "Binding od PSD93 to SynGAP",
+    "bioNetGenDef": "PSD93(PDZ3) + SynGAP(c) <-> PSD93(PDZ3!1).SynGAP(c!1)    kr42p, kr42m"
+  },
+  {
+    "name": "PSD93_GKAP",
+    "description": "Binding of PSD93 to GKAP",
+    "bioNetGenDef": "PSD93(GK) + GKAP(GKBD) <-> PSD93(GK!1).GKAP(GKBD!1)    kr43p, kr43m"
+  },
+  {
+    "name": "PSD93_Kalirin",
+    "description": "Binding of PSD93 to Kalirin",
+    "bioNetGenDef": "PSD93(PDZ3) + kalirin(c) <-> PSD93(PDZ3!1).kalirin(c!1)    kr44p, kr44m"
+  },
+  {
+    "name": "PSD93_AKAP",
+    "description": "Binding of PSD93 to AKAP",
+    "bioNetGenDef": "PSD93(SH3) + AKAP(sh3) <-> PSD93(SH3!1).AKAP(sh3!1)    kr45p, kr45m"
+  },
+  {
+    "name": "PSD93_SPAR",
+    "description": "Binding of PSD93 to SPAR",
+    "bioNetGenDef": "PSD93(GK) + SPAR(GKBD) <-> PSD93(GK!1).SPAR(GKBD!1)    kr46p, kr46m"
+  },
+  {
+    "name": "PSD93_NOS",
+    "description": "Binding PSD93 to NOS",
+    "bioNetGenDef": "PSD93(PDZ2) + NOS(PDZ) <-> PSD93(PDZ2!1).NOS(PDZ!1)    kr47p, kr47m"
+  },
+  {
+    "name": "PSD93_SAP102",
+    "description": "Binding of PSD93 to SAP102",
+    "bioNetGenDef": "SAP102(H!+,SH3) + PSD93(GK) <-> SAP102(H!+,SH3!0).PSD93(GK!0)    kr48p, kr48m"
+  },
+  {
+    "name": "NR2A_Spectrin",
+    "description": "Binding of NR2A to Spectrin",
+    "bioNetGenDef": "NR2A(SBS~u,SBS__17) + Spectrin(NRB) <-> NR2A(SBS~u,SBS__17!1).Spectrin(NRB!1)    kr49p, kr49m"
+  },
+  {
+    "name": "NR2B_Spectrin",
+    "description": "Binding of NR2B to Spectrin",
+    "bioNetGenDef": "NR2B(SBS~u,SBS__17) + Spectrin(NRB) <-> NR2B(SBS~u,SBS__17!1).Spectrin(NRB!1)    kr50p, kr50m"
+  },
+  {
+    "name": "NR2A_CAMKII",
+    "description": "Binding NR2A to CAMKII",
+    "bioNetGenDef": "CaMKII(k1) + NR2A(camkbd) <-> CaMKII(k1!1).NR2A(camkbd!1)    kr51p, kr51m"
+  },
+  {
+    "name": "NR2B_CAMKII",
+    "description": "Binding NR2B to CAMKII",
+    "bioNetGenDef": "CaMKII(k1) + NR2B(camkbd) <-> CaMKII(k1!1).NR2B(camkbd!1)    kr52p, kr52m"
+  },
+  {
+    "name": "NR2A_FYN",
+    "description": "Binding NR2A to Fyn",
+    "bioNetGenDef": "NR2A(TyrP) + FYN(SH2) <-> NR2A(TyrP!1).FYN(SH2!1)    kr53p, kr53m"
+  },
+  {
+    "name": "NR2B_FYN",
+    "description": "Binding NR2B to Fyn",
+    "bioNetGenDef": "NR2B(TyrP) + FYN(SH2) <-> NR2B(TyrP!1).FYN(SH2!1)    kr54p, kr54m"
+  },
+  {
+    "name": "NR2A_Src",
+    "description": "Binding NR2A to Src",
+    "bioNetGenDef": "NR2A(TyrP) + src(SH2) <-> NR2A(TyrP!1).src(SH2!1)    kr55p, kr55m"
+  },
+  {
+    "name": "NR2B_Src",
+    "description": "Binding NR2B to Src",
+    "bioNetGenDef": "NR2B(TyrP) + src(SH2) <-> NR2B(TyrP!1).src(SH2!1)    kr56p, kr56m"
+  },
+  {
+    "name": "NR2A_PLCg",
+    "description": "Binding NR2A to PLCg",
+    "bioNetGenDef": "NR2A(TyrP) + PLCg(SH2) <-> NR2A(TyrP!1).PLCg(SH2!1)    kr57p, kr57m"
+  },
+  {
+    "name": "NR2B_PLCg",
+    "description": "Binding NR2B to PLCg",
+    "bioNetGenDef": "NR2B(TyrP) + PLCg(SH2) <-> NR2B(TyrP!1).PLCg(SH2!1)    kr58p, kr58m"
+  },
+  {
+    "name": "NR1_PKC",
+    "description": "Binding NR1 to PKC",
+    "bioNetGenDef": "NR1(SerP) + PKC(k) <-> NR1(SerP!1).PKC(k!1)    kr59p, kr59m"
+  },
+  {
+    "name": "NR1_PKA",
+    "description": "Binding NR1 to PKA",
+    "bioNetGenDef": "NR1(SerP) + PKA(k) <-> NR1(SerP!1).PKA(k!1)    kr60p, kr60m"
+  },
+  {
+    "name": "NR1_Spectrin",
+    "description": "Binding NR1 to Spectrin",
+    "bioNetGenDef": "NR1(SBS~u,SBS__17) + Spectrin(NRB) <-> NR1(SBS~u,SBS__17!1).Spectrin(NRB!1)    kr61p, kr61m"
+  },
+  {
+    "name": "NR1_NR2A",
+    "description": "Binding NR1 to NR2A",
+    "bioNetGenDef": "NR1(b) + NR2A(b) <-> NR1(b!0).NR2A(b!0)    kr62p, kr62m"
+  },
+  {
+    "name": "NR1_NR2B",
+    "description": "Binding NR1 to NR2B",
+    "bioNetGenDef": "NR1(b) + NR2B(b) <-> NR1(b!0).NR2B(b!0)    kr63p, kr63m"
+  },
+  {
+    "name": "NR2A_PSD93",
+    "description": "Binding NR2A to PSD93",
+    "bioNetGenDef": "PSD93(PDZ1) + NR2A(c) <-> PSD93(PDZ1!1).NR2A(c!1)    kr64p, kr64m"
+  },
+  {
+    "name": "NR2B_PSD93",
+    "description": "Binding NR2B to PSD93",
+    "bioNetGenDef": "PSD93(PDZ1) + NR2B(c) <-> PSD93(PDZ1!1).NR2B(c!1)    kr65p, kr65m"
+  },
+  {
+    "name": "NR2A_PSD95",
+    "description": "Binding NR2B to PSD95",
+    "bioNetGenDef": "PSD95(PDZ1) + NR2A(c) <-> PSD95(PDZ1!1).NR2A(c!1)    kr66p, kr66m"
+  },
+  {
+    "name": "NR2B_PSD95",
+    "description": "Binding NR2B to PSD95",
+    "bioNetGenDef": "PSD95(PDZ1) + NR2B(c) <-> PSD95(PDZ1!1).NR2B(c!1)    kr67p, kr67m"
+  },
+  {
+    "name": "NR2A_SAP102",
+    "description": "Binding NR2A to SAP102",
+    "bioNetGenDef": "SAP102(PDZ1) + NR2A(c) <-> SAP102(PDZ1!1).NR2A(c!1)    kr68p, kr68m"
+  },
+  {
+    "name": "NR2B_SAP102",
+    "description": "Binding NR2B to SAP102",
+    "bioNetGenDef": "SAP102(PDZ1) + NR2B(c) <-> SAP102(PDZ1!1).NR2B(c!1)    kr69p, kr69m"
+  },
+  {
+    "name": "NR2B_PTP1D",
+    "description": "Binding NR2B to PTP1D",
+    "bioNetGenDef": "NR2B(TyrP) + PTP1D(SH2) <-> NR2B(TyrP!1).PTP1D(SH2!1)    kr70p, kr70m"
+  },
+  {
+    "name": "NR1_CaM",
+    "description": "Binding NR1 to CaM",
+    "bioNetGenDef": "CaM(h) + NR1(c0) <-> CaM(h!0).NR1(c0!0)    kr71p, kr71m"
+  },
+  {
+    "name": "Spectrin_dim",
+    "description": "Dimerosation of Spectrin",
+    "bioNetGenDef": "Spectrin(SL) + Spectrin(SL) <-> Spectrin(SL!1).Spectrin(SL!1)    kr72p, kr72m"
+  },
+  {
+    "name": "Spectrin_RACK1",
+    "description": "Binding of Spectrin to RACK1",
+    "bioNetGenDef": "Spectrin(PH) + RACK1(WD) <-> Spectrin(PH!1).RACK1(WD!1)    kr73p, kr73m"
+  },
+  {
+    "name": "RACK_Src",
+    "description": "Binding of RACK1 to Src",
+    "bioNetGenDef": "RACK1(WD6~p,WD6__17) + src(SH2) <-> RACK1(WD6~p,WD6__17!1).src(SH2!1)    kr74p, kr74m"
+  },
+  {
+    "name": "DYN_Src",
+    "description": "Binding Dynamin to Src",
+    "bioNetGenDef": "DYN(PRD) + src(SH3) <-> DYN(PRD!0).src(SH3!0)    kr75p, kr75m"
+  },
+  {
+    "name": "DYN_PLCg",
+    "description": "Binding Dynamin to PLCg",
+    "bioNetGenDef": "DYN(PRD) + PLCg(SH3) <-> DYN(PRD!1).PLCg(SH3!1)    kr76p, kr76m"
+  },
+  {
+    "name": "AKAP_PKC",
+    "description": "Binding AKAP to PKC",
+    "bioNetGenDef": "AKAP(c) + PKC(akap) <-> AKAP(c!0).PKC(akap!0)    kr77p, kr77m"
+  },
+  {
+    "name": "RACK1_PKC",
+    "description": "Binding RACK to PKC",
+    "bioNetGenDef": "RACK1(WD1) + PKC(PH) <-> RACK1(WD1!1).PKC(PH!1)    kr78p, kr78m"
+  },
+  {
+    "name": "SAP97_dim",
+    "description": "SAP97 dimerisation",
+    "bioNetGenDef": "SAP97(L27) + SAP97(L27) <-> SAP97(L27!1).SAP97(L27!1)    kr79p, kr79m"
+  },
+  {
+    "name": "SAP97_SynGAP",
+    "description": "Binding of SAP97 to SynGAP",
+    "bioNetGenDef": "SAP97(PDZ3) + SynGAP(c) <-> SAP97(PDZ3!1).SynGAP(c!1)    kr80p, kr80m"
+  },
+  {
+    "name": "SAP97_GLuR1",
+    "description": "Binding SAP97 to GluR1",
+    "bioNetGenDef": "SAP97(PDZ1) + GluR1(c) <-> SAP97(PDZ1!1).GluR1(c!1)    kr81p, kr81m"
+  },
+  {
+    "name": "SAP97_AKAP",
+    "description": "Binding SAP97 to AKAP",
+    "bioNetGenDef": "SAP97(SH3) + AKAP(sh3) <-> SAP97(SH3!1).AKAP(sh3!1)    kr82p, kr82m"
+  },
+  {
+    "name": "SAP97_Kalirin",
+    "description": "Binding SAP97 to Kalirin",
+    "bioNetGenDef": "SAP97(PDZ3) + kalirin(c) <-> SAP97(PDZ3!1).kalirin(c!1)    kr83p, kr83m"
+  },
+  {
+    "name": "SAP97_SPAR",
+    "description": "Binding SAP97 to SPAR",
+    "bioNetGenDef": "SAP97(GK) + SPAR(GKBD) <-> SAP97(GK!1).SPAR(GKBD!1)    kr84p, kr84m"
+  },
+  {
+    "name": "SAP97_GKAP",
+    "description": "Binding SAP97 to GKAP",
+    "bioNetGenDef": "SAP97(GK) + GKAP(GKBD) <-> SAP97(GK!1).GKAP(GKBD!1)    kr85p, kr85m"
+  },
+  {
+    "name": "SAP102_CaM",
+    "description": "Binding SAP102 to CaM",
+    "bioNetGenDef": "SAP102(H) + CaM(h) <-> SAP102(H!1).CaM(h!1)    kr86p, kr86m"
+  },
+  {
+    "name": "SAP102_NR2A",
+    "description": "Binding SAP102 to NR2A",
+    "bioNetGenDef": "SAP102(PDZ1) + NR2A(c) <-> SAP102(PDZ1!1).NR2A(c!1)    kr87p, kr87m"
+  },
+  {
+    "name": "SAP102_NR2B",
+    "description": "Binding SAP102 to NR2B",
+    "bioNetGenDef": "SAP102(PDZ1) + NR2B(c) <-> SAP102(PDZ1!1).NR2B(c!1)    kr88p, kr88m"
+  },
+  {
+    "name": "SAP102_SynGAP",
+    "description": "Binding of SAP102 to SynGAP",
+    "bioNetGenDef": "SAP102(PDZ3) + SynGAP(c) <-> SAP102(PDZ3!1).SynGAP(c!1)    kr89p, kr89m"
+  },
+  {
+    "name": "SAP102_Kalirin",
+    "description": "Binding of SAP102 to Kalirin",
+    "bioNetGenDef": "SAP102(PDZ3) + kalirin(c) <-> SAP102(PDZ3!1).kalirin(c!1)    kr90p, kr90m"
+  },
+  {
+    "name": "SAP102_SPAR",
+    "description": "Binding of SAP102 to SPAR",
+    "bioNetGenDef": "SAP102(GK) + SPAR(GKBD) <-> SAP102(GK!1).SPAR(GKBD!1)    kr91p, kr91m"
+  },
+  {
+    "name": "SAP102_AKAP",
+    "description": "Binding SAP102 to AKAP",
+    "bioNetGenDef": "SAP102(SH3) + AKAP(sh3) <-> SAP102(SH3!1).AKAP(sh3!1)    kr92p, kr92m"
+  },
+  {
+    "name": "SAP102_GKAP",
+    "description": "Binding SAP102 to GKAP",
+    "bioNetGenDef": "SAP102(GK) + GKAP(GKBD) <-> SAP102(GK!1).GKAP(GKBD!1)    kr93p, kr93m"
+  },
+  {
+    "name": "GluR6_PSD95",
+    "description": "Binding GluR6 to PSD95",
+    "bioNetGenDef": "PSD95(PDZ1) + GluR6(c) <-> PSD95(PDZ1!0).GluR6(c!0)    kr94p, kr94m"
+  },
+  {
+    "name": "GluR6_SAP97",
+    "description": "Binding GluR6 to SAP97",
+    "bioNetGenDef": "SAP97(PDZ1) + GluR6(c) <-> SAP97(PDZ1!0).GluR6(c!0)    kr95p, kr95m"
+  },
+  {
+    "name": "GLuR6_SAP102",
+    "description": "Binding GluR6 to SAP102",
+    "bioNetGenDef": "SAP102(PDZ1) + GluR6(c) <-> SAP102(PDZ1!0).GluR6(c!0)    kr96p, kr96m"
+  },
+  {
+    "name": "SHANK_Cortactin",
+    "description": "Binding SHANK to Cortactin",
+    "bioNetGenDef": "SHANK(PRD) + cortactin(SH3) <-> SHANK(PRD!0).cortactin(SH3!0)    kr97p, kr97m"
+  },
+  {
+    "name": "SHANK_GKAP",
+    "description": "Binding SHANK to GKAP",
+    "bioNetGenDef": "SHANK(PDZ) + GKAP(c) <-> SHANK(PDZ!1).GKAP(c!1)    kr98p, kr98m"
+  },
+  {
+    "name": "SHANK_HOMER",
+    "description": "Binding SHANK to HOMER",
+    "bioNetGenDef": "SHANK(PRD) + HOMER(EVH1) <-> SHANK(PRD!1).HOMER(EVH1!1)    kr99p, kr99m"
+  },
+  {
+    "name": "SHANK_mGLUR",
+    "description": "Binding SHANK to mGLUR",
+    "bioNetGenDef": "SHANK(PDZ) + mGluR(c) <-> SHANK(PDZ!1).mGluR(c!1)    kr100p, kr100m"
+  },
+  {
+    "name": "SHANK_PROSAPIP",
+    "description": "Binding SHANK to PROSAPIP",
+    "bioNetGenDef": "SHANK(PDZ) + PROSAPIP1(c) <-> SHANK(PDZ!1).PROSAPIP1(c!1)    kr101p, kr101m"
+  },
+  {
+    "name": "SHANK_dim",
+    "description": "SHANK dimerisation",
+    "bioNetGenDef": "SHANK(SAM1) + SHANK(SAM1) <-> SHANK(SAM1!1).SHANK(SAM1!1)    kr102p, kr102m"
+  },
+  {
+    "name": "HOMER_mGLUR",
+    "description": "Binding HOMER to mGLUR",
+    "bioNetGenDef": "HOMER(EVH1) + mGluR(PRD) <-> HOMER(EVH1!1).mGluR(PRD!1)    kr103p, kr103m"
+  },
+  {
+    "name": "HOMER_dim",
+    "description": "Homer dimerisation",
+    "bioNetGenDef": "HOMER(CC) + HOMER(CC) <-> HOMER(CC!1).HOMER(CC!1)    kr104p, kr104m"
+  },
+  {
+    "name": "DYN_cortactin",
+    "description": "Binding DYN to Cortactin",
+    "bioNetGenDef": "DYN(PRD) + cortactin(SH3) <-> DYN(PRD!0).cortactin(SH3!0)    kr105p, kr105m"
+  },
+  {
+    "name": "RACK1 to PLCg",
+    "description": "Binding RACK to PLCg",
+    "bioNetGenDef": "RACK1(WD6~p,WD6__17) + PLCg(SH2) <-> RACK1(WD6~p,WD6__17!1).PLCg(SH2!1)    kr106p, kr106m"
+  },
+  {
+    "name": "DYN_Fyn",
+    "description": "Binding DYN to Fyn",
+    "bioNetGenDef": "DYN(PRD) + FYN(SH3) <-> DYN(PRD!0).FYN(SH3!0)    kr107p, kr107m"
+  },
+  {
+    "name": "DYN_GRb2",
+    "description": "Bindng DYN to Grb2",
+    "bioNetGenDef": "DYN(PRD) + Grb2(SH3) <-> DYN(PRD!1).Grb2(SH3!1)    kr108p, kr108m"
+  },
+  {
+    "name": "DYN_dim",
+    "description": "DYN dimerisation",
+    "bioNetGenDef": "DYN(CC) + DYN(CC) <-> DYN(CC!0).DYN(CC!0)    kr109p, kr109m"
+  },
+  {
+    "name": "DYN_RACK1",
+    "description": "Binding DYN to RACK1",
+    "bioNetGenDef": "DYN(PH) + RACK1(WD) <-> DYN(PH!1).RACK1(WD!1)    kr110p, kr110m"
+  },
+  {
+    "name": "S-SCAM_NR2A",
+    "description": "Binding S-SCAM to NR2A",
+    "bioNetGenDef": "SSCAM(PDZ1) + NR2A(c) <-> SSCAM(PDZ1!1).NR2A(c!1)    kr111p, kr111m"
+  },
+  {
+    "name": "S-SCAM_NR2B",
+    "description": "Binding S-SCAM to NR2B",
+    "bioNetGenDef": "SSCAM(PDZ1) + NR2B(c) <-> SSCAM(PDZ1!1).NR2B(c!1)    kr112p, kr112m"
+  },
+  {
+    "name": "S-SCAM_GKAP",
+    "description": "Binding S-SCAM to GKAP",
+    "bioNetGenDef": "SSCAM(GK) + GKAP(GKBD) <-> SSCAM(GK!1).GKAP(GKBD!1)    kr113p, kr113m"
+  },
+  {
+    "name": "kalirin_Rac1",
+    "description": "Binding Rac1 to Kalirin",
+    "bioNetGenDef": "kalirin(GEF1) + Rac1(gef) <-> kalirin(GEF1!1).Rac1(gef!1)    kr114p, kr114m"
+  },
+  {
+    "name": "kalirin_Rac2",
+    "description": "Binding Rac2 to Kalirin",
+    "bioNetGenDef": "kalirin(GEF1) + Rac2(gef) <-> kalirin(GEF1!1).Rac2(gef!1)    kr115p, kr115m"
+  },
+  {
+    "name": "kalirin_RhoG",
+    "description": "Binding RHOG to kalirin",
+    "bioNetGenDef": "kalirin(GEF1) + RhoG(gef) <-> kalirin(GEF1!1).RhoG(gef!1)    kr116p, kr116m"
+  },
+  {
+    "name": "kalirin_RhoC",
+    "description": "Binding RhoC to kalirin",
+    "bioNetGenDef": "kalirin(GEF1) + RhoC(gef) <-> kalirin(GEF1!1).RhoC(gef!1)    kr117p, kr117m"
+  },
+  {
+    "name": "Rac1_PAK1",
+    "description": "Binding Rac1 to PAK1",
+    "bioNetGenDef": "Rac1(pak) + PAK1(PBD) <-> Rac1(pak!0).PAK1(PBD!0)    kr118p, kr118m"
+  },
+  {
+    "name": "SPAR_Rap",
+    "description": "Binding SPAR to Rap",
+    "bioNetGenDef": "SPAR(GAP) + Rap(gap) <-> SPAR(GAP!1).Rap(gap!1)    kr119p, kr119m"
+  },
+  {
+    "name": "SPAR_PROSAPIP",
+    "description": "Binding PROSAPIP to SPAR",
+    "bioNetGenDef": "PROSAPIP1(CC1) + SPAR(CC) <-> PROSAPIP1(CC1!1).SPAR(CC!1)    kr120p, kr120m"
+  },
+  {
+    "name": "AKAP_PKA",
+    "description": "Binding AKAP to PKA",
+    "bioNetGenDef": "AKAP(r) + PKA(R) <-> AKAP(r!0).PKA(R!0)    kr121p, kr121m"
+  },
+  {
+    "name": "GluR1_GluR2",
+    "description": "Binding GluR1 to GluR2",
+    "bioNetGenDef": "GluR1(N2) + GluR2(N1) <-> GluR1(N2!1).GluR2(N1!1)    kr122p, kr122m"
+  },
+  {
+    "name": "GluR1_dim",
+    "description": "GluR1 dimerisation",
+    "bioNetGenDef": "GluR1(N1) + GluR1(N1) <-> GluR1(N1!1).GluR1(N1!1)    kr123p, kr123m"
+  },
+  {
+    "name": "GluR2_dim",
+    "description": "GluR2 dimerisation",
+    "bioNetGenDef": "GluR2(N2) + GluR2(N2) <-> GluR2(N2!1).GluR2(N2!1)    kr124p, kr124m"
+  },
+  {
+    "name": "GluR1_stargazin",
+    "description": "Binding GluR1 to stragazin",
+    "bioNetGenDef": "stargazin(glur) + GluR1(starg) <-> stargazin(glur!1).GluR1(starg!1)    kr125p, kr125m"
+  },
+  {
+    "name": "GluR1_PiCk1",
+    "description": "Binding GluR1 to PICK1",
+    "bioNetGenDef": "PICK1(PDZ) + GluR2(c~u,c__17) <-> PICK1(PDZ!1).GluR2(c~u,c__17!1)    kr126p, kr126m"
+  },
+  {
+    "name": "GluR2_GRIP",
+    "description": "Binding GluR2 to GRIP",
+    "bioNetGenDef": "GRIP(PDZ4~u,PDZ5) + GluR2(c~u,c__17) <-> GRIP(PDZ4~u,PDZ5!1).GluR2(c~u,c__17!1)    kr127p, kr127m"
+  },
+  {
+    "name": "GluR2_PKC",
+    "description": "Binding GLuR2 to PKC",
+    "bioNetGenDef": "GluR2(K) + PKC(k) <-> GluR2(K!1).PKC(k!1)    kr128p, kr128m"
+  },
+  {
+    "name": "GRIP_dim",
+    "description": "GRIP dimerisation",
+    "bioNetGenDef": "GRIP(PDZ6) + GRIP(PDZ6) <-> GRIP(PDZ6) + GRIP(PDZ6)    kr129p, kr129m"
+  }
+]

@@ -1,0 +1,302 @@
+[
+  {
+    "bioNetGenDef": "Ca(x)",
+    "description": "Calcium Ca2+",
+    "uniprotIds": "",
+    "geneNames": ""
+  },
+  {
+    "bioNetGenDef": "CaM(ck,n1,n2,c1,c2,h)",
+    "description": "Calmodulin",
+    "uniprotIds": "P0DP28,P0DP27,P0DP26",
+    "geneNames": "Calm3,Calm2,Calm1"
+  },
+  {
+    "bioNetGenDef": "CB(ca1,ca2,ca3,ca4)",
+    "description": "Calbindin",
+    "uniprotIds": "P12658",
+    "geneNames": "Calb1"
+  },
+  {
+    "bioNetGenDef": "CaMKII(a,b,cam,s~u~p,k1)",
+    "description": "calcium/calmodulin dependent protein kinase II",
+    "uniprotIds": "P28652,P11798",
+    "geneNames": "Camk2b,Camk2a"
+  },
+  {
+    "bioNetGenDef": "I1(pp3~u~p,pp1)",
+    "description": "Protein phosphatase 1 regulatory inhibitor subunit 1A",
+    "uniprotIds": "Q9ERT9",
+    "geneNames": "Ppp1r1a"
+  },
+  {
+    "bioNetGenDef": "PP1(i1)",
+    "description": "Protein phosphatase 1 catalytic subunits",
+    "uniprotIds": "P62137,P62141,P63087",
+    "geneNames": "Ppp1ca,Ppp1cb,Ppp1cc"
+  },
+  {
+    "bioNetGenDef": "PP3(ca)",
+    "description": "Calcineurin",
+    "uniprotIds": "P63328",
+    "geneNames": "Ppp3ca"
+  },
+  {
+    "bioNetGenDef": "PSD95(NH2,PDZ1,PDZ2,PDZ3,GK,SH3,H)",
+    "description": "discs large MAGUK scaffold protein 4",
+    "uniprotIds": "Q62108",
+    "geneNames": "Dlg4"
+  },
+  {
+    "bioNetGenDef": "PSD93(L27,PDZ1,PDZ2,PDZ3,GK,H,NH2,SH3)",
+    "description": "discs large MAGUK scaffold protein 2",
+    "uniprotIds": "Q91XM9",
+    "geneNames": "Dlg2"
+  },
+  {
+    "bioNetGenDef": "stargazin(c~u~p,glur,c__17)",
+    "description": "calcium voltage-gated channel auxiliary subunit gamma 2",
+    "uniprotIds": "O88602",
+    "geneNames": "Cacng2"
+  },
+  {
+    "bioNetGenDef": "SAP97(L27,PDZ1,PDZ2,PDZ3,GK,SH3,H)",
+    "description": "discs large MAGUK scaffold protein 1",
+    "uniprotIds": "Q811D0",
+    "geneNames": "Dlg1"
+  },
+  {
+    "bioNetGenDef": "SAP102(L27,PDZ1,PDZ2,PDZ3,GK,H,SH3)",
+    "description": "discs large MAGUK scaffold protein 3",
+    "uniprotIds": "P70175",
+    "geneNames": "Dlg3"
+  },
+  {
+    "bioNetGenDef": "NR2A(c,b,c0,SBS~u~p,K,camkbd,TyrP,SBS__17)",
+    "description": "glutamate ionotropic receptor NMDA type subunit 2A",
+    "uniprotIds": "P35436",
+    "geneNames": "Grin2a"
+  },
+  {
+    "bioNetGenDef": "NR2B(c,b,c0,SBS~u~p,K,camkbd,TyrP,SBS__17)",
+    "description": "glutamate ionotropic receptor NMDA type subunit 2B",
+    "uniprotIds": "Q01097",
+    "geneNames": "Grin2b"
+  },
+  {
+    "bioNetGenDef": "NR1(c,b,c0,SBS~u~p,K,SerP,SBS__17)",
+    "description": "glutamate ionotropic receptor NMDA type subunit 1",
+    "uniprotIds": "P35438",
+    "geneNames": "Grin1"
+  },
+  {
+    "bioNetGenDef": "Spectrin(NRB,SL,PH)",
+    "description": "spectrins",
+    "uniprotIds": "P08032,P16546,P15508,Q62261,Q3UGZ4,E9PX29",
+    "geneNames": "Spta1,Sptan1,Sptb,Sptbn1,Sptbn2,Sptbn4"
+  },
+  {
+    "bioNetGenDef": "src(SH3,SH2)",
+    "description": "SRC proto-oncogene, non-receptor tyrosine kinase",
+    "uniprotIds": "P05480",
+    "geneNames": "Src"
+  },
+  {
+    "bioNetGenDef": "FYN(SH2,SH3)",
+    "description": "FYN proto-oncogene, Src family tyrosine kinase",
+    "uniprotIds": "P39688",
+    "geneNames": "Fyn"
+  },
+  {
+    "bioNetGenDef": "PLCg(SH3,SH2,PH)",
+    "description": "phospholipase C gamma",
+    "uniprotIds": "Q62077,Q8CIH5",
+    "geneNames": "Plcg1,Plcg2"
+  },
+  {
+    "bioNetGenDef": "PKC(akap,k,PH,Ser~u~p)",
+    "description": "Protein kinase C",
+    "uniprotIds": "P20444,P68404,P28867,P16054,P63318,Q02111,Q02956",
+    "geneNames": "Prkca,Prkcb,Prkcd,Prkce,Prkcg,Prkcq,Prkcz"
+  },
+  {
+    "bioNetGenDef": "PKA(R,k)",
+    "description": "protein kinase cAMP-activated catalytic subunit",
+    "uniprotIds": "P05132,P68181",
+    "geneNames": "Prkaca,Prkacb"
+  },
+  {
+    "bioNetGenDef": "GluR6(c)",
+    "description": "glutamate ionotropic receptor kainate type subunit 2",
+    "uniprotIds": "P39087",
+    "geneNames": "Grik2"
+  },
+  {
+    "bioNetGenDef": "GluR1(g2,g3,starg,c,N2,N1)",
+    "description": "glutamate ionotropic receptor AMPA type subunit 1",
+    "uniprotIds": "P23818",
+    "geneNames": "Gria1"
+  },
+  {
+    "bioNetGenDef": "GluR2(c~u~p,g1,g3,K,N1,N2,c__17)",
+    "description": "glutamate ionotropic receptor AMPA type subunit 2",
+    "uniprotIds": "P23819",
+    "geneNames": "Gria2"
+  },
+  {
+    "bioNetGenDef": "GluR3(g1,g2)",
+    "description": "glutamate ionotropic receptor AMPA type subunit 3",
+    "uniprotIds": "Q9Z2W9",
+    "geneNames": "Gria3"
+  },
+  {
+    "bioNetGenDef": "GluR4(g1,g2)",
+    "description": "glutamate ionotropic receptor AMPA type subunit 4",
+    "uniprotIds": "Q9Z2W8",
+    "geneNames": "Gria4"
+  },
+  {
+    "bioNetGenDef": "GRIP(PDZ4~u~p,PDZ5,PDZ6)",
+    "description": "glutamate receptor interacting protein 1",
+    "uniprotIds": "Q925T6",
+    "geneNames": "Grip1"
+  },
+  {
+    "bioNetGenDef": "SHANK(PDZ,SAM,SAM1,PRD)",
+    "description": "SH3 and multiple ankyrin repeat domains",
+    "uniprotIds": "D3YZU1,Q80Z38,Q4ACU6",
+    "geneNames": "Shank1,Shank2,Shank3"
+  },
+  {
+    "bioNetGenDef": "HOMER(EVH1,CC)",
+    "description": "homer scaffold protein",
+    "uniprotIds": "Q9Z2Y3,Q9QWW1,Q99JP6",
+    "geneNames": "Homer1,Homer2,Homer3"
+  },
+  {
+    "bioNetGenDef": "cortactin(SH3,NTA)",
+    "description": "cortactin",
+    "uniprotIds": "Q60598",
+    "geneNames": "Cttn"
+  },
+  {
+    "bioNetGenDef": "GKAP(c,GKBD)",
+    "description": "DLG associated proteins",
+    "uniprotIds": "Q9D415,Q8BJ42,Q6PFD5,B1AZP2,Q8K4R9",
+    "geneNames": "Dlgap1,Dlgap2,Dlgap3,Dlgap4,Dlgap5"
+  },
+  {
+    "bioNetGenDef": "DYN(PRD,CC,PH)",
+    "description": "Dynamins",
+    "uniprotIds": "P39053,P39054,Q8BZ98",
+    "geneNames": "Dnm1,Dnm2,Dnm3"
+  },
+  {
+    "bioNetGenDef": "AKAP(sh3,r,c)",
+    "description": "A-kinase anchoring proteins",
+    "uniprotIds": "O08715,O54931,O88987,Q60662,D3YVF0,O55074,Q7TN79",
+    "geneNames": "Akap1,Akap2,Akap3,Akap4,Akap5,Akap6,Akap7"
+  },
+  {
+    "bioNetGenDef": "SSCAM(PDZ1,PDZ2,GK)",
+    "description": "membrane associated guanylate kinase, WW and PDZ domain containing 2",
+    "uniprotIds": "Q9WVQ1",
+    "geneNames": "Magi2"
+  },
+  {
+    "bioNetGenDef": "RACK1(WD,WD1,WD6~u~p,SH2,WD6__17)",
+    "description": "receptor for activated C kinase 1",
+    "uniprotIds": "P68040",
+    "geneNames": "Gnb2l1"
+  },
+  {
+    "bioNetGenDef": "SynGAP(c)",
+    "description": "synaptic Ras GTPase activating protein 1",
+    "uniprotIds": "F6SEU4",
+    "geneNames": "Syngap1"
+  },
+  {
+    "bioNetGenDef": "kalirin(c,GEF1,NH2~u~p)",
+    "description": "kalirin RhoGEF kinase",
+    "uniprotIds": "A2CG49",
+    "geneNames": "Kalrn"
+  },
+  {
+    "bioNetGenDef": "NOS(PDZ)",
+    "description": "nitric oxide synthase 1",
+    "uniprotIds": "Q9Z0J4",
+    "geneNames": "Nos1"
+  },
+  {
+    "bioNetGenDef": "PTP1D(SH2)",
+    "description": "protein tyrosine phosphatase, non-receptor type 11",
+    "uniprotIds": "P35235",
+    "geneNames": "Ptpn11"
+  },
+  {
+    "bioNetGenDef": "SPAR(GKBD,GAP,Act1,Act2,CC)",
+    "description": "RAP1 GTPase activating protein",
+    "uniprotIds": "A2ALS5",
+    "geneNames": "Rap1gap"
+  },
+  {
+    "bioNetGenDef": "mGluR(PRD,c,CaMBD)",
+    "description": "Glutamate metabotropic receptors",
+    "uniprotIds": "P97772,Q14BI2,Q9QYS2,Q68EF4,Q3UVX5,Q5NCH9,Q68ED2,P47743",
+    "geneNames": "Grm1,Grm2,Grm3,Grm4,Grm5,Grm6,Grm7,Grm8"
+  },
+  {
+    "bioNetGenDef": "Grb2(SH3)",
+    "description": "growth factor receptor bound protein 2",
+    "uniprotIds": "Q60631",
+    "geneNames": "Grb2"
+  },
+  {
+    "bioNetGenDef": "Rac1(gef,pak)",
+    "description": "Rac family small GTPase 1",
+    "uniprotIds": "P63001",
+    "geneNames": "Rac1"
+  },
+  {
+    "bioNetGenDef": "Rac2(gef)",
+    "description": "Rac family small GTPase 2",
+    "uniprotIds": "Q05144",
+    "geneNames": "Rac2"
+  },
+  {
+    "bioNetGenDef": "RhoG(gef)",
+    "description": "ras homolog family member G",
+    "uniprotIds": "P84096",
+    "geneNames": "Rhog"
+  },
+  {
+    "bioNetGenDef": "RhoC(gef)",
+    "description": "ras homolog family member C",
+    "uniprotIds": "Q62159",
+    "geneNames": "Rhoc"
+  },
+  {
+    "bioNetGenDef": "PAK1(PBD)",
+    "description": "p21 (RAC1) activated kinase 1",
+    "uniprotIds": "O88643",
+    "geneNames": "Pak1"
+  },
+  {
+    "bioNetGenDef": "Rap(gap)",
+    "description": "N-ethylmaleimide sensitive factor, vesicle fusing ATPase",
+    "uniprotIds": "P46460",
+    "geneNames": "Nsf"
+  },
+  {
+    "bioNetGenDef": "PICK1(PDZ)",
+    "description": "protein interacting with PRKCA 1",
+    "uniprotIds": "Q62083",
+    "geneNames": "Pick1"
+  },
+  {
+    "bioNetGenDef": "PROSAPIP1(c,CC1)",
+    "description": "leucine zipper tumor suppressor family member 3",
+    "uniprotIds": "A2AHG0",
+    "geneNames": "Lzts3"
+  }
+]

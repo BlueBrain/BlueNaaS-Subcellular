@@ -1,0 +1,3829 @@
+[
+  {
+    "id": "5af69c05-0a9b-409f-8f69-a04c253db0bc",
+    "name": "ca-cam_Cam_CB_2018_spatial",
+    "annotation": "This is the model due to [Hi & al, 2018], Imlemented by Hi on smoldyn language and translated  to BNGL\n\nSimple ligand-receptor binding model expressed in cell units:\n*  time - seconds\n*  concentration - M and molecule number (#)\n*  volume - l\n*  kinetic rates - M^(1-n)*s^-1 (n - order of reaction) and s^-1 (for #) ",
+    "nonBnglStructures": false,
+    "structures": [
+      {
+        "name": "EC2",
+        "type": "compartment",
+        "size": "1.0",
+        "parentName": "-",
+        "annotation": ""
+      },
+      {
+        "name": "Dendrite2",
+        "type": "membrane",
+        "size": "1.0",
+        "parentName": "EC2",
+        "annotation": ""
+      },
+      {
+        "name": "Dendrite",
+        "type": "compartment",
+        "size": "1.0",
+        "parentName": "Dendrite2",
+        "annotation": ""
+      },
+      {
+        "name": "Synapse2",
+        "type": "membrane",
+        "size": "1.0",
+        "parentName": "EC2",
+        "annotation": ""
+      },
+      {
+        "name": "Synapse",
+        "type": "compartment",
+        "size": "1.0",
+        "parentName": "Synapse2",
+        "annotation": ""
+      },
+      {
+        "name": "PSD2",
+        "type": "membrane",
+        "size": "1.0",
+        "parentName": "EC2",
+        "annotation": ""
+      }
+    ],
+    "parameters": [
+      {
+        "name": "NA",
+        "definition": "6.02205e23",
+        "annotation": ""
+      },
+      {
+        "name": "vol",
+        "definition": "4.179796243999999e-17",
+        "annotation": ""
+      },
+      {
+        "name": "agconc",
+        "definition": "1",
+        "annotation": ""
+      },
+      {
+        "name": "D_Ca",
+        "definition": "30",
+        "annotation": ""
+      },
+      {
+        "name": "D_CB",
+        "definition": "20",
+        "annotation": ""
+      },
+      {
+        "name": "D_CaM",
+        "definition": "5",
+        "annotation": ""
+      },
+      {
+        "name": "Vext",
+        "definition": "1e-17",
+        "annotation": ""
+      },
+      {
+        "name": "rdend",
+        "definition": "2.5e-7",
+        "annotation": ""
+      },
+      {
+        "name": "ldend",
+        "definition": "5e-6",
+        "annotation": ""
+      },
+      {
+        "name": "pi",
+        "definition": "3.1416",
+        "annotation": ""
+      },
+      {
+        "name": "Sdend",
+        "definition": "2*pi*rdend*ldend",
+        "annotation": ""
+      },
+      {
+        "name": "eff_width",
+        "definition": "1e-8",
+        "annotation": ""
+      },
+      {
+        "name": "Vdend",
+        "definition": "pi*rdend*rdend*ldend*1e3",
+        "annotation": ""
+      },
+      {
+        "name": "Sart1",
+        "definition": "pi*0.25e-14",
+        "annotation": ""
+      },
+      {
+        "name": "Vsyn",
+        "definition": "1e-17",
+        "annotation": ""
+      },
+      {
+        "name": "fac",
+        "definition": "1.0",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_in",
+        "definition": "8.33*0.08e-6*fac",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_out",
+        "definition": "8.33*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBN1_on",
+        "definition": "7.50E+07*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBN2_on",
+        "definition": "7.50E+07*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBC1_on",
+        "definition": "7.50E+07*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBC2_on",
+        "definition": "7.50E+07*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBN1_off",
+        "definition": "29.5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBN2_off",
+        "definition": "29.5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBC1_off",
+        "definition": "29.5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CBC2_off",
+        "definition": "29.5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMN1_on",
+        "definition": "7.7e8*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMN2_on",
+        "definition": "3.2e10*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMC1_on",
+        "definition": "8.4e7*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMC2_on",
+        "definition": "2.5e7*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMN1_off",
+        "definition": "1.6e5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMN2_off",
+        "definition": "2.2e4*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMC1_off",
+        "definition": "2.6e3*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaMC2_off",
+        "definition": "6.5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "CaM0",
+        "definition": "1*0.08*1e-3/agconc",
+        "annotation": ""
+      },
+      {
+        "name": "Ca0",
+        "definition": "250*0.08*1e-6/agconc",
+        "annotation": ""
+      },
+      {
+        "name": "CaB0",
+        "definition": "1*0.03*1e-3/agconc",
+        "annotation": ""
+      },
+      {
+        "name": "NMDA0",
+        "definition": "40/agconc",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_CaM",
+        "definition": "5*fac",
+        "annotation": ""
+      },
+      {
+        "name": "durpulse",
+        "definition": "0.0020",
+        "annotation": ""
+      },
+      {
+        "name": "durpulse1",
+        "definition": "1.00*durpulse",
+        "annotation": ""
+      },
+      {
+        "name": "kCa",
+        "definition": "0",
+        "annotation": ""
+      },
+      {
+        "name": "kCa1",
+        "definition": "1.00*kCa",
+        "annotation": ""
+      }
+    ],
+    "functions": [
+      {
+        "name": "k_4",
+        "definition": "2*CBN1_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_5",
+        "definition": "CBN2_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_6",
+        "definition": "2*CBC1_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_7",
+        "definition": "CBC2_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_9",
+        "definition": "CBN1_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_10",
+        "definition": "2*CBN2_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_11",
+        "definition": "CBC1_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_12",
+        "definition": "2*CBC2_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_14",
+        "definition": "2*CaMN1_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_15",
+        "definition": "CaMN2_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_16",
+        "definition": "2*CaMC1_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_17",
+        "definition": "CaMC2_on*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k_19",
+        "definition": "CaMN1_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_20",
+        "definition": "2*CaMN2_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_21",
+        "definition": "CaMC1_off",
+        "annotation": ""
+      },
+      {
+        "name": "k_22",
+        "definition": "2*CaMC2_off",
+        "annotation": ""
+      },
+      {
+        "name": "k__5",
+        "definition": "Ca_in + 0",
+        "annotation": ""
+      },
+      {
+        "name": "k__6",
+        "definition": "Ca_out*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k__7",
+        "definition": "Ca_in + 0",
+        "annotation": ""
+      },
+      {
+        "name": "k__8",
+        "definition": "Ca_out*agconc",
+        "annotation": ""
+      },
+      {
+        "name": "k__9",
+        "definition": "kCa1*1e3",
+        "annotation": ""
+      },
+      {
+        "name": "k__10",
+        "definition": "20*fac",
+        "annotation": ""
+      },
+      {
+        "name": "k__11",
+        "definition": "10*700/40/50*1000",
+        "annotation": ""
+      }
+    ],
+    "molecules": [
+      {
+        "name": "Ca",
+        "definition": "Ca(x)",
+        "annotation": ""
+      },
+      {
+        "name": "CaM",
+        "definition": "CaM(N1,N2,C1,C2,K,Kp~0~1)",
+        "annotation": ""
+      },
+      {
+        "name": "CB",
+        "definition": "CB(N1,N2,C1,C2)",
+        "annotation": ""
+      },
+      {
+        "name": "NMDA",
+        "definition": "NMDA(pore~O~C,ank~0~1)",
+        "annotation": ""
+      }
+    ],
+    "species": [
+      {
+        "name": "@Dendrite:CaM",
+        "definition": "@Dendrite:CaM(N1,N2,C1,C2,K,Kp~0)",
+        "concentration": "CaM0",
+        "annotation": ""
+      },
+      {
+        "name": "@Dendrite:Ca",
+        "definition": "@Dendrite:Ca(x)",
+        "concentration": "Ca0",
+        "annotation": ""
+      },
+      {
+        "name": "@Dendrite:CB",
+        "definition": "@Dendrite:CB(N1,N2,C1,C2)",
+        "concentration": "CaB0",
+        "annotation": ""
+      },
+      {
+        "name": "@Synapse:CaM",
+        "definition": "@Synapse:CaM(N1,N2,C1,C2,K,Kp~0)",
+        "concentration": "CaM0",
+        "annotation": ""
+      },
+      {
+        "name": "@Synapse:Ca",
+        "definition": "@Synapse:Ca(x)",
+        "concentration": "Ca0",
+        "annotation": ""
+      },
+      {
+        "name": "@Synapse:CB",
+        "definition": "@Synapse:CB(N1,N2,C1,C2)",
+        "concentration": "CaB0",
+        "annotation": ""
+      },
+      {
+        "name": "@PSD2:NMDA",
+        "definition": "@PSD2:NMDA(pore~C,ank~1)",
+        "concentration": "NMDA0",
+        "annotation": ""
+      }
+    ],
+    "observables": [
+      {
+        "name": "CaM",
+        "definition": "CaM(N1,C1)",
+        "annotation": ""
+      },
+      {
+        "name": "CaMCa4",
+        "definition": "CaM(N1!+,N2!+,C1!+,C2!+)",
+        "annotation": ""
+      },
+      {
+        "name": "Ca",
+        "definition": "Ca(x)",
+        "annotation": ""
+      },
+      {
+        "name": "TotCa",
+        "definition": "Ca()",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_1",
+        "definition": "@Dendrite:Ca(x)",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_2",
+        "definition": "@Dendrite:CaM()",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_3",
+        "definition": "@Dendrite:CB()",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_4",
+        "definition": "@Synapse:Ca(x)",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_5",
+        "definition": "@Synapse:CaM()",
+        "annotation": ""
+      },
+      {
+        "name": "Diff_6",
+        "definition": "@Synapse:CB()",
+        "annotation": ""
+      }
+    ],
+    "reactions": [
+      {
+        "name": "NMDA_opening ",
+        "definition": " @PSD2:NMDA(pore~C)  -> @PSD2:NMDA(pore~O)",
+        "kf": "k__9()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "NMDA_closing ",
+        "definition": " @PSD2:NMDA(pore~O)  -> @PSD2:NMDA(pore~C)",
+        "kf": "k__10()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "NMDA_Ca_input ",
+        "definition": "@PSD2:NMDA(pore~O)  -> @PSD2:NMDA(pore~O) + @Synapse:Ca(x)",
+        "kf": "k__11()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_input",
+        "definition": "0 -> @Synapse:Ca(x)",
+        "kf": "k__5()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_extr",
+        "definition": "@Synapse:Ca(x) -> 0",
+        "kf": "k__6()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_inputd",
+        "definition": "0 -> @Dendrite:Ca(x)",
+        "kf": "k__7()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "Ca_extrd",
+        "definition": "@Dendrite:Ca(x) -> 0",
+        "kf": "k__8()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "N1_Ca_on",
+        "definition": "CaM(N2,N1,K,Kp~0) + Ca(x) -> CaM(N2,N1!1,K,Kp~0).Ca(x!1)",
+        "kf": "k_14()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "N2_Ca_on",
+        "definition": "CaM(N1!+,N2,K,Kp~0) + Ca(x) -> CaM(N1!+,N2!1,K,Kp~0).Ca(x!1)",
+        "kf": "k_15()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "C1_Ca_on",
+        "definition": "CaM(C2,C1,K,Kp~0) + Ca(x) -> CaM(C2,C1!1,K,Kp~0).Ca(x!1)",
+        "kf": "k_16()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "C2_Ca_on",
+        "definition": "CaM(C1!+,C2,K,Kp~0) + Ca(x) -> CaM(C1!+,C2!1,K,Kp~0).Ca(x!1)",
+        "kf": "k_17()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "N1_Ca_off",
+        "definition": "CaM(N1!1,N2,K,Kp~0).Ca(x!1)->CaM(N1,N2,K,Kp~0) + Ca(x)",
+        "kf": "k_19()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "N2_Ca_off",
+        "definition": "CaM(N1!+,N2!1,K,Kp~0).Ca(x!1)->CaM(N1!+,N2,K,Kp~0) + Ca(x)",
+        "kf": "k_20()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "C1_Ca_off",
+        "definition": "CaM(C1!1,C2,K,Kp~0).Ca(x!1)->CaM(C1,C2,K,Kp~0) + Ca(x)",
+        "kf": "k_21()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "C2_Ca_off",
+        "definition": "CaM(C1!+,C2!1,K,Kp~0).Ca(x!1)->CaM(C1!+,C2,K,Kp~0) + Ca(x)",
+        "kf": "k_22()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_N1_Ca_on",
+        "definition": "CB(N2,N1) + Ca(x) -> CB(N2,N1!1).Ca(x!1)",
+        "kf": "k_4()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_N2_Ca_on",
+        "definition": "CB(N1!+,N2) + Ca(x) -> CB(N2!1,N1!+).Ca(x!1)",
+        "kf": "k_5()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_C1_Ca_on",
+        "definition": "CB(C2,C1) + Ca(x) -> CB(C2,C1!1).Ca(x!1)",
+        "kf": "k_6()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_C2_Ca_on",
+        "definition": "CB(C1!+,C2) + Ca(x) -> CB(C1!+,C2!1).Ca(x!1)",
+        "kf": "k_7()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_N1_Ca_off",
+        "definition": "CB(N1!1,N2).Ca(x!1)->CB(N1,N2) + Ca(x)",
+        "kf": "k_9()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_N2_Ca_off",
+        "definition": "CB(N1!+,N2!1).Ca(x!1)->CB(N1!+,N2) + Ca(x)",
+        "kf": "k_10()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_C1_Ca_off",
+        "definition": "CB(C1!1,C2).Ca(x!1)->CB(C1,C2) + Ca(x)",
+        "kf": "k_11()",
+        "kr": "",
+        "annotation": ""
+      },
+      {
+        "name": "CB_C2_Ca_off",
+        "definition": "CB(C1!+,C2!1).Ca(x!1)->CB(C1!+,C2) + Ca(x)",
+        "kf": "k_12()",
+        "kr": "",
+        "annotation": ""
+      }
+    ],
+    "diffusions": [],
+    "geometry": {
+      "id": "931b3199-2819-4fc6-b11a-e63213d00cf7",
+      "name": "Main",
+      "annotation": "Dendrite and spine geometry.",
+      "nodes": [
+        [
+          -2.5e-7,
+          0.00000171429,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0.0000014285699999999998,
+          -0.0000011
+        ],
+        [
+          -2.5e-7,
+          0.0000014285699999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          -2.5e-7,
+          0.0000011428599999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          -2.5e-7,
+          8.5714e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          8.5714e-7,
+          -6e-7
+        ],
+        [
+          -2.5e-7,
+          -0.0000011428599999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -0.0000014285699999999998,
+          -0.0000011
+        ],
+        [
+          -2.5e-7,
+          -0.0000014285699999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          0.0000014285699999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          0.0000011428599999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          -2.8571e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          5e-8,
+          0,
+          -4.5e-7
+        ],
+        [
+          0,
+          -2.8571e-7,
+          -6e-7
+        ],
+        [
+          0,
+          0.0000011428599999999998,
+          -6e-7
+        ],
+        [
+          2.5e-7,
+          8.5714e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0.00000171429,
+          -0.0000011
+        ],
+        [
+          0,
+          -0.00000171429,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          -0.00000171429,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          -0.000002,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -5e-8,
+          -4.5e-7
+        ],
+        [
+          0,
+          5e-8,
+          -4.5e-7
+        ],
+        [
+          0,
+          1.7677999999999997e-7,
+          -1.7677999999999997e-7
+        ],
+        [
+          -2.5e-7,
+          2.8571e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0,
+          -0.0000011
+        ],
+        [
+          -2.5e-7,
+          0,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -0.00000171429,
+          -6e-7
+        ],
+        [
+          0,
+          8.5714e-7,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          5.714299999999999e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          5.714299999999999e-7,
+          -0.0000011
+        ],
+        [
+          0,
+          0.000002,
+          -0.0000011
+        ],
+        [
+          -2.5e-7,
+          0.000002,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          0.00000171429,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0.0000011428599999999998,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          0,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -0.0000011428599999999998,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          -0.0000014285699999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -0.0000014285699999999998,
+          -6e-7
+        ],
+        [
+          -2.5e-7,
+          -0.00000171429,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0.0000014285699999999998,
+          -6e-7
+        ],
+        [
+          -2.5e-7,
+          5.714299999999999e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          2.8571e-7,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          2.8571e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          0.000002,
+          -8.499999999999999e-7
+        ],
+        [
+          -1.7677999999999997e-7,
+          0,
+          -1.7677999999999997e-7
+        ],
+        [
+          0,
+          -1.7677999999999997e-7,
+          -1.7677999999999997e-7
+        ],
+        [
+          -2.5e-7,
+          0,
+          0
+        ],
+        [
+          0,
+          2.8571e-7,
+          -6e-7
+        ],
+        [
+          0,
+          -0.000002,
+          -6e-7
+        ],
+        [
+          0,
+          -5.714299999999999e-7,
+          -0.0000011
+        ],
+        [
+          2.5e-7,
+          -5.714299999999999e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          2.5e-7,
+          -8.5714e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -2.8571e-7,
+          -0.0000011
+        ],
+        [
+          0,
+          -0.0000011428599999999998,
+          -6e-7
+        ],
+        [
+          -5e-8,
+          0,
+          -4.5e-7
+        ],
+        [
+          2.5e-7,
+          -0.0000011428599999999998,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          5.714299999999999e-7,
+          -6e-7
+        ],
+        [
+          1.7677999999999997e-7,
+          0,
+          -1.7677999999999997e-7
+        ],
+        [
+          0,
+          0.00000171429,
+          -6e-7
+        ],
+        [
+          0,
+          1.7677999999999997e-7,
+          1.7677999999999997e-7
+        ],
+        [
+          0,
+          2.5e-7,
+          0
+        ],
+        [
+          -1.7677999999999997e-7,
+          0,
+          1.7677999999999997e-7
+        ],
+        [
+          0,
+          0,
+          2.5e-7
+        ],
+        [
+          0,
+          -1.7677999999999997e-7,
+          1.7677999999999997e-7
+        ],
+        [
+          1.7677999999999997e-7,
+          0,
+          1.7677999999999997e-7
+        ],
+        [
+          -2.5e-7,
+          -2.8571e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          0.000002,
+          -6e-7
+        ],
+        [
+          0,
+          -2.5e-7,
+          0
+        ],
+        [
+          2.5e-7,
+          0,
+          0
+        ],
+        [
+          0,
+          -0.000002,
+          -0.0000011
+        ],
+        [
+          -2.5e-7,
+          -0.000002,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -5.714299999999999e-7,
+          -6e-7
+        ],
+        [
+          0,
+          -8.5714e-7,
+          -6e-7
+        ],
+        [
+          -2.5e-7,
+          -5.714299999999999e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          -2.5e-7,
+          -8.5714e-7,
+          -8.499999999999999e-7
+        ],
+        [
+          0,
+          -8.5714e-7,
+          -0.0000011
+        ],
+        [
+          -1.1339e-7,
+          0,
+          -3.1339e-7
+        ],
+        [
+          0,
+          0,
+          -7.249999999999999e-7
+        ],
+        [
+          8.838999999999999e-8,
+          8.838999999999999e-8,
+          -1.7677999999999997e-7
+        ],
+        [
+          8.838999999999999e-8,
+          -8.838999999999999e-8,
+          -1.7677999999999997e-7
+        ],
+        [
+          1.1339e-7,
+          0,
+          -3.1339e-7
+        ]
+      ],
+      "faces": [
+        [
+          25,
+          47,
+          54
+        ],
+        [
+          25,
+          47,
+          77
+        ],
+        [
+          47,
+          54,
+          77
+        ],
+        [
+          25,
+          54,
+          77
+        ],
+        [
+          11,
+          13,
+          34
+        ],
+        [
+          11,
+          34,
+          77
+        ],
+        [
+          11,
+          13,
+          77
+        ],
+        [
+          13,
+          34,
+          77
+        ],
+        [
+          17,
+          18,
+          70
+        ],
+        [
+          17,
+          18,
+          19
+        ],
+        [
+          18,
+          19,
+          70
+        ],
+        [
+          17,
+          19,
+          70
+        ],
+        [
+          17,
+          69,
+          70
+        ],
+        [
+          17,
+          19,
+          69
+        ],
+        [
+          19,
+          69,
+          70
+        ],
+        [
+          23,
+          28,
+          41
+        ],
+        [
+          28,
+          29,
+          41
+        ],
+        [
+          23,
+          29,
+          41
+        ],
+        [
+          23,
+          28,
+          29
+        ],
+        [
+          44,
+          76,
+          78
+        ],
+        [
+          76,
+          78,
+          79
+        ],
+        [
+          44,
+          78,
+          79
+        ],
+        [
+          44,
+          76,
+          79
+        ],
+        [
+          3,
+          27,
+          33
+        ],
+        [
+          3,
+          10,
+          33
+        ],
+        [
+          3,
+          10,
+          27
+        ],
+        [
+          10,
+          27,
+          33
+        ],
+        [
+          0,
+          31,
+          66
+        ],
+        [
+          31,
+          43,
+          66
+        ],
+        [
+          0,
+          43,
+          66
+        ],
+        [
+          0,
+          31,
+          43
+        ],
+        [
+          2,
+          3,
+          14
+        ],
+        [
+          2,
+          10,
+          14
+        ],
+        [
+          3,
+          10,
+          14
+        ],
+        [
+          2,
+          3,
+          10
+        ],
+        [
+          34,
+          42,
+          47
+        ],
+        [
+          12,
+          34,
+          47
+        ],
+        [
+          12,
+          34,
+          42
+        ],
+        [
+          12,
+          42,
+          47
+        ],
+        [
+          6,
+          51,
+          74
+        ],
+        [
+          6,
+          51,
+          72
+        ],
+        [
+          51,
+          72,
+          74
+        ],
+        [
+          6,
+          72,
+          74
+        ],
+        [
+          49,
+          65,
+          73
+        ],
+        [
+          11,
+          65,
+          73
+        ],
+        [
+          11,
+          49,
+          73
+        ],
+        [
+          11,
+          49,
+          65
+        ],
+        [
+          49,
+          50,
+          73
+        ],
+        [
+          50,
+          73,
+          74
+        ],
+        [
+          49,
+          73,
+          74
+        ],
+        [
+          49,
+          50,
+          74
+        ],
+        [
+          13,
+          65,
+          73
+        ],
+        [
+          11,
+          13,
+          73
+        ],
+        [
+          11,
+          13,
+          65
+        ],
+        [
+          49,
+          52,
+          65
+        ],
+        [
+          11,
+          52,
+          65
+        ],
+        [
+          11,
+          49,
+          52
+        ],
+        [
+          60,
+          64,
+          78
+        ],
+        [
+          59,
+          60,
+          78
+        ],
+        [
+          59,
+          64,
+          78
+        ],
+        [
+          59,
+          60,
+          64
+        ],
+        [
+          12,
+          13,
+          34
+        ],
+        [
+          12,
+          13,
+          77
+        ],
+        [
+          12,
+          34,
+          77
+        ],
+        [
+          20,
+          54,
+          76
+        ],
+        [
+          54,
+          76,
+          80
+        ],
+        [
+          20,
+          76,
+          80
+        ],
+        [
+          20,
+          54,
+          80
+        ],
+        [
+          61,
+          62,
+          78
+        ],
+        [
+          61,
+          78,
+          79
+        ],
+        [
+          62,
+          78,
+          79
+        ],
+        [
+          61,
+          62,
+          79
+        ],
+        [
+          34,
+          42,
+          77
+        ],
+        [
+          34,
+          47,
+          77
+        ],
+        [
+          42,
+          47,
+          77
+        ],
+        [
+          60,
+          64,
+          68
+        ],
+        [
+          60,
+          68,
+          78
+        ],
+        [
+          64,
+          68,
+          78
+        ],
+        [
+          50,
+          72,
+          74
+        ],
+        [
+          71,
+          72,
+          74
+        ],
+        [
+          50,
+          71,
+          72
+        ],
+        [
+          50,
+          71,
+          74
+        ],
+        [
+          4,
+          28,
+          40
+        ],
+        [
+          4,
+          28,
+          56
+        ],
+        [
+          4,
+          40,
+          56
+        ],
+        [
+          28,
+          40,
+          56
+        ],
+        [
+          13,
+          25,
+          54
+        ],
+        [
+          13,
+          54,
+          77
+        ],
+        [
+          13,
+          25,
+          77
+        ],
+        [
+          71,
+          73,
+          74
+        ],
+        [
+          50,
+          71,
+          73
+        ],
+        [
+          45,
+          76,
+          79
+        ],
+        [
+          76,
+          79,
+          80
+        ],
+        [
+          45,
+          79,
+          80
+        ],
+        [
+          45,
+          76,
+          80
+        ],
+        [
+          12,
+          47,
+          77
+        ],
+        [
+          78,
+          79,
+          80
+        ],
+        [
+          76,
+          78,
+          80
+        ],
+        [
+          59,
+          60,
+          61
+        ],
+        [
+          59,
+          61,
+          78
+        ],
+        [
+          60,
+          61,
+          78
+        ],
+        [
+          57,
+          78,
+          79
+        ],
+        [
+          57,
+          79,
+          80
+        ],
+        [
+          57,
+          78,
+          80
+        ],
+        [
+          6,
+          53,
+          55
+        ],
+        [
+          6,
+          36,
+          55
+        ],
+        [
+          36,
+          53,
+          55
+        ],
+        [
+          6,
+          36,
+          53
+        ],
+        [
+          23,
+          28,
+          40
+        ],
+        [
+          23,
+          29,
+          40
+        ],
+        [
+          28,
+          29,
+          40
+        ],
+        [
+          4,
+          29,
+          40
+        ],
+        [
+          4,
+          28,
+          29
+        ],
+        [
+          3,
+          5,
+          14
+        ],
+        [
+          5,
+          10,
+          14
+        ],
+        [
+          3,
+          5,
+          10
+        ],
+        [
+          3,
+          4,
+          27
+        ],
+        [
+          3,
+          15,
+          27
+        ],
+        [
+          3,
+          4,
+          15
+        ],
+        [
+          4,
+          15,
+          27
+        ],
+        [
+          0,
+          16,
+          43
+        ],
+        [
+          16,
+          32,
+          43
+        ],
+        [
+          0,
+          32,
+          43
+        ],
+        [
+          0,
+          16,
+          32
+        ],
+        [
+          23,
+          42,
+          47
+        ],
+        [
+          23,
+          42,
+          77
+        ],
+        [
+          23,
+          47,
+          77
+        ],
+        [
+          4,
+          5,
+          56
+        ],
+        [
+          5,
+          28,
+          56
+        ],
+        [
+          4,
+          5,
+          28
+        ],
+        [
+          0,
+          16,
+          30
+        ],
+        [
+          0,
+          30,
+          43
+        ],
+        [
+          16,
+          30,
+          43
+        ],
+        [
+          59,
+          61,
+          62
+        ],
+        [
+          59,
+          62,
+          78
+        ],
+        [
+          13,
+          25,
+          65
+        ],
+        [
+          25,
+          54,
+          65
+        ],
+        [
+          13,
+          54,
+          65
+        ],
+        [
+          1,
+          3,
+          33
+        ],
+        [
+          1,
+          3,
+          10
+        ],
+        [
+          1,
+          10,
+          33
+        ],
+        [
+          59,
+          62,
+          64
+        ],
+        [
+          62,
+          64,
+          78
+        ],
+        [
+          6,
+          8,
+          37
+        ],
+        [
+          6,
+          36,
+          37
+        ],
+        [
+          8,
+          36,
+          37
+        ],
+        [
+          6,
+          8,
+          36
+        ],
+        [
+          24,
+          52,
+          65
+        ],
+        [
+          24,
+          65,
+          77
+        ],
+        [
+          52,
+          65,
+          77
+        ],
+        [
+          24,
+          52,
+          77
+        ],
+        [
+          11,
+          50,
+          73
+        ],
+        [
+          11,
+          49,
+          50
+        ],
+        [
+          11,
+          24,
+          52
+        ],
+        [
+          11,
+          52,
+          77
+        ],
+        [
+          11,
+          24,
+          77
+        ],
+        [
+          11,
+          12,
+          13
+        ],
+        [
+          11,
+          12,
+          34
+        ],
+        [
+          0,
+          1,
+          9
+        ],
+        [
+          0,
+          9,
+          32
+        ],
+        [
+          1,
+          9,
+          32
+        ],
+        [
+          0,
+          1,
+          32
+        ],
+        [
+          24,
+          41,
+          42
+        ],
+        [
+          24,
+          42,
+          77
+        ],
+        [
+          41,
+          42,
+          77
+        ],
+        [
+          24,
+          41,
+          77
+        ],
+        [
+          23,
+          24,
+          41
+        ],
+        [
+          23,
+          41,
+          77
+        ],
+        [
+          23,
+          24,
+          77
+        ],
+        [
+          24,
+          25,
+          65
+        ],
+        [
+          24,
+          25,
+          77
+        ],
+        [
+          25,
+          65,
+          77
+        ],
+        [
+          24,
+          34,
+          42
+        ],
+        [
+          24,
+          34,
+          77
+        ],
+        [
+          11,
+          24,
+          34
+        ],
+        [
+          23,
+          24,
+          25
+        ],
+        [
+          23,
+          25,
+          77
+        ],
+        [
+          13,
+          20,
+          54
+        ],
+        [
+          13,
+          20,
+          77
+        ],
+        [
+          20,
+          54,
+          77
+        ],
+        [
+          21,
+          47,
+          54
+        ],
+        [
+          21,
+          47,
+          77
+        ],
+        [
+          21,
+          54,
+          77
+        ],
+        [
+          11,
+          50,
+          71
+        ],
+        [
+          11,
+          71,
+          73
+        ],
+        [
+          11,
+          13,
+          71
+        ],
+        [
+          13,
+          71,
+          73
+        ],
+        [
+          7,
+          17,
+          38
+        ],
+        [
+          17,
+          18,
+          38
+        ],
+        [
+          7,
+          17,
+          18
+        ],
+        [
+          7,
+          18,
+          38
+        ],
+        [
+          45,
+          46,
+          67
+        ],
+        [
+          45,
+          46,
+          79
+        ],
+        [
+          46,
+          67,
+          79
+        ],
+        [
+          45,
+          67,
+          79
+        ],
+        [
+          44,
+          46,
+          60
+        ],
+        [
+          44,
+          46,
+          78
+        ],
+        [
+          44,
+          60,
+          78
+        ],
+        [
+          46,
+          60,
+          78
+        ],
+        [
+          23,
+          28,
+          56
+        ],
+        [
+          28,
+          47,
+          56
+        ],
+        [
+          23,
+          47,
+          56
+        ],
+        [
+          23,
+          28,
+          47
+        ],
+        [
+          12,
+          20,
+          54
+        ],
+        [
+          12,
+          54,
+          77
+        ],
+        [
+          12,
+          20,
+          77
+        ],
+        [
+          46,
+          61,
+          78
+        ],
+        [
+          46,
+          78,
+          79
+        ],
+        [
+          46,
+          61,
+          79
+        ],
+        [
+          44,
+          45,
+          76
+        ],
+        [
+          44,
+          45,
+          79
+        ],
+        [
+          2,
+          14,
+          39
+        ],
+        [
+          9,
+          14,
+          39
+        ],
+        [
+          2,
+          9,
+          14
+        ],
+        [
+          2,
+          9,
+          39
+        ],
+        [
+          46,
+          60,
+          61
+        ],
+        [
+          44,
+          46,
+          79
+        ],
+        [
+          6,
+          7,
+          8
+        ],
+        [
+          6,
+          7,
+          36
+        ],
+        [
+          7,
+          8,
+          36
+        ],
+        [
+          22,
+          76,
+          78
+        ],
+        [
+          22,
+          78,
+          80
+        ],
+        [
+          22,
+          76,
+          80
+        ],
+        [
+          7,
+          8,
+          18
+        ],
+        [
+          8,
+          18,
+          36
+        ],
+        [
+          7,
+          18,
+          36
+        ],
+        [
+          63,
+          64,
+          68
+        ],
+        [
+          63,
+          64,
+          79
+        ],
+        [
+          64,
+          68,
+          79
+        ],
+        [
+          63,
+          68,
+          79
+        ],
+        [
+          64,
+          78,
+          79
+        ],
+        [
+          68,
+          78,
+          79
+        ],
+        [
+          57,
+          68,
+          78
+        ],
+        [
+          57,
+          68,
+          79
+        ],
+        [
+          46,
+          61,
+          63
+        ],
+        [
+          61,
+          63,
+          79
+        ],
+        [
+          46,
+          63,
+          79
+        ],
+        [
+          62,
+          63,
+          64
+        ],
+        [
+          62,
+          63,
+          79
+        ],
+        [
+          62,
+          64,
+          79
+        ],
+        [
+          44,
+          45,
+          46
+        ],
+        [
+          32,
+          43,
+          66
+        ],
+        [
+          0,
+          32,
+          66
+        ],
+        [
+          0,
+          2,
+          39
+        ],
+        [
+          0,
+          2,
+          9
+        ],
+        [
+          0,
+          9,
+          39
+        ],
+        [
+          23,
+          40,
+          56
+        ],
+        [
+          22,
+          44,
+          60
+        ],
+        [
+          22,
+          44,
+          78
+        ],
+        [
+          22,
+          60,
+          78
+        ],
+        [
+          23,
+          25,
+          54
+        ],
+        [
+          23,
+          47,
+          54
+        ],
+        [
+          23,
+          25,
+          47
+        ],
+        [
+          12,
+          13,
+          20
+        ],
+        [
+          0,
+          9,
+          58
+        ],
+        [
+          9,
+          32,
+          58
+        ],
+        [
+          0,
+          32,
+          58
+        ],
+        [
+          1,
+          2,
+          9
+        ],
+        [
+          1,
+          9,
+          10
+        ],
+        [
+          2,
+          9,
+          10
+        ],
+        [
+          1,
+          2,
+          10
+        ],
+        [
+          0,
+          30,
+          31
+        ],
+        [
+          30,
+          31,
+          43
+        ],
+        [
+          12,
+          21,
+          47
+        ],
+        [
+          12,
+          21,
+          77
+        ],
+        [
+          0,
+          1,
+          16
+        ],
+        [
+          1,
+          16,
+          32
+        ],
+        [
+          0,
+          39,
+          58
+        ],
+        [
+          9,
+          39,
+          58
+        ],
+        [
+          0,
+          58,
+          66
+        ],
+        [
+          32,
+          58,
+          66
+        ],
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          4,
+          5,
+          15
+        ],
+        [
+          5,
+          15,
+          28
+        ],
+        [
+          4,
+          15,
+          28
+        ],
+        [
+          9,
+          10,
+          14
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          11,
+          65,
+          77
+        ],
+        [
+          23,
+          41,
+          42
+        ],
+        [
+          13,
+          65,
+          77
+        ],
+        [
+          10,
+          15,
+          27
+        ],
+        [
+          3,
+          10,
+          15
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          5,
+          15
+        ],
+        [
+          5,
+          10,
+          15
+        ],
+        [
+          15,
+          28,
+          29
+        ],
+        [
+          4,
+          15,
+          29
+        ],
+        [
+          4,
+          27,
+          29
+        ],
+        [
+          15,
+          27,
+          29
+        ],
+        [
+          8,
+          18,
+          37
+        ],
+        [
+          18,
+          36,
+          37
+        ],
+        [
+          17,
+          38,
+          70
+        ],
+        [
+          18,
+          38,
+          70
+        ],
+        [
+          63,
+          67,
+          68
+        ],
+        [
+          67,
+          68,
+          79
+        ],
+        [
+          63,
+          67,
+          79
+        ],
+        [
+          28,
+          42,
+          47
+        ],
+        [
+          23,
+          28,
+          42
+        ],
+        [
+          28,
+          41,
+          42
+        ],
+        [
+          50,
+          51,
+          74
+        ],
+        [
+          50,
+          51,
+          72
+        ],
+        [
+          22,
+          44,
+          76
+        ],
+        [
+          21,
+          54,
+          76
+        ],
+        [
+          21,
+          76,
+          80
+        ],
+        [
+          21,
+          54,
+          80
+        ],
+        [
+          12,
+          20,
+          80
+        ],
+        [
+          12,
+          54,
+          80
+        ],
+        [
+          6,
+          35,
+          75
+        ],
+        [
+          35,
+          51,
+          75
+        ],
+        [
+          6,
+          51,
+          75
+        ],
+        [
+          6,
+          35,
+          51
+        ],
+        [
+          6,
+          74,
+          75
+        ],
+        [
+          51,
+          74,
+          75
+        ],
+        [
+          49,
+          74,
+          75
+        ],
+        [
+          49,
+          51,
+          74
+        ],
+        [
+          49,
+          51,
+          75
+        ],
+        [
+          49,
+          50,
+          51
+        ],
+        [
+          7,
+          8,
+          38
+        ],
+        [
+          8,
+          18,
+          38
+        ],
+        [
+          8,
+          26,
+          38
+        ],
+        [
+          8,
+          18,
+          26
+        ],
+        [
+          18,
+          26,
+          38
+        ],
+        [
+          21,
+          22,
+          76
+        ],
+        [
+          21,
+          22,
+          80
+        ],
+        [
+          26,
+          48,
+          70
+        ],
+        [
+          18,
+          26,
+          48
+        ],
+        [
+          18,
+          48,
+          70
+        ],
+        [
+          18,
+          26,
+          70
+        ],
+        [
+          6,
+          7,
+          55
+        ],
+        [
+          7,
+          36,
+          55
+        ],
+        [
+          26,
+          38,
+          70
+        ],
+        [
+          51,
+          53,
+          72
+        ],
+        [
+          6,
+          53,
+          72
+        ],
+        [
+          6,
+          51,
+          53
+        ],
+        [
+          6,
+          37,
+          53
+        ],
+        [
+          36,
+          37,
+          53
+        ],
+        [
+          51,
+          53,
+          55
+        ],
+        [
+          6,
+          51,
+          55
+        ],
+        [
+          35,
+          51,
+          55
+        ],
+        [
+          6,
+          35,
+          55
+        ],
+        [
+          6,
+          7,
+          35
+        ],
+        [
+          7,
+          35,
+          55
+        ],
+        [
+          18,
+          19,
+          48
+        ],
+        [
+          19,
+          48,
+          70
+        ],
+        [
+          8,
+          26,
+          37
+        ],
+        [
+          18,
+          26,
+          37
+        ],
+        [
+          46,
+          63,
+          67
+        ],
+        [
+          20,
+          45,
+          76
+        ],
+        [
+          20,
+          45,
+          80
+        ],
+        [
+          61,
+          62,
+          63
+        ],
+        [
+          12,
+          21,
+          54
+        ],
+        [
+          12,
+          21,
+          80
+        ]
+      ],
+      "elements": [
+        [
+          54,
+          25,
+          47,
+          77
+        ],
+        [
+          13,
+          34,
+          11,
+          77
+        ],
+        [
+          70,
+          17,
+          18,
+          19
+        ],
+        [
+          70,
+          69,
+          17,
+          19
+        ],
+        [
+          23,
+          28,
+          41,
+          29
+        ],
+        [
+          44,
+          76,
+          78,
+          79
+        ],
+        [
+          27,
+          33,
+          3,
+          10
+        ],
+        [
+          0,
+          31,
+          66,
+          43
+        ],
+        [
+          3,
+          2,
+          14,
+          10
+        ],
+        [
+          42,
+          47,
+          34,
+          12
+        ],
+        [
+          74,
+          6,
+          51,
+          72
+        ],
+        [
+          49,
+          65,
+          73,
+          11
+        ],
+        [
+          49,
+          50,
+          73,
+          74
+        ],
+        [
+          65,
+          13,
+          73,
+          11
+        ],
+        [
+          49,
+          52,
+          65,
+          11
+        ],
+        [
+          64,
+          60,
+          78,
+          59
+        ],
+        [
+          34,
+          13,
+          12,
+          77
+        ],
+        [
+          20,
+          54,
+          76,
+          80
+        ],
+        [
+          62,
+          61,
+          78,
+          79
+        ],
+        [
+          47,
+          42,
+          34,
+          77
+        ],
+        [
+          64,
+          60,
+          68,
+          78
+        ],
+        [
+          50,
+          74,
+          72,
+          71
+        ],
+        [
+          40,
+          28,
+          4,
+          56
+        ],
+        [
+          13,
+          25,
+          54,
+          77
+        ],
+        [
+          50,
+          73,
+          74,
+          71
+        ],
+        [
+          45,
+          76,
+          79,
+          80
+        ],
+        [
+          47,
+          34,
+          12,
+          77
+        ],
+        [
+          76,
+          78,
+          79,
+          80
+        ],
+        [
+          61,
+          60,
+          59,
+          78
+        ],
+        [
+          78,
+          57,
+          79,
+          80
+        ],
+        [
+          53,
+          6,
+          55,
+          36
+        ],
+        [
+          40,
+          28,
+          23,
+          29
+        ],
+        [
+          28,
+          40,
+          4,
+          29
+        ],
+        [
+          5,
+          3,
+          14,
+          10
+        ],
+        [
+          4,
+          27,
+          3,
+          15
+        ],
+        [
+          0,
+          16,
+          43,
+          32
+        ],
+        [
+          47,
+          23,
+          42,
+          77
+        ],
+        [
+          28,
+          4,
+          56,
+          5
+        ],
+        [
+          16,
+          30,
+          0,
+          43
+        ],
+        [
+          61,
+          59,
+          62,
+          78
+        ],
+        [
+          65,
+          13,
+          25,
+          54
+        ],
+        [
+          33,
+          1,
+          3,
+          10
+        ],
+        [
+          59,
+          64,
+          62,
+          78
+        ],
+        [
+          8,
+          6,
+          37,
+          36
+        ],
+        [
+          52,
+          24,
+          65,
+          77
+        ],
+        [
+          50,
+          49,
+          73,
+          11
+        ],
+        [
+          24,
+          52,
+          11,
+          77
+        ],
+        [
+          34,
+          13,
+          11,
+          12
+        ],
+        [
+          1,
+          0,
+          9,
+          32
+        ],
+        [
+          41,
+          24,
+          42,
+          77
+        ],
+        [
+          23,
+          24,
+          41,
+          77
+        ],
+        [
+          65,
+          24,
+          25,
+          77
+        ],
+        [
+          42,
+          24,
+          34,
+          77
+        ],
+        [
+          34,
+          24,
+          11,
+          77
+        ],
+        [
+          25,
+          24,
+          23,
+          77
+        ],
+        [
+          54,
+          20,
+          13,
+          77
+        ],
+        [
+          54,
+          47,
+          21,
+          77
+        ],
+        [
+          73,
+          50,
+          11,
+          71
+        ],
+        [
+          13,
+          73,
+          11,
+          71
+        ],
+        [
+          7,
+          38,
+          17,
+          18
+        ],
+        [
+          67,
+          45,
+          46,
+          79
+        ],
+        [
+          60,
+          46,
+          44,
+          78
+        ],
+        [
+          23,
+          28,
+          56,
+          47
+        ],
+        [
+          20,
+          54,
+          12,
+          77
+        ],
+        [
+          61,
+          46,
+          78,
+          79
+        ],
+        [
+          44,
+          45,
+          76,
+          79
+        ],
+        [
+          2,
+          39,
+          14,
+          9
+        ],
+        [
+          60,
+          61,
+          46,
+          78
+        ],
+        [
+          46,
+          44,
+          78,
+          79
+        ],
+        [
+          8,
+          7,
+          6,
+          36
+        ],
+        [
+          76,
+          22,
+          78,
+          80
+        ],
+        [
+          7,
+          8,
+          18,
+          36
+        ],
+        [
+          68,
+          63,
+          64,
+          79
+        ],
+        [
+          68,
+          64,
+          78,
+          79
+        ],
+        [
+          57,
+          68,
+          78,
+          79
+        ],
+        [
+          63,
+          46,
+          61,
+          79
+        ],
+        [
+          64,
+          63,
+          62,
+          79
+        ],
+        [
+          64,
+          62,
+          78,
+          79
+        ],
+        [
+          45,
+          44,
+          46,
+          79
+        ],
+        [
+          66,
+          0,
+          43,
+          32
+        ],
+        [
+          0,
+          39,
+          2,
+          9
+        ],
+        [
+          28,
+          40,
+          23,
+          56
+        ],
+        [
+          60,
+          44,
+          22,
+          78
+        ],
+        [
+          25,
+          23,
+          54,
+          47
+        ],
+        [
+          13,
+          20,
+          12,
+          77
+        ],
+        [
+          0,
+          58,
+          9,
+          32
+        ],
+        [
+          2,
+          1,
+          9,
+          10
+        ],
+        [
+          30,
+          31,
+          0,
+          43
+        ],
+        [
+          47,
+          12,
+          21,
+          77
+        ],
+        [
+          1,
+          16,
+          0,
+          32
+        ],
+        [
+          39,
+          0,
+          58,
+          9
+        ],
+        [
+          58,
+          0,
+          66,
+          32
+        ],
+        [
+          3,
+          1,
+          2,
+          10
+        ],
+        [
+          28,
+          4,
+          5,
+          15
+        ],
+        [
+          14,
+          2,
+          9,
+          10
+        ],
+        [
+          1,
+          0,
+          2,
+          9
+        ],
+        [
+          52,
+          65,
+          11,
+          77
+        ],
+        [
+          23,
+          41,
+          42,
+          77
+        ],
+        [
+          13,
+          65,
+          25,
+          77
+        ],
+        [
+          3,
+          27,
+          10,
+          15
+        ],
+        [
+          4,
+          3,
+          5,
+          15
+        ],
+        [
+          5,
+          3,
+          10,
+          15
+        ],
+        [
+          4,
+          28,
+          29,
+          15
+        ],
+        [
+          27,
+          4,
+          29,
+          15
+        ],
+        [
+          8,
+          37,
+          18,
+          36
+        ],
+        [
+          65,
+          13,
+          11,
+          77
+        ],
+        [
+          38,
+          70,
+          17,
+          18
+        ],
+        [
+          63,
+          68,
+          67,
+          79
+        ],
+        [
+          23,
+          28,
+          47,
+          42
+        ],
+        [
+          28,
+          23,
+          41,
+          42
+        ],
+        [
+          50,
+          74,
+          51,
+          72
+        ],
+        [
+          22,
+          44,
+          76,
+          78
+        ],
+        [
+          54,
+          21,
+          76,
+          80
+        ],
+        [
+          54,
+          20,
+          12,
+          80
+        ],
+        [
+          6,
+          35,
+          75,
+          51
+        ],
+        [
+          6,
+          75,
+          74,
+          51
+        ],
+        [
+          75,
+          49,
+          74,
+          51
+        ],
+        [
+          49,
+          50,
+          74,
+          51
+        ],
+        [
+          7,
+          8,
+          38,
+          18
+        ],
+        [
+          38,
+          8,
+          26,
+          18
+        ],
+        [
+          21,
+          22,
+          76,
+          80
+        ],
+        [
+          70,
+          26,
+          48,
+          18
+        ],
+        [
+          6,
+          7,
+          55,
+          36
+        ],
+        [
+          70,
+          38,
+          26,
+          18
+        ],
+        [
+          6,
+          51,
+          72,
+          53
+        ],
+        [
+          6,
+          53,
+          37,
+          36
+        ],
+        [
+          6,
+          51,
+          53,
+          55
+        ],
+        [
+          6,
+          35,
+          51,
+          55
+        ],
+        [
+          6,
+          7,
+          35,
+          55
+        ],
+        [
+          48,
+          70,
+          18,
+          19
+        ],
+        [
+          26,
+          8,
+          37,
+          18
+        ],
+        [
+          63,
+          67,
+          46,
+          79
+        ],
+        [
+          45,
+          20,
+          76,
+          80
+        ],
+        [
+          63,
+          61,
+          62,
+          79
+        ],
+        [
+          21,
+          54,
+          12,
+          80
+        ],
+        [
+          25,
+          23,
+          47,
+          77
+        ],
+        [
+          54,
+          21,
+          12,
+          77
+        ]
+      ],
+      "meshNameRoot": "spine",
+      "scale": 0.000001,
+      "structures": [
+        {
+          "name": "Dendrite",
+          "type": "compartment",
+          "tetIdxs": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            16,
+            19,
+            21,
+            22,
+            23,
+            24,
+            26,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            40,
+            41,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            62,
+            63,
+            66,
+            69,
+            71,
+            79,
+            80,
+            81,
+            83,
+            84,
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            108,
+            109,
+            110,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            135,
+            136
+          ]
+        },
+        {
+          "name": "Synapse",
+          "type": "compartment",
+          "tetIdxs": [
+            5,
+            15,
+            17,
+            18,
+            20,
+            25,
+            27,
+            28,
+            29,
+            39,
+            42,
+            60,
+            61,
+            64,
+            65,
+            67,
+            68,
+            70,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78,
+            82,
+            107,
+            111,
+            112,
+            113,
+            120,
+            131,
+            132,
+            133,
+            134
+          ]
+        },
+        {
+          "name": "PSD2",
+          "type": "membrane",
+          "triIdxs": [
+            133,
+            141
+          ]
+        }
+      ],
+      "freeDiffusionBoundaries": []
+    },
+    "simulations": []
+  }
+]
