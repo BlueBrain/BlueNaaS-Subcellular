@@ -58,25 +58,25 @@ const UnitType = {
 
 const units = [{
   val: 'm³',
-  type: UnitType.volSize,
+  type: UnitType.VOL_SIZE,
 }, {
   val: 'm²',
-  type: UnitType.surfSize,
+  type: UnitType.SURF_SIZE,
 }, {
   val: 'm³.s⁻¹',
-  type: UnitType.volReacRate,
+  type: UnitType.VOL_REAC_RATE,
 }, {
   val: 'm².s⁻¹',
-  type: UnitType.surfReacRate,
+  type: UnitType.SURF_REAC_RATE,
 }, {
   val: 's',
-  type: UnitType.time,
+  type: UnitType.TIME,
 }, {
   val: 'item',
-  type: UnitType.other,
+  type: UnitType.OTHER,
 }, {
   val: 'other',
-  type: UnitType.other,
+  type: UnitType.OTHER,
 }];
 
 const SimSolver = {
