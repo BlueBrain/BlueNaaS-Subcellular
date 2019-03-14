@@ -106,18 +106,15 @@ class NeuronRenderer {
   initNeuronCloud(cloudSize) {
     const positionBuffer = new Float32Array(cloudSize * 3);
     const colorBuffer = new Float32Array(cloudSize * 3);
-    const alphaBuffer = new Float32Array(cloudSize).fill(0.8);
 
     this.neuronCloud = {
       positionBufferAttr: new BufferAttribute(positionBuffer, 3),
       colorBufferAttr: new BufferAttribute(colorBuffer, 3),
-      alphaBufferAttr: new BufferAttribute(alphaBuffer, 1),
     };
 
     const geometry = new BufferGeometry();
     geometry.addAttribute('position', this.neuronCloud.positionBufferAttr);
     geometry.addAttribute('color', this.neuronCloud.colorBufferAttr);
-    geometry.addAttribute('alpha', this.neuronCloud.alphaBufferAttr);
 
     const material = new PointsMaterial({
       vertexColors: VertexColors,
@@ -521,9 +518,10 @@ class NeuronRenderer {
   }
 
   getMeshByNativeCoordinates(x, y) {
-    this.mouseGl.x = (x / this.renderer.domElement.clientWidth) * 2 - 1;
-    // TODO: remove hardcoded const
-    this.mouseGl.y = -((y - 28) / this.renderer.domElement.clientHeight) * 2 + 1;
+    const canvas = this.renderer.domElement;
+
+    this.mouseGl.x = ((x - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
+    this.mouseGl.y = -((y - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
 
     this.raycaster.setFromCamera(this.mouseGl, this.camera);
     const intersections = this.raycaster.intersectObjects(this.scene.children, true);

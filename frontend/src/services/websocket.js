@@ -34,8 +34,7 @@ class Ws {
     this.messageQueue = [];
     this.requestResolvers = new Map();
     this.socket = null;
-
-    this.initWebSocket();
+    this.clientId = null;
   }
 
   send(message, data, cmdId = null) {
@@ -70,8 +69,8 @@ class Ws {
     return response;
   }
 
-  initWebSocket() {
-    const socketUrl = getSocketUrlFromConfig(config);
+  init() {
+    const socketUrl = `${getSocketUrlFromConfig(config)}?clientId=${this.clientId}`;
     this.socket = new WebSocket(socketUrl);
 
     this.socket.addEventListener('open', () => this.processQueue());
@@ -94,7 +93,7 @@ class Ws {
   }
 
   reconnect() {
-    setTimeout(() => this.initWebSocket(), reconnectTimeout);
+    setTimeout(() => this.init(), reconnectTimeout);
   }
 
   processQueue() {
