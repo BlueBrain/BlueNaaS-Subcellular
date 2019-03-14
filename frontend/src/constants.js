@@ -109,7 +109,7 @@ const defaultEmptyModel = {
   simulations: [],
 };
 
-const DefaultSolverConfig = {
+const defaultSolverConfig = {
   [SimSolver.STEPS]: {
     dt: 0.02,
     tEnd: 20,
@@ -132,7 +132,7 @@ export default {
   ModelExportFormats,
   ModelFormatExtensions,
   defaultEmptyModel,
-  DefaultSolverConfig,
+  defaultSolverConfig,
   StimulusTypeEnum,
   ServerMessageType,
 };
