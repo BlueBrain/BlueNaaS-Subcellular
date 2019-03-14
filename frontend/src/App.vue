@@ -12,6 +12,8 @@
 
 <script>
   import './styles.scss';
+  import './server-events';
+
   import Header from './components/header.vue';
   import Footer from './components/footer.vue';
 
