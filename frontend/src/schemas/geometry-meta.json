@@ -1,0 +1,151 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "meshNameRoot",
+    "scale",
+    "structures",
+    "freeDiffusionBoundaries"
+  ],
+  "properties": {
+    "meshNameRoot": {
+      "$id": "#/properties/meshNameRoot",
+      "type": "string",
+      "title": "The Meshnameroot Schema",
+      "description": "Base name for TetGen mesh files",
+      "default": "",
+      "pattern": "^(.*)$"
+    },
+    "scale": {
+      "$id": "#/properties/scale",
+      "type": "number",
+      "title": "The Scale Schema",
+      "description": "Mesh scale",
+      "default": 0.0,
+      "examples": [
+        1e-06
+      ]
+    },
+    "structures": {
+      "$id": "#/properties/structures",
+      "type": "array",
+      "title": "The Structures Schema",
+      "default": null,
+      "minItems": 1,
+      "items": {
+        "$id": "#/properties/structures/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "$id": "#/properties/structures/items/properties/name",
+            "type": "string",
+            "title": "The Name Schema",
+            "default": "",
+            "examples": [
+              "Dendrite"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "type": {
+            "$id": "#/properties/structures/items/properties/type",
+            "type": "string",
+            "enum": [
+              "compartment",
+              "membrane"
+            ],
+            "title": "Structure Type Schema",
+            "description": "Mesh 2d and 3d structures",
+            "default": "",
+            "examples": [
+              "compartment"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "tetIdxs": {
+            "$id": "#/properties/structures/items/properties/tetIdxs",
+            "type": "array",
+            "title": "Compartment tetIdxs Schema",
+            "description": "Compartment tetrahedron indexes",
+            "default": null,
+            "items": {
+              "$id": "#/properties/structures/items/properties/tetIdxs/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                0,
+                1,
+                2
+              ]
+            }
+          },
+          "triIdxs": {
+            "$id": "#/properties/structures/items/properties/triIdxs",
+            "type": "array",
+            "title": "Membrane TriIdxs Schema",
+            "description": "Membrane triangle indexes",
+            "default": null,
+            "items": {
+              "$id": "#/properties/structures/items/properties/triIdxs/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                133,
+                141
+              ]
+            }
+          }
+        }
+      }
+    },
+    "freeDiffusionBoundaries": {
+      "$id": "#/properties/freeDiffusionBoundaries",
+      "type": "array",
+      "title": "The Freediffusionboundaries Schema",
+      "items": {
+        "$id": "#/properties/freeDiffusionBoundaries/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "properties": {
+          "name": {
+            "$id": "#/properties/freeDiffusionBoundaries/items/properties/name",
+            "type": "string",
+            "title": "The Name Schema",
+            "default": "",
+            "examples": [
+              "Dend_syn"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "triIdxs": {
+            "$id": "#/properties/freeDiffusionBoundaries/items/properties/triIdxs",
+            "type": "array",
+            "title": "The Triidxs Schema",
+            "items": {
+              "$id": "#/properties/freeDiffusionBoundaries/items/properties/triIdxs/items",
+              "type": "integer",
+              "title": "The Items Schema",
+              "default": 0,
+              "examples": [
+                2,
+                3
+              ]
+            }
+          }
+        },
+        "required": [
+          "triIdxs"
+        ]
+      }
+    }
+  }
+}
