@@ -8,9 +8,27 @@
         v-for="comp in compartments"
         :key="comp.name"
       >
-        <div class="color-block mr-6" :style="{'background-color': comp.color}"></div>
+        <i-switch
+          class="mr-6"
+          v-model="comp.visible"
+          size="small"
+          :style="comp.visible ? {'background-color': comp.color} : {}"
+          @on-change="onVisibilityChange(comp)"
+        />
         <span>{{ comp.name }}</span>
       </div>
+    </div>
+
+    <div class="display-conf-container">
+      <i-switch
+        class="mr-6"
+        size="small"
+        v-model="displayMode"
+        :true-value="GeometryDisplayMode.WIREFRAME"
+        :false-value="GeometryDisplayMode.DEFAULT"
+        @on-change="onDisplayModeChange"
+      />
+      <span>Wireframe</span>
     </div>
 
     <canvas ref="canvas"></canvas>
@@ -23,6 +41,8 @@
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
   import constants from '@/constants';
 
+  const { StructureType, GeometryDisplayMode } = constants;
+
 
   export default {
     name: 'geometry-viewer',
@@ -33,7 +53,9 @@
     },
     data() {
       return {
+        GeometryDisplayMode,
         compartments: [],
+        displayMode: GeometryDisplayMode.DEFAULT,
       };
     },
     mounted() {
@@ -42,10 +64,20 @@
     },
     methods: {
       initGeometry() {
-        this.renderer.initGeometry(this.geometryData);
+        this.renderer.initGeometry(this.geometryData, this.displayMode);
         this.compartments = (this.geometryData.structures || [])
-          .filter(st => st.type === constants.StructureType.COMPARTMENT)
-          .map((st, idx) => ({ name: st.name, color: this.renderer.colors[idx].css() }));
+          .filter(st => st.type === StructureType.COMPARTMENT)
+          .map((st, idx) => ({
+            name: st.name,
+            color: this.renderer.colors[idx].css(),
+            visible: true,
+          }));
+      },
+      onVisibilityChange(comp) {
+        this.renderer.setVisible(comp.name, comp.visible);
+      },
+      onDisplayModeChange(mode) {
+        this.renderer.setDisplayMode(mode);
       },
     },
     watch: {
@@ -62,16 +94,26 @@
 
 
 <style lang="scss" scoped>
-  .compartment-agenda-container {
+  .compartment-agenda-container, .display-conf-container {
+    background-color: #f8f8f9;
+    border: 1px solid #e9ebef;
     position: absolute;
     z-index: 10;
     bottom: 6px;
+    padding: 6px;
+  }
+
+  .compartment-agenda-container {
+    padding-bottom: 2px;
     left: 6px;
-    line-height: 14px;
 
     span {
       vertical-align: middle;
     }
+  }
+
+  .display-conf-container {
+    right: 6px;
   }
 
   .color-block {

@@ -15,14 +15,19 @@ import {
   MeshPhongMaterial,
   Mesh,
   Box3,
-  DoubleSide,
   Sphere,
+  DoubleSide,
+  WireframeGeometry,
+  LineSegments,
+  MeshBasicMaterial,
 } from 'three';
 import * as DistinctColors from 'distinct-colors';
 
 import TrackballControls from './trackball-controls';
 import utils from '@/tools/neuron-renderer-utils';
 import constants from '@/constants';
+
+const { StructureType, GeometryDisplayMode } = constants;
 
 
 const FOG_COLOR = 0xffffff;
@@ -51,12 +56,11 @@ class ModelGeometryRenderer {
     this.scene.fog = new Fog(FOG_COLOR, NEAR, FAR);
     this.scene.add(new AmbientLight(AMBIENT_LIGHT_COLOR));
 
-    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 1e-8, 1000);
+    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 1, 1000);
     this.scene.add(this.camera);
     this.camera.add(new PointLight(CAMERA_LIGHT_COLOR, 0.9));
 
     this.modelMeshObject = new Object3D();
-    this.modelMeshCenter = new Vector3(0, 0, 0);
     this.scene.add(this.modelMeshObject);
 
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
@@ -80,7 +84,9 @@ class ModelGeometryRenderer {
    *                                          and value is an array of tetrahedron indexes
    *                                          from geometry.elements
    */
-  initGeometry(modelGeometry) {
+  initGeometry(modelGeometry, displayMode = GeometryDisplayMode.DEFAULT) {
+    // TODO: move mesh skinning to TetGen class
+
     if (this.meshes) throw new Error('Model geometry has been already initialized');
 
     const defaultStructure = {
@@ -90,7 +96,7 @@ class ModelGeometryRenderer {
     };
 
     const structures = modelGeometry.structures || [defaultStructure];
-    const compartments = structures.filter(c => c.type === constants.StructureType.COMPARTMENT);
+    const compartments = structures.filter(c => c.type === StructureType.COMPARTMENT);
 
     this.colors = new DistinctColors({
       count: compartments.length,
@@ -102,35 +108,74 @@ class ModelGeometryRenderer {
       lightMax: 90,
     });
 
-    compartments.forEach((compartment, compartmentIdx) => {
-      const elements = compartment.tetIdxs.map(elIdx => modelGeometry.elements[elIdx]);
 
-      const geometry = new Geometry();
-      modelGeometry.nodes.forEach(node => geometry.vertices.push(new Vector3(...node)));
-      elements.forEach((element) => {
-        const [vert1, vert2, vert3, vert4] = element;
-        geometry.faces.push(new Face3(vert1, vert2, vert3));
-        geometry.faces.push(new Face3(vert2, vert4, vert3));
-        geometry.faces.push(new Face3(vert1, vert3, vert4));
-        geometry.faces.push(new Face3(vert1, vert2, vert4));
+    compartments.forEach((compartment, compartmentIdx) => {
+      const vertexMap = {};
+
+      const tets = compartment.tetIdxs.map(elIdx => modelGeometry.elements[elIdx]);
+
+      tets.forEach((tet) => {
+        const [vert1, vert2, vert3, vert4] = tet;
+
+        [
+          [vert1, vert3, vert2],
+          [vert2, vert3, vert4],
+          [vert1, vert2, vert4],
+          [vert1, vert4, vert3],
+        ].forEach((tri) => {
+          const key = tri.slice().sort().join('_');
+          vertexMap[key] = !vertexMap[key] && [...tri];
+        });
       });
 
-      geometry.computeFaceNormals();
+      const surfTris = Object.values(vertexMap).filter(val => val);
+
+      const surfVertices = Array.from(new Set(surfTris.reduce((acc, cur) => acc.concat(cur))));
+
+      const surfVertexIdxMap = new Map();
+      surfVertices.forEach((v, idx) => { surfVertexIdxMap[v] = idx; });
+
+      const compGeometry = new Geometry();
+      surfVertices.forEach((nodeIdx) => {
+        const vec = new Vector3(...modelGeometry.nodes[nodeIdx]);
+        compGeometry.vertices.push(vec);
+      });
+
+      surfTris.forEach((tris) => {
+        const face = new Face3(...tris.map(triIdx => surfVertexIdxMap[triIdx]));
+        compGeometry.faces.push(face);
+      });
+
+      // TODO: normalise geometries
+      compGeometry.mergeVertices();
+      compGeometry.computeFaceNormals();
 
       const color = this.colors[compartmentIdx].num();
 
-      const material = new MeshPhongMaterial({
+      const compMaterial = new MeshPhongMaterial({
         color,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0,
         side: DoubleSide,
       });
 
-      const mesh = new Mesh(geometry, material);
+      const compMesh = new Mesh(compGeometry, compMaterial);
+      compMesh.name = compartment.name;
+      this.modelMeshObject.add(compMesh);
 
-      this.modelMeshObject.add(mesh);
+      const wireframeGeometry = new WireframeGeometry(compGeometry);
+      const lineMaterial = new MeshBasicMaterial({
+        color,
+        opacity: 0,
+        transparent: true,
+        depthTest: false,
+      });
+      const wireframe = new LineSegments(wireframeGeometry, lineMaterial);
+      wireframe.name = compartment.name;
+      this.modelMeshObject.add(wireframe);
     });
 
+    this.setDisplayMode(displayMode);
     this.alignCamera();
   }
 
@@ -140,6 +185,22 @@ class ModelGeometryRenderer {
       this.modelMeshObject.remove(mesh);
       utils.disposeMesh(mesh);
     }
+  }
+
+  setVisible(compName, visible) {
+    this.modelMeshObject.traverse((obj) => {
+      if (obj.name === compName) obj.visible = visible;
+    });
+  }
+
+  setDisplayMode(mode) {
+    this.modelMeshObject.traverse((obj) => {
+      if (mode === 'wireframe' && obj instanceof Mesh) obj.material.opacity = 0.1;
+      if (mode === 'wireframe' && obj instanceof LineSegments) obj.material.opacity = 0.5;
+
+      if (mode === 'default' && obj instanceof Mesh) obj.material.opacity = 1;
+      if (mode === 'default' && obj instanceof LineSegments) obj.material.opacity = 0;
+    });
   }
 
   alignCamera() {
@@ -155,7 +216,6 @@ class ModelGeometryRenderer {
 
     this.camera.position.z = this.distance + center.z;
     this.controls.target = center;
-    this.modelMeshCenter = center;
   }
 
   destroy() {
@@ -175,12 +235,6 @@ class ModelGeometryRenderer {
   }
 
   render() {
-    const timer = Date.now() * 0.001;
-
-    this.camera.position.x = Math.cos(timer) * this.distance;
-    this.camera.position.y = Math.sin(timer) * this.distance;
-    this.camera.lookAt(this.modelMeshCenter);
-
     this.renderer.render(this.scene, this.camera);
   }
 
