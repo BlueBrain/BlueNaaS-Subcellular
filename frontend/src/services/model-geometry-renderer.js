@@ -38,6 +38,23 @@ const CAMERA_LIGHT_COLOR = 0xcacaca;
 const BACKGROUND_COLOR = 0xf8f8f9;
 
 
+function getNormScalar(nodes) {
+  const xVec = nodes.map(node => node[0]);
+  const yVec = nodes.map(node => node[1]);
+  const zVec = nodes.map(node => node[2]);
+
+  const deltaX = Math.max(...xVec) - Math.min(...xVec);
+  const deltaY = Math.max(...yVec) - Math.min(...yVec);
+  const deltaZ = Math.max(...zVec) - Math.min(...zVec);
+
+  const maxDimensionSize = Math.max(deltaX, deltaY, deltaZ);
+
+  const normScalar = 1 / maxDimensionSize;
+
+  return normScalar;
+}
+
+
 class ModelGeometryRenderer {
   constructor(canvas) {
     this.renderer = new WebGLRenderer({
@@ -56,7 +73,7 @@ class ModelGeometryRenderer {
     this.scene.fog = new Fog(FOG_COLOR, NEAR, FAR);
     this.scene.add(new AmbientLight(AMBIENT_LIGHT_COLOR));
 
-    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 1, 1000);
+    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 0.1, 10);
     this.scene.add(this.camera);
     this.camera.add(new PointLight(CAMERA_LIGHT_COLOR, 0.9));
 
@@ -108,6 +125,7 @@ class ModelGeometryRenderer {
       lightMax: 90,
     });
 
+    this.normScalar = getNormScalar(modelGeometry.nodes);
 
     compartments.forEach((compartment, compartmentIdx) => {
       const vertexMap = {};
@@ -137,7 +155,7 @@ class ModelGeometryRenderer {
 
       const compGeometry = new Geometry();
       surfVertices.forEach((nodeIdx) => {
-        const vec = new Vector3(...modelGeometry.nodes[nodeIdx]);
+        const vec = new Vector3(...modelGeometry.nodes[nodeIdx].map(coord => coord * this.normScalar));
         compGeometry.vertices.push(vec);
       });
 
@@ -146,7 +164,6 @@ class ModelGeometryRenderer {
         compGeometry.faces.push(face);
       });
 
-      // TODO: normalise geometries
       compGeometry.mergeVertices();
       compGeometry.computeFaceNormals();
 
@@ -174,6 +191,7 @@ class ModelGeometryRenderer {
       wireframe.name = compartment.name;
       this.modelMeshObject.add(wireframe);
     });
+
 
     this.setDisplayMode(displayMode);
     this.alignCamera();
