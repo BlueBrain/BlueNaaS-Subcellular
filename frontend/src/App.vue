@@ -14,6 +14,8 @@
   import './styles.scss';
   import './server-events';
 
+  import bus from './services/event-bus';
+
   import Header from './components/header.vue';
   import Footer from './components/footer.vue';
 
@@ -23,6 +25,10 @@
     components: {
       'header-component': Header,
       'footer-component': Footer,
+    },
+    mounted() {
+      this.$store.dispatch('init');
+      window.addEventListener('resize', () => bus.$emit('layoutChange'));
     },
   };
 </script>

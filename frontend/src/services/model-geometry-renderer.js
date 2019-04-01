@@ -84,9 +84,6 @@ class ModelGeometryRenderer {
     this.controls.enableDamping = true;
     this.controls.zoomSpeed = 0.8;
 
-    this.onResizeBinded = this.onResize.bind(this);
-    this.initEventListeners();
-
     this.animate();
   }
 
@@ -261,14 +258,6 @@ class ModelGeometryRenderer {
     this.camera.aspect = clientWidth / clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(clientWidth, clientHeight);
-  }
-
-  initEventListeners() {
-    window.addEventListener('resize', this.onResizeBinded, false);
-  }
-
-  destroyEventListeners() {
-    window.removeEventListener('resize', this.onResizeBinded, false);
   }
 }
 
