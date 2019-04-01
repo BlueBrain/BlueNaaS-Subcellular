@@ -40,7 +40,7 @@
         @input="onStructureChange"
       >
         <i-option
-          v-if="!isRootStructurePresent"
+          v-if="!isRootStructurePresent || nonBnglStructures"
           value="-"
         >
           none
@@ -106,7 +106,7 @@
         this.$emit('input', this.structure);
       },
       isValid() {
-        return this.structure.name && this.structure.parentName;
+        return this.structure.name.trim() && (this.nonBnglStructures || this.structure.parentName);
       },
       onSizeInputTab() {
         this.$refs.annotationInput.focus();
@@ -127,6 +127,9 @@
       },
       isRootStructurePresent() {
         return this.$store.state.model.structures.some(s => s.parentName === '-');
+      },
+      nonBnglStructures() {
+        return this.$store.state.model.nonBnglStructures;
       },
     },
     watch: {

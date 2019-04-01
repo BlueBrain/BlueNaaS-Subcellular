@@ -153,7 +153,11 @@
     },
     methods: {
       addStructure() {
-        this.newStructure = Object.assign({}, defaultStructure, { name: findUniqName(this.structures, 'ST') });
+        this.newStructure = Object.assign(
+          {},
+          defaultStructure,
+          { name: findUniqName(this.structures, 'ST'), valid: this.nonBnglStructures },
+        );
         this.showNewStructureModal();
 
         this.$nextTick(() => {
