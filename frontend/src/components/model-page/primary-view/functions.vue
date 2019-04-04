@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredFunctions"
-        @on-current-change="onFunctionSelect"
+        @on-row-click="onFunctionSelect"
       />
     </div>
 
@@ -156,8 +156,8 @@
       removeFunction() {
         this.$store.commit('removeSelectedEntity');
       },
-      onFunctionSelect(func) {
-        this.$store.commit('setEntitySelection', { type: 'function', entity: func });
+      onFunctionSelect(func, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'function', entity: func });
       },
       onOk() {
         this.hideNewFunctionModal();

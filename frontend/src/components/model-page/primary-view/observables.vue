@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredEntities"
-        @on-current-change="onObservableSelect"
+        @on-row-click="onObservableSelect"
       />
     </div>
 
@@ -154,8 +154,8 @@
       removeObservable() {
         this.$store.commit('removeSelectedEntity');
       },
-      onObservableSelect(observable) {
-        this.$store.commit('setEntitySelection', { type: 'observable', entity: observable });
+      onObservableSelect(observable, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'observable', entity: observable });
       },
       onOk() {
         this.hideNewObservableModal();

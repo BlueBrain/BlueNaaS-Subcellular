@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredStructures"
-        @on-current-change="onStructureSelect"
+        @on-row-click="onStructureSelect"
       />
     </div>
 
@@ -174,8 +174,8 @@
       removeStructure() {
         this.$store.commit('removeSelectedEntity');
       },
-      onStructureSelect(structure) {
-        this.$store.commit('setEntitySelection', { type: 'structure', entity: structure });
+      onStructureSelect(structure, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'structure', entity: structure });
       },
       computeTableHeight() {
         this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);

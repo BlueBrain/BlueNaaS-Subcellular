@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredMolecules"
-        @on-current-change="onMoleculeSelect"
+        @on-row-click="onMoleculeSelect"
       />
     </div>
 
@@ -155,8 +155,8 @@
       removeMolecule() {
         this.$store.commit('removeSelectedEntity');
       },
-      onMoleculeSelect(molecule) {
-        this.$store.commit('setEntitySelection', { type: 'molecule', entity: molecule });
+      onMoleculeSelect(molecule, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'molecule', entity: molecule });
       },
       onOk() {
         this.hideNewMoleculeModal();

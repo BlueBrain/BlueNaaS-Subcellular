@@ -119,9 +119,10 @@ export default {
     Vue.set(state.model, 'simulations', simulations);
   },
 
-  setEntitySelection(state, { type, entity }) {
+  setEntitySelection(state, { type, entity, index }) {
     Vue.set(state, 'selectedEntity', {
       type,
+      index,
       entity,
     });
   },
@@ -148,8 +149,8 @@ export default {
 
   removeSelectedEntity(state) {
     const entityCollection = entityTypeCollectionMap[state.selectedEntity.type];
-    state.model[entityCollection] = state.model[entityCollection]
-      .filter(entity => entity.name !== state.selectedEntity.entity.name);
+    const { index } = state.selectedEntity;
+    state.model[entityCollection].splice(index, 1);
 
     state.selectedEntity = null;
   },

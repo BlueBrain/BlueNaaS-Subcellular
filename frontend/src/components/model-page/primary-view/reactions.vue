@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredReactions"
-        @on-current-change="onReactionSelect"
+        @on-row-click="onReactionSelect"
       />
     </div>
 
@@ -195,8 +195,8 @@
       removeReaction() {
         this.$store.commit('removeSelectedEntity');
       },
-      onReactionSelect(reaction) {
-        this.$store.commit('setEntitySelection', { type: 'reaction', entity: reaction });
+      onReactionSelect(reaction, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'reaction', entity: reaction });
       },
       onOk() {
         this.hideNewReactionModal();

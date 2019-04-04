@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredSpecies"
-        @on-current-change="onSpeciesSelect"
+        @on-row-click="onSpeciesSelect"
       />
     </div>
 
@@ -166,8 +166,8 @@
       removeSpecies() {
         this.$store.commit('removeSelectedEntity');
       },
-      onSpeciesSelect(species) {
-        this.$store.commit('setEntitySelection', { type: 'species', entity: species });
+      onSpeciesSelect(species, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'species', entity: species });
       },
       onOk() {
         this.newSpeciesModalVisible = false;

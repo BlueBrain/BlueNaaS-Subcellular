@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredParameters"
-        @on-current-change="onParameterSelect"
+        @on-row-click="onParameterSelect"
       />
     </div>
 
@@ -154,8 +154,8 @@
       removeParameter() {
         this.$store.commit('removeSelectedEntity');
       },
-      onParameterSelect(parameter) {
-        this.$store.commit('setEntitySelection', { type: 'parameter', entity: parameter });
+      onParameterSelect(parameter, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'parameter', entity: parameter });
       },
       onOk() {
         this.hideNewParameterModal();

@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredSimulations"
-        @on-current-change="onSimulationSelect"
+        @on-row-click="onSimulationSelect"
       />
     </div>
 
@@ -272,8 +272,8 @@
         }, pick(this.selectedSimulation, ['clientId', 'modelId', 'solver', 'solverConf', 'annotation']));
         this.onOk();
       },
-      onSimulationSelect(simulation) {
-        this.$store.commit('setEntitySelection', { type: 'simulation', entity: simulation });
+      onSimulationSelect(simulation, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'simulation', entity: simulation });
       },
       onOk() {
         this.newSimulationModalVisible = false;

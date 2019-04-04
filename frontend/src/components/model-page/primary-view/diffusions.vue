@@ -13,7 +13,7 @@
         :height="tableHeight"
         :columns="columns"
         :data="filteredDiffusions"
-        @on-current-change="onDiffusionSelect"
+        @on-row-click="onDiffusionSelect"
       />
     </div>
 
@@ -164,8 +164,8 @@
       removeDiffusion() {
         this.$store.commit('removeSelectedEntity');
       },
-      onDiffusionSelect(diffusion) {
-        this.$store.commit('setEntitySelection', { type: 'diffusion', entity: diffusion });
+      onDiffusionSelect(diffusion, index) {
+        this.$store.commit('setEntitySelection', { index, type: 'diffusion', entity: diffusion });
       },
       onOk() {
         this.hideNewDiffusionModal();
