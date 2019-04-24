@@ -2,20 +2,32 @@
 <template>
   <div class="h-100 pos-relative canvas-container">
 
-    <div class="compartment-agenda-container">
+    <div
+      class="compartment-agenda-container"
+      v-if="structure.compartments.length || structure.membranes.length"
+    >
       <div
-        class="mb-6"
-        v-for="comp in compartments"
-        :key="comp.name"
+        class="comp-type-agenda"
+        v-for="(label, stType) in structureTypeLabel"
+        :key="stType"
       >
-        <i-switch
-          class="mr-6"
-          v-model="comp.visible"
-          size="small"
-          :style="comp.visible ? {'background-color': comp.color} : {}"
-          @on-change="onVisibilityChange(comp)"
-        />
-        <span>{{ comp.name }}</span>
+        <div v-if="structure[stType].length">
+          <p class="mb-6">{{ label }}:</p>
+          <div
+            class="mb-6"
+            v-for="st in structure[stType]"
+            :key="st.name"
+          >
+            <i-switch
+              class="mr-6"
+              v-model="st.visible"
+              size="small"
+              :style="st.visible ? {'background-color': st.color} : {}"
+              @on-change="onVisibilityChange(st)"
+            />
+            <span>{{ st.name }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -24,8 +36,8 @@
         class="mr-6"
         size="small"
         v-model="displayMode"
-        :true-value="GeometryDisplayMode.WIREFRAME"
         :false-value="GeometryDisplayMode.DEFAULT"
+        :true-value="GeometryDisplayMode.WIREFRAME"
         @on-change="onDisplayModeChange"
       />
       <span>Wireframe</span>
@@ -40,6 +52,7 @@
 <script>
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
   import constants from '@/constants';
+  import bus from '@/services/event-bus';
 
   const { StructureType, GeometryDisplayMode } = constants;
 
@@ -54,24 +67,44 @@
     data() {
       return {
         GeometryDisplayMode,
-        compartments: [],
+        structure: {
+          compartments: [],
+          membranes: [],
+        },
+        structureTypeLabel: {
+          compartments: 'Compartments',
+          membranes: 'Membranes',
+        },
         displayMode: GeometryDisplayMode.DEFAULT,
       };
     },
     mounted() {
       this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
       this.initGeometry();
+
+      this.onLayoutChangeBinded = this.onLayoutChange.bind(this);
+      bus.$on('layoutChange', this.onLayoutChangeBinded);
+    },
+    beforeDestroy() {
+      bus.$off('layoutChange', this.onLayoutChangeBinded);
+      this.renderer.destroy();
     },
     methods: {
       initGeometry() {
         this.renderer.initGeometry(this.geometryData, this.displayMode);
-        this.compartments = (this.geometryData.structures || [])
-          .filter(st => st.type === StructureType.COMPARTMENT)
+        const structure = (this.geometryData.structures || [])
           .map((st, idx) => ({
             name: st.name,
             color: this.renderer.colors[idx].css(),
             visible: true,
+            type: st.type,
           }));
+
+        this.structure.compartments = structure.filter(st => st.type === StructureType.COMPARTMENT);
+        this.structure.membranes = structure.filter(st => st.type === StructureType.MEMBRANE);
+      },
+      onLayoutChange() {
+        this.renderer.onResize();
       },
       onVisibilityChange(comp) {
         this.renderer.setVisible(comp.name, comp.visible);
@@ -86,9 +119,6 @@
         this.initGeometry();
       },
     },
-    beforeDestroy() {
-      this.renderer.destroy();
-    },
   };
 </script>
 
@@ -101,6 +131,10 @@
     z-index: 10;
     bottom: 6px;
     padding: 6px;
+  }
+
+  .comp-type-agenda {
+    padding: 6px 0;
   }
 
   .compartment-agenda-container {

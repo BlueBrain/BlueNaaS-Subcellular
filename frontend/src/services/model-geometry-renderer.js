@@ -110,10 +110,9 @@ class ModelGeometryRenderer {
     };
 
     const structures = modelGeometry.structures || [defaultStructure];
-    const compartments = structures.filter(c => c.type === StructureType.COMPARTMENT);
 
     this.colors = new DistinctColors({
-      count: compartments.length,
+      count: structures.length,
       hueMin: 0,
       hueMax: 360,
       chromaMin: 60,
@@ -124,10 +123,11 @@ class ModelGeometryRenderer {
 
     this.normScalar = getNormScalar(modelGeometry.nodes);
 
-    compartments.forEach((compartment, compartmentIdx) => {
+    const createCompartmentGeometry = (compartment) => {
       const vertexMap = {};
 
-      const tets = compartment.tetIdxs.map(elIdx => modelGeometry.elements[elIdx]);
+      const tets = compartment.tetIdxs
+        .map(elIdx => modelGeometry.elements[elIdx]);
 
       tets.forEach((tet) => {
         const [vert1, vert2, vert3, vert4] = tet;
@@ -145,14 +145,18 @@ class ModelGeometryRenderer {
 
       const surfTris = Object.values(vertexMap).filter(val => val);
 
-      const surfVertices = Array.from(new Set(surfTris.reduce((acc, cur) => acc.concat(cur))));
+      const allSurfVertices = surfTris.reduce((acc, cur) => acc.concat(cur));
+      const surfVertices = Array.from(new Set(allSurfVertices));
 
       const surfVertexIdxMap = new Map();
       surfVertices.forEach((v, idx) => { surfVertexIdxMap[v] = idx; });
 
       const compGeometry = new Geometry();
       surfVertices.forEach((nodeIdx) => {
-        const vec = new Vector3(...modelGeometry.nodes[nodeIdx].map(coord => coord * this.normScalar));
+        const coords = modelGeometry
+          .nodes[nodeIdx]
+          .map(coord => coord * this.normScalar);
+        const vec = new Vector3(...coords);
         compGeometry.vertices.push(vec);
       });
 
@@ -161,23 +165,64 @@ class ModelGeometryRenderer {
         compGeometry.faces.push(face);
       });
 
-      compGeometry.mergeVertices();
-      compGeometry.computeFaceNormals();
+      return compGeometry;
+    };
 
-      const color = this.colors[compartmentIdx].num();
+    const createMembraneGeometry = (membrane) => {
+      const { triIdxs } = membrane;
 
-      const compMaterial = new MeshPhongMaterial({
+      const vertexIdxSet = new Set();
+      triIdxs.forEach((triIdx) => {
+        modelGeometry.faces[triIdx]
+          .forEach(vertexIdx => vertexIdxSet.add(vertexIdx));
+      });
+
+      const vertexIdxs = Array.from(vertexIdxSet);
+      const vertexIdxMap = vertexIdxs
+        .reduce((acc, vertexIdx, idx) => Object.assign(acc, { [vertexIdx]: idx }), {});
+
+      const membGeometry = new Geometry();
+
+      vertexIdxs.forEach((vertexIdx) => {
+        const coords = modelGeometry
+          .nodes[vertexIdx]
+          .map(coord => coord * this.normScalar);
+        const vec = new Vector3(...coords);
+        membGeometry.vertices.push(vec);
+      });
+
+      membrane.triIdxs.forEach((triIdx) => {
+        const faceReindexedVertexIdxs = modelGeometry.faces[triIdx]
+          .map(vertexIdx => vertexIdxMap[vertexIdx]);
+        const face = new Face3(...faceReindexedVertexIdxs);
+        membGeometry.faces.push(face);
+      });
+
+      return membGeometry;
+    };
+
+    structures.forEach((structure, idx) => {
+      const geometry = structure.type === StructureType.COMPARTMENT
+        ? createCompartmentGeometry(structure)
+        : createMembraneGeometry(structure);
+
+      geometry.mergeVertices();
+      geometry.computeFaceNormals();
+
+      const color = this.colors[idx].num();
+
+      const material = new MeshPhongMaterial({
         color,
         transparent: true,
         opacity: 0,
         side: DoubleSide,
       });
 
-      const compMesh = new Mesh(compGeometry, compMaterial);
-      compMesh.name = compartment.name;
-      this.modelMeshObject.add(compMesh);
+      const stMesh = new Mesh(geometry, material);
+      stMesh.name = structure.name;
+      this.modelMeshObject.add(stMesh);
 
-      const wireframeGeometry = new WireframeGeometry(compGeometry);
+      const wireframeGeometry = new WireframeGeometry(geometry);
       const lineMaterial = new MeshBasicMaterial({
         color,
         opacity: 0,
@@ -185,10 +230,9 @@ class ModelGeometryRenderer {
         depthTest: false,
       });
       const wireframe = new LineSegments(wireframeGeometry, lineMaterial);
-      wireframe.name = compartment.name;
+      wireframe.name = structure.name;
       this.modelMeshObject.add(wireframe);
     });
-
 
     this.setDisplayMode(displayMode);
     this.alignCamera();
