@@ -39,7 +39,7 @@
     </i-form>
 
     <div v-if="simulation.solverConf">
-      <sim-steps-conf-form
+      <steps-conf-form
         v-if="simulation.solver === SimSolver.STEPS"
         v-model="simulation.solverConf"
         @input="onSimulationChange"
@@ -75,8 +75,8 @@
   // TODO: add stimuli for nfsim
   import SimStimuliForm from '@/components/shared/sim-stimuli-form.vue';
 
-  import SimStepsConfForm from '@/components/shared/sim-steps-conf-form.vue';
   import SimNfsimConfForm from '@/components/shared/sim-nfsim-conf-form.vue';
+  import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
 
   const { defaultSolverConfig, SimSolver } = constants;
 
@@ -89,8 +89,8 @@
     name: 'simulation-form',
     props: ['value'],
     components: {
-      'sim-steps-conf-form': SimStepsConfForm,
       'sim-nfsim-conf-form': SimNfsimConfForm,
+      'steps-conf-form': StepsConfForm,
     },
     data() {
       return {

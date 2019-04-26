@@ -67,6 +67,11 @@
         return this.conf.dt && this.conf.tEnd;
       },
     },
+    watch: {
+      value() {
+        this.conf = Object.assign({}, this.value);
+      },
+    },
   };
 </script>
 
