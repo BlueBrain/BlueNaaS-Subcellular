@@ -22,7 +22,7 @@
 
       <i-button
         type="primary"
-        :disabled="!simulationEdited"
+        :disabled="!simulationEdited || !tmpEntity.valid"
         @click="applySimulationChange"
       >
         Apply
