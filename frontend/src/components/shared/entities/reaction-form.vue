@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="100"
+    :label-width="120"
     @submit.native.prevent
   >
     <FormItem
@@ -83,7 +83,7 @@
       isValid() {
         // TODO: add reaction validation
         // TODO: add kr validation if reaction is bidirectional
-        return this.reaction.name && this.reaction.definition && this.reaction.kf;
+        return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf;
       },
       onDefinitionInputTab() {
         this.$refs.kfInput.focus();

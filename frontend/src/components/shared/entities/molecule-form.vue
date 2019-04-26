@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="100"
+    :label-width="120"
     @submit.native.prevent
   >
     <FormItem
@@ -64,7 +64,7 @@
         this.$emit('input', this.molecule);
       },
       isValid() {
-        return this.molecule.name && this.molecule.definition;
+        return this.molecule.name.trim() && this.molecule.definition;
       },
       onDefinitionInputTab() {
         this.$refs.annotationInput.focus();

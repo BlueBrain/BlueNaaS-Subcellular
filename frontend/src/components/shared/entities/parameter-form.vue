@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="110"
+    :label-width="120"
     @submit.native.prevent="onSubmit"
   >
     <FormItem
@@ -73,7 +73,7 @@
         this.$emit('input', this.parameter);
       },
       isValid() {
-        return this.parameter.name && this.parameter.definition && this.parameter.unit;
+        return this.parameter.name.trim() && this.parameter.definition && this.parameter.unit;
       },
       onDefinitionInputTab() {
         this.$refs.unitSelect.focus();

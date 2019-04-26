@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="100"
+    :label-width="120"
     @submit.native.prevent
   >
     <FormItem
@@ -76,7 +76,9 @@
         this.$emit('input', this.species);
       },
       isValid() {
-        return this.species.name && this.species.definition && this.species.concentration;
+        return this.species.name.trim()
+          && this.species.definition
+          && this.species.concentration;
       },
       onDefinitionInputTab() {
         this.$refs.concentrationInput.focus();

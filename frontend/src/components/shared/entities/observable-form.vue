@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="100"
+    :label-width="120"
     @submit.native.prevent
   >
     <FormItem
@@ -61,7 +61,7 @@
         this.$emit('input', this.observable);
       },
       isValid() {
-        return this.observable.name && this.observable.definition;
+        return this.observable.name.trim() && this.observable.definition;
       },
       onDefinitionInputTab() {
         this.$refs.annotationInput.focus();

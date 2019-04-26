@@ -90,7 +90,7 @@
         this.$emit('input', this.diffusion);
       },
       isValid() {
-        return this.diffusion.name && this.diffusion.speciesDefinition;
+        return this.diffusion.name.trim() && this.diffusion.speciesDefinition;
       },
       onSpeciesDefinitionInputTab() {
         this.$refs.diffusionConstantInput.focus();
