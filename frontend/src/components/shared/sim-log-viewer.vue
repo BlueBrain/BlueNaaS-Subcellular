@@ -35,7 +35,17 @@
     nfsim_stdout: 'NFsim stdout',
     nfsim_stderr: 'NFsim stderr',
     system: 'System',
+    rnf: '.rnf',
   };
+
+  const logPriority = [
+    'system',
+    'bng_stderr',
+    'nfsim_stderr',
+    'nfsim_stdout',
+    'bng_stdout',
+    'rnf',
+  ];
 
   export default {
     name: 'sim-log-viewer',
@@ -46,23 +56,8 @@
       const logTypes = Object.keys(LogTypeEnum)
         .reduce((a, logType) => a.concat(sim.log[logType] ? logType : []), []);
 
-      let initialLogType = '';
-
-      if (sim.error) {
-        if (sim.log.system) {
-          initialLogType = 'system';
-        } else if (sim.log.nfsim_stderr) {
-          initialLogType = 'nfsim_stderr';
-        } else if (sim.log.nfsim_stdout) {
-          initialLogType = 'nfsim_stdout';
-        } else if (sim.log.bng_stderr) {
-          initialLogType = 'bng_stderr';
-        } else {
-          initialLogType = 'bng_stdout';
-        }
-      } else {
-        initialLogType = 'nfsim_stdout';
-      }
+      const initialLogType = logPriority.find(logType => sim.log[logType])
+        || Object.keys(sim.log)[0];
 
       return {
         LogTypeEnum,
