@@ -76,6 +76,7 @@
       </i-col>
 
       <i-col span="4">
+        <!-- TODO: add support for exponential notation -->
         <InputNumber
           v-if="!stimulus.type || stimulus.type === 'setParam' || stimulus.type === 'setConc'"
           v-model="stimulus.value"
@@ -104,26 +105,39 @@
       </i-col>
 
     </Row>
+
+    <div class="p-6 mt-6">
+      <i-button
+        @click="onImportClick"
+      >
+        Import from file
+      </i-button>
+    </div>
+
+    <Modal
+      title="Import stimuli from a file"
+      class-name="vertical-center-modal"
+      v-model="importModalVisible"
+    >
+      <stimuli-import @on-import="onImport"/>
+    </Modal>
   </div>
 </template>
 
 
 <script>
+  // TODO: cleanup, refactor
   import sortBy from 'lodash/sortBy';
 
   import constants from '@/constants';
+
+  import NfsimStimuliImport from './nfsim-stimuli-import.vue';
 
   const { StimulusTypeEnum: StimType } = constants;
 
   const stimulusTypes = [{
     type: StimType.SET_PARAM,
     label: 'set param',
-  }, {
-    type: StimType.SET_CONC,
-    label: 'set conc',
-  }, {
-    type: StimType.CLAMP_CONC,
-    label: 'clamp conc',
   }];
 
   const tableColumns = [{
@@ -149,20 +163,24 @@
 
   const defaultStimulus = {
     t: null,
-    type: null,
+    type: StimType.SET_PARAM,
     target: null,
     value: null,
   };
 
   export default {
-    name: 'steps-stimuli-form',
+    name: 'nfsim-stimuli-form',
     props: ['value'],
+    components: {
+      'stimuli-import': NfsimStimuliImport,
+    },
     data() {
       return {
         tableColumns,
         stimulusTypes,
         stimuli: this.value.slice(),
         stimulus: Object.assign({}, defaultStimulus),
+        importModalVisible: false,
       };
     },
     methods: {
@@ -184,6 +202,14 @@
       onStimuliChange() {
         this.$emit('input', this.stimuli.slice());
       },
+      onImportClick() {
+        this.importModalVisible = true;
+      },
+      onImport(stimuli) {
+        this.stimuli = stimuli;
+        this.importModalVisible = false;
+        this.onStimuliChange();
+      },
     },
     computed: {
       parameters() {
@@ -197,7 +223,12 @@
           value,
         } = this.stimulus;
 
-        return t && type && target && value;
+        return t && type && target && typeof value === 'number';
+      },
+    },
+    watch: {
+      value() {
+        this.stimuli = this.value.slice();
       },
     },
   };

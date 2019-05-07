@@ -44,7 +44,7 @@
         v-model="simulation.solverConf"
         @input="onSimulationChange"
       />
-      <sim-nfsim-conf-form
+      <nfsim-conf-form
         v-else-if="simulation.solver === SimSolver.NFSIM"
         v-model="simulation.solverConf"
         @input="onSimulationChange"
@@ -72,11 +72,8 @@
 <script>
   import constants from '@/constants';
 
-  // TODO: add stimuli for nfsim
-  import SimStimuliForm from '@/components/shared/sim-stimuli-form.vue';
-
-  import SimNfsimConfForm from '@/components/shared/sim-nfsim-conf-form.vue';
   import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
+  import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue';
 
   const { defaultSolverConfig, SimSolver } = constants;
 
@@ -89,8 +86,8 @@
     name: 'simulation-form',
     props: ['value'],
     components: {
-      'sim-nfsim-conf-form': SimNfsimConfForm,
       'steps-conf-form': StepsConfForm,
+      'nfsim-conf-form': NfsimConfForm,
     },
     data() {
       return {
@@ -109,7 +106,9 @@
         this.$emit('input', this.simulation);
       },
       isValid() {
-        return this.simulation.name && this.simulation.solverConf.valid;
+        return this.simulation.name.trim()
+          && this.simulation.solverConf.valid
+          && this.simulation.solver;
       },
       focus() {
         this.$refs.nameInput.focus();
@@ -117,7 +116,7 @@
       getSolverSelectLabel(solver) {
         const solverState = this.solverState(solver);
         return solverLabel[solver]
-          + solverState.reason ? ` (${solverState.reason})` : '';
+          + (solverState.reason ? ` (${solverState.reason})` : '');
       },
     },
     computed: {
