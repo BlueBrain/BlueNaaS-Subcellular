@@ -24,7 +24,7 @@
         :disabled="!proteins.length"
         @click="gotoNextStep"
       >
-        To protein concentrations
+        To molecule concentrations
         <Icon type="arrow-right-a"></Icon>
       </i-button>
     </div>

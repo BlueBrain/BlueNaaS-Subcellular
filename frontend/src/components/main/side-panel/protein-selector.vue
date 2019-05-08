@@ -1,30 +1,42 @@
 
 <template>
   <div>
-    <h3 class="mt-12">Protein selector</h3>
+    <h3 class="mt-12">Molecule selector</h3>
 
     <Row class="mt-12" :gutter="12">
       <i-col :span="12">
-        <h4>All Proteins</h4>
-        <i-select
-          v-model="currentProteinListId"
-          class="mt-6"
-          size="small"
-        >
-          <i-option
-            v-for="(listLabel, listId) of proteinList"
-            :key="listId"
-            :value="listId"
-          >
-            {{ listLabel }}
-          </i-option>
-        </i-select>
+        <strong>All molecules</strong>
+        <small v-if="proteins.availableFiltered.length !== proteins.available.length">
+          ({{ proteins.availableFiltered.length }} out of {{ proteins.available.length }})
+        </small>
+
+        <Row :gutter="12">
+          <i-col :span="19">
+            <i-select
+              v-model="currentProteinListId"
+              class="mt-6"
+            >
+              <i-option
+                v-for="(listLabel, listId) of proteinList"
+                :key="listId"
+                :value="listId"
+              >
+                {{ listLabel }}
+              </i-option>
+            </i-select>
+          </i-col>
+          <i-col :span="5" class="text-right">
+            <Checkbox class="checkbox-line" v-model="onlyDefinedConcentration">Only defined conc.</Checkbox>
+          </i-col>
+        </Row>
 
         <collection-text-filter-input
           class="mt-6"
+          search-placeholder="Molecule name, UniProtID, gene name"
           v-model="proteins.availableFiltered"
           :collection="proteins.available"
           :filter-by="proteinSearchProps"
+          :only-defined-concentration="onlyDefinedConcentration"
         />
 
         <div class="virtual-list-container p-6 mt-6">
@@ -51,7 +63,6 @@
 
         <div class="mt-6">
           <i-button
-            size="small"
             @click="onAddFiltered"
           >
             Add filtered
@@ -59,10 +70,14 @@
         </div>
       </i-col>
       <i-col :span="12">
-        <h4>Selected proteins</h4>
+        <strong>Selected molecules</strong>
+        <small v-if="proteins.selectedFiltered.length !== proteins.selected.length">
+          ({{ proteins.selectedFiltered.length }} out of {{ proteins.selected.length }})
+        </small>
 
         <collection-text-filter-input
           class="mt-6"
+          search-placeholder="Molecule name, UniProtID, gene name"
           v-model="proteins.selectedFiltered"
           :collection="proteins.selected"
           :filter-by="proteinSearchProps"
@@ -93,15 +108,13 @@
         <Row class="mt-6">
           <i-col :span="12">
             <i-button
-              size="small"
               @click="createCustomProteinList"
             >
-              Create protein group
+              Create molecule group
             </i-button>
           </i-col>
           <i-col :span="12" class="text-right">
             <i-button
-              size="small"
               type="warning"
               @click="onClearSelected"
             >
@@ -121,7 +134,9 @@
   import CollectionTextFilterInput from '@/components//shared/collection-text-filter-input.vue';
 
   // TODO: add integration to load proteins from remote backend (nexus?)
-  import proteinsRaw from '@/cell_proteins_reduced.json';
+  import proteinService from '../../../services/protein';
+
+  const proteinsRaw = proteinService.getProteinList();
 
   const sortFunc = (p1, p2) => (p1.protNames < p2.protNames ? -1 : 1);
 
@@ -151,6 +166,7 @@
       return {
         proteinList,
         proteinSearchProps,
+        onlyDefinedConcentration: false,
         currentProteinListId: 'all',
         neuron: null,
         synapse: null,
@@ -259,5 +275,11 @@
   .virtual-list-container {
     border: 1px solid #dddee1;
     border-radius: 3px;
+  }
+
+  .checkbox-line {
+    height: 24px;
+    line-height: 24px;
+    margin-top: 6px;
   }
 </style>

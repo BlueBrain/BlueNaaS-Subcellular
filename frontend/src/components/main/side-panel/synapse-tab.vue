@@ -12,7 +12,7 @@
           type="primary"
           @click="gotoNextStep"
         >
-          To protein selection
+          To molecule selection
           <Icon type="arrow-right-a"></Icon>
         </i-button>
       </div>
