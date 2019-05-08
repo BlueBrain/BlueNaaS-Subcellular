@@ -2,7 +2,7 @@
 <template>
   <div>
     <Row :gutter="12" type="flex">
-      <i-col span="16">
+      <i-col span="12">
         <i-form
           :label-width="100"
           @submit.native.prevent
@@ -79,10 +79,10 @@
                   </p>
                   <p>
                     geometry.json should contain: <br>
-                    * <strong>scale</strong>: mesh scale ration
+                    * <strong>scale</strong>: mesh scale
                     * <strong>meshNameRoot</strong>: name of TetGen files (without extension) <br>
-                    * <strong>compartments</strong>: object with compartment names as keys and list of corresponding tetrahedron indexes from mesh as value <br>
-                    * <strong>freeDiffusionBoundaries</strong>: pairs of compartment names where free diffusion boundaries should be set
+                    * <strong>structures</strong>: collection of objects with name, type ("compartment" or "membrane") and tetIdxs(comp)|triIdxs(memb) defined<br>
+                    * <strong>freeDiffusionBoundaries</strong>: collection of objects with name and triIdxs params defined
                   </p>
                 </div>
               </Poptip>
@@ -91,7 +91,7 @@
           </div>
         </Upload>
       </i-col>
-      <i-col span="8">
+      <i-col span="12">
         <div class="geometry-viewer-container h-100">
           <geometry-viewer
             v-if="geometryData"
@@ -184,7 +184,7 @@
         const schemaValid = validateGeometryMeta(geometry);
         if (!schemaValid) {
           const [errObj] = validateGeometryMeta.errors;
-          this.error = `${errObj.keyword} of ${errObj.dataPath} ${errObj.message}`;
+          this.error = `geometry.json error: ${errObj.dataPath} ${errObj.message}`;
           return;
         }
 
@@ -195,7 +195,7 @@
             || (st.type === StructureType.MEMBRANE && st.triIdxs.length);
 
           if (!valid) {
-            this.error = `${st.name} should contain ${geomMetaStructProp[st.type]} property`;
+            this.error = `geometry.json error: ${st.name} should contain ${geomMetaStructProp[st.type]} property`;
           }
 
           return valid;
@@ -263,10 +263,10 @@
       },
       emitChange() {
         const modelGeometry = {
+          ...this.geometry,
           name: this.name,
           annotation: this.annotation,
           file: this.file,
-          geometry: this.geometry,
           valid: this.geometryValid,
         };
         this.$emit('input', Object.assign({}, this.value, modelGeometry));
@@ -320,10 +320,6 @@
   }
   .error {
     color: red;
-
-    &:first-letter {
-      text-transform: capitalize;
-    }
   }
   .geometry-viewer-container {
     background-color: #f8f8f9;
