@@ -6,7 +6,6 @@
       <i-col span="4">
         <i-select
           v-model="ctrl.currentType"
-          size="small"
           element-id="te"
           placeholder="Filter"
           :transfer="true"
@@ -17,7 +16,6 @@
       </i-col>
       <i-col span="6">
         <i-select
-          size="small"
           placeholder="Prop"
           :transfer="true"
           v-model="ctrl.currentProp"
@@ -34,7 +32,6 @@
         <i-select
           v-model="ctrl.currentValue"
           :transfer="true"
-          size="small"
           filterable
           placeholder="Value"
         >
@@ -47,7 +44,6 @@
       </i-col>
       <i-col span="4" style="text-align: center">
         <i-button
-          size="small"
           long
           type="primary"
           @click="addFilter"
@@ -82,7 +78,6 @@
         >
           <RadioGroup
             type="button"
-            size="small"
             v-model="ctrl.includeAlgorythm"
             @on-change="onAlgorythmChange"
           >
@@ -116,7 +111,6 @@
         >
           <RadioGroup
             type="button"
-            size="small"
             v-model="ctrl.excludeAlgorythm"
             @on-change="onAlgorythmChange"
           >
@@ -137,7 +131,6 @@
         push="20"
       >
         <i-button
-          size="small"
           long
           @click="resetFilters"
         >Reset filters</i-button>

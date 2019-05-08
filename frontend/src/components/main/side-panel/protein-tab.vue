@@ -21,7 +21,6 @@
     <div class="text-right mt-12">
       <i-button
         type="primary"
-        size="small"
         :disabled="!proteins.length"
         @click="gotoNextStep"
       >

@@ -10,7 +10,6 @@
       <div class="text-right mt-12">
         <i-button
           type="primary"
-          size="small"
           @click="gotoNextStep"
         >
           To protein selection

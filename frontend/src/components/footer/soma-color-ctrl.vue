@@ -4,7 +4,6 @@
     <Form :label-width="65" label-position="left">
       <FormItem label="Color by:" style="margin-bottom: 0">
         <i-select
-          size="small"
           placeholder="Color by"
           v-model="currentProp"
           :transfer="true"
