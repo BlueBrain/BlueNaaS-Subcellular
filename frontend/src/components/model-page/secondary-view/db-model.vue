@@ -19,6 +19,7 @@
       class="mt-12"
       type="error"
       @click="deleteModel"
+      :disabled="model.public"
     >
       Delete
     </i-button>
