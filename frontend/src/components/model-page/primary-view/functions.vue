@@ -94,6 +94,7 @@
     name: '',
     valid: false,
     definition: '',
+    argument: '',
     annotation: '',
   };
 
@@ -114,6 +115,10 @@
           title: 'Name',
           key: 'name',
           maxWidth: 240,
+        }, {
+          title: 'Arg',
+          key: 'argument',
+          maxWidth: 120,
         }, {
           title: 'BioNetGen definition',
           render: (h, params) => h(BnglInput, {

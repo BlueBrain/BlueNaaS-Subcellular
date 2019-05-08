@@ -15,6 +15,15 @@
       />
     </FormItem>
     <FormItem
+      label="Argument"
+    >
+      <i-input
+        size="small"
+        v-model="func.argument"
+        @input="onFunctionChange"
+      />
+    </FormItem>
+    <FormItem
       label="BioNetGen def. *"
     >
       <bngl-input
