@@ -7,10 +7,12 @@ import words from 'lodash/words';
 import cloneDeep from 'lodash/cloneDeep';
 import uuidv4 from 'uuid/v4';
 
+import constants from '@/constants';
+import modelTools from '@/tools/model-tools';
+
 import agents from '@/data/agents.json';
 import rules from '@/data/rules.json';
 import reactionRates from '@/data/reac-rates';
-import constants from '@/constants';
 
 
 const defaultStructures = {
@@ -158,7 +160,7 @@ function buildFromProteins(proteins) {
 function buildFromBngl(fileContent) {
   const newLineR = /\r\n|\r|\n/;
 
-    const model = Object.assign({ id: uuidv4(), name: '' }, cloneDeep(constants.defaultEmptyModel));
+    const model = Object.assign(cloneDeep(constants.defaultEmptyModel), { id: uuidv4() });
 
     const sPartsToStructure = sParts => ({
       name: sParts[0],
@@ -174,23 +176,38 @@ function buildFromBngl(fileContent) {
       annotation: '',
     });
 
-    const lineToFunction = line => ({
-      name: line.match(/(.*)\(\)/)[1],
-      definition: line.match(/(.*)\(\)(.*)/)[2].trim(),
-      annotation: '',
-    });
+    const lineToFunction = (line) => {
+      const functionR = /(\w+)\((\w*)\)\s*=?\s*(.*)/;
+      const functionMatch = line.match(functionR);
 
-    const mPartsToMolecule = mParts => ({
-      name: mParts[0].match(/(.*)\(/)[1],
-      definition: mParts[0],
-      annotation: '',
-    });
+      const func = {
+        name: functionMatch[1],
+        argument: functionMatch[2],
+        definition: functionMatch[3],
+        annotation: '',
+      };
+
+      return func;
+    };
+
+    const mPartsToMolecule = (mParts) => {
+      const molecule = {
+        name: mParts[0].match(/(.*)\(/)[1],
+        definition: mParts[0],
+        annotation: '',
+      };
+
+      return molecule;
+    };
 
     const partsToSpecies = (parts) => {
+      const def = parts[0];
+
       return {
         name: words(parts[0].match(/(.*)(\(?|$)/)[1]).join('_'),
-        definition: parts[0],
+        definition: def,
         concentration: parts[1],
+        unit: modelTools.getDefaultSpecUnit(model, def),
         annotation: '',
       };
     };
@@ -199,17 +216,21 @@ function buildFromBngl(fileContent) {
       const bidirectional = line.includes('<->');
 
       const reactionR = bidirectional
-        ? /^(\w*?)\s?:?\s*(.*)\s+(\S+)\s*,\s*(\S+)#?(.*?)$/
-        : /^(\w*?)\s?:?\s*(.*)\s+(\S+)#?(.*?)$/;
+        ? /^((\w*)\s?:)?\s*(.*)\s+(\S+)\s*,\s*(\S+)#?(.*?)$/
+        : /^((\w*)\s?:)?\s*(.*)\s+(\S+)#?(.*?)$/;
 
       const reactionMatch = line.match(reactionR);
 
+      const reacDef = reactionMatch[3];
+
       const reaction = {
-        name: reactionMatch[1] || '-',
-        definition: reactionMatch[2],
-        kf: reactionMatch[3],
-        kr: bidirectional ? reactionMatch[4] : '',
-        annotation: bidirectional ? reactionMatch[5] : reactionMatch[4],
+        name: reactionMatch[2] || '-',
+        definition: reacDef,
+        kf: reactionMatch[4],
+        // kfUnit: modelTools.getDefaultForwardKineticRateUnit(model, reacDef),
+        kr: bidirectional ? reactionMatch[5] : '',
+        // krUnit: bidirectional ? modelTools.getDefaultBackwardKineticRateUnit(model, reacDef) : null,
+        annotation: bidirectional ? reactionMatch[6] : reactionMatch[5],
       };
 
       return reaction;
@@ -268,16 +289,19 @@ function buildFromBngl(fileContent) {
         .map(lineToFunction);
     }
 
-    model.molecules = fileContent
-      .match(moleculesR)[1]
-      .split(newLineR)
-      .filter(m => m)
-      .map(m => m.trim())
-      .filter(m => !m.startsWith('#'))
-      .map(p => p.match(/[^#]*/)[0])
-      .map(p => p.trim())
-      .map(m => m.split(/\t|\s/).filter(p => p))
-      .map(mPartsToMolecule);
+    if (moleculesR.test(fileContent)) {
+      model.molecules = fileContent
+        .match(moleculesR)[1]
+        .split(newLineR)
+        .map(m => m.trim())
+        .filter(m => m)
+        .filter(m => !m.startsWith('#'))
+        .map(p => p.match(/[^#]*/)[0])
+        .map(p => p.trim())
+        .filter(p => p)
+        .map(m => m.split(/\t|\s/).filter(p => p))
+        .map(mPartsToMolecule);
+    }
 
     if (speciesR.test(fileContent)) {
       model.species = fileContent
@@ -296,8 +320,8 @@ function buildFromBngl(fileContent) {
       model.observables = fileContent
         .match(observablesR)[1]
         .split(newLineR)
-        .filter(o => o)
         .map(o => o.trim())
+        .filter(o => o)
         .filter(o => !o.startsWith('#'))
         .map(p => p.match(/[^#]*/)[0])
         .map(p => p.trim())
@@ -310,6 +334,7 @@ function buildFromBngl(fileContent) {
       .split(newLineR)
       .map(r => r.trim())
       .filter(r => !r.startsWith('#'))
+      .filter(r => !r.includes(':\\'))
       .filter(r => r)
       .map(p => p.match(/[^#]*/)[0])
       .map(p => p.trim())
