@@ -13,16 +13,16 @@ import modelBuilder from '@/services/model-builder';
 
 
 export default {
-  async init({ commit }) {
+  async init({ dispatch }) {
     let user = await storage.getItem('user');
     if (!user) {
-        user = {
+      user = {
         id: uuidv4(),
         fullName: '',
         email: '',
       };
     }
-    commit('setUser', user);
+    dispatch('setUser', user);
     socket.clientId = user.id;
     socket.init();
   },
