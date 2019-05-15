@@ -2,6 +2,7 @@
 import Vue from 'vue';
 import findIndex from 'lodash/findIndex';
 import get from 'lodash/get';
+import cloneDeep from 'lodash/cloneDeep';
 
 import constants from '@/constants';
 
@@ -81,13 +82,27 @@ export default {
     // TODO: deprecate in favor of upper one
     const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simStatus.id);
 
+    // TODO: refactor
+    if (!simStatus.log) {
+      delete simStatus.log;
+    }
+
     const currentSim = state.model.simulations[simIndex];
     const simulation = Object.assign({}, currentSim, simStatus);
+
+    // add description as system log if there are no logs
+    // TODO: refactor
+    if (!simulation.log && simulation.description) {
+      simulation.log = {
+        system: simulation.description,
+      };
+    }
+
     Vue.set(state.model.simulations, simIndex, simulation);
 
     // TODO: consider refactoring .selectedEntity
     if (get(state, 'selectedEntity.entity.id') === simStatus.id) {
-      Vue.set(state.selectedEntity.entity, 'status', simStatus.status);
+      Vue.set(state.selectedEntity, 'entity', cloneDeep(simulation));
     }
   },
 
@@ -100,6 +115,9 @@ export default {
 
   addSimStepTrace(state, simStepTrace) {
     const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simStepTrace.id);
+
+    if (simIndex === -1) return;
+
     const currentSimulation = state.model.simulations[simIndex];
     const simulation = Object.assign({}, currentSimulation);
     simulation.times.push(simStepTrace.t);
