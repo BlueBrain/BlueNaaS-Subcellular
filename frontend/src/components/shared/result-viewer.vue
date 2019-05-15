@@ -19,7 +19,7 @@
     },
     yaxis: {
       ticks: 'outside',
-      title: 'Concentration, # mols',
+      title: 'Amount of molecules, #',
     },
   };
 
@@ -54,10 +54,11 @@
   };
 
   export default {
-    name: 'sim-result-viewer',
+    name: 'result-viewer',
     data() {
       return {
         initialized: false,
+        chartPointN: 0,
       };
     },
     props: ['simId'],
@@ -71,35 +72,44 @@
       init() {
         if (!this.simulation.traceTarget && !this.simulation.times.length) return;
 
+        this.chartPointN = this.simulation.values.length;
         Plotly.newPlot(this.$refs.chart, this.getChartData(), layout, config);
         downloadCsvBtn.click = () => this.downloadCsv();
         this.initialized = true;
       },
       redraw() {
-        Plotly.react(this.$refs.chart, this.getChartData(), layout);
+        const chartDataDiff = this.getChartData(this.chartPointN);
+        const xDiffList = chartDataDiff.map(diff => diff.x);
+        const yDiffList = chartDataDiff.map(diff => diff.y);
+        const extTraceTarget = [...Array(xDiffList.length).keys()];
+        Plotly.extendTraces(this.$refs.chart, { x: xDiffList, y: yDiffList }, extTraceTarget);
+        this.chartPointN += xDiffList[0].length;
       },
-      getChartData() {
+      getChartData(startIndex = 0) {
         return this.simulation.traceTarget === 'observable'
-          ? this.observableTargetChartData()
-          : this.speciesTargetChartData();
+          ? this.observableTargetChartData(startIndex)
+          : this.speciesTargetChartData(startIndex);
       },
-      observableTargetChartData() {
+      observableTargetChartData(startIndex) {
         return this.simulation.observables.reduce((chartDataArray, observable, idx) => {
-          const concValues = this.simulation.values.map(concentrations => concentrations[idx]);
+          const concValues = this.simulation.values
+            .slice(startIndex)
+            .map(concentrations => concentrations[idx]);
           return chartDataArray.concat({
-            x: this.simulation.times,
+            x: this.simulation.times.slice(startIndex),
             y: concValues,
             name: observable.name,
             type: 'scatter',
           });
         }, []);
       },
-      speciesTargetChartData() {
+      speciesTargetChartData(startIndex) {
         return this.simulation.observables.reduce((chartDataArray, observable) => {
           const concValues = this.simulation.values
+            .slice(startIndex)
             .map(concentrations => observable.specIdxs.reduce((sum, specIdx) => sum + concentrations[specIdx], 0));
           return chartDataArray.concat({
-            x: this.simulation.times,
+            x: this.simulation.times.slice(startIndex),
             y: concValues,
             name: observable.name,
             type: 'scatter',
@@ -107,8 +117,13 @@
         }, []);
       },
       downloadCsv() {
-        // TODO: change to comply with new sim trace structure
-        const csv = this.simResult.columns.join(',').concat('\n') + this.simResult.values.map(row => row.join(',')).join('\n');
+        const chartData = this.getChartData();
+        const observableNames = chartData.map(data => data.name);
+
+        const csvHeader = ['Time', ...observableNames].join(',').concat('\n');
+        const csvContent = chartData[0].x.map((x, idx) => [x, ...chartData.map(data => data.y[idx])].join(',')).join('\n');
+        const csv = csvHeader + csvContent;
+
         const csvBlob = new Blob([csv], { type: 'text/plain;charset=utf-8' });
 
         const modelName = this.$store.state.model.name;

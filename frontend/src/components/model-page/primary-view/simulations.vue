@@ -121,7 +121,7 @@
       v-model="simTraceViewerVisible"
       fullscreen
     >
-      <sim-trace-viewer
+      <result-viewer
         v-if="simTraceViewerVisible"
         :sim-id="selectedSimulation.id"
       />
@@ -146,12 +146,13 @@
   import { mapState } from 'vuex';
   import get from 'lodash/get';
   import pick from 'lodash/pick';
+  import cloneDeep from 'lodash/cloneDeep';
   import uuidv1 from 'uuid/v1';
 
   import bus from '@/services/event-bus';
 
   import SimulationForm from '@/components/shared/entities/simulation-form.vue';
-  import SimTraceViewer from '@/components/shared/sim-trace-viewer.vue';
+  import ResultViewer from '@/components/shared/result-viewer.vue';
   import SimLogViewer from '@/components/shared/sim-log-viewer.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -190,7 +191,7 @@
     name: 'simulations-component',
     components: {
       'simulation-form': SimulationForm,
-      'sim-trace-viewer': SimTraceViewer,
+      'result-viewer': ResultViewer,
       'sim-log-viewer': SimLogViewer,
     },
     data() {
@@ -236,16 +237,13 @@
     },
     methods: {
       addSimulation() {
-        this.newSimulation = Object.assign({
-          valid: true,
+        this.newSimulation = Object.assign({}, cloneDeep(defaultSimulation), {
+          valid: false,
           id: uuidv1(),
           clientId: this.$store.state.user.id,
           modelId: this.$store.state.model.id,
-          status: SimStatus.CREATED,
-          name: findUniqName(this.entities, 'sim'),
-          solver: SimSolver.NFSIM,
-          solverConf: Object.assign({}, constants.DefaultSolverConfig[SimSolver.NFSIM]),
-        }, defaultSimulation);
+          name: findUniqName(this.simulations, 'sim'),
+        });
         this.showNewSimulationModal();
 
         this.$nextTick(() => {
@@ -310,10 +308,10 @@
         return selectedEntityType === 'simulation' ? state.selectedEntity.entity : null;
       },
       runBtnAvailable() {
-        return get(this, 'selectedEntity.status') === SimStatus.CREATED;
+        return get(this, 'selectedSimulation.status') === SimStatus.CREATED;
       },
       cancelBtnAvailable() {
-        const status = get(this, 'selectedEntity.status', null);
+        const status = get(this, 'selectedSimulation.status', null);
         return [SimStatus.QUEUED, SimStatus.STARTED].includes(status);
       },
       traceGraphBtnAvailable() {
