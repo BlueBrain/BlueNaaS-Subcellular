@@ -56,9 +56,25 @@ export default {
     commit('updateDbModels', cloneDeep(models));
   },
 
-  async createGeometry({ commit }, geometryRaw) {
+  async createGeometry({ commit, dispatch }, geometryRaw) {
     const { geometry } = await socket.request('create_geometry', geometryRaw);
     commit('setGeometry', geometry);
+    dispatch('setStructSizesFromGeometry');
+  },
+
+  setStructSizesFromGeometry({ state, commit }) {
+    const { structures } = state.model.geometry;
+    structures.forEach((geomStruct) => {
+      const modelStructIdx = state.model.structures.findIndex(s => s.name === geomStruct.name);
+      if (modelStructIdx === -1) return;
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'size',
+        value: geomStruct.size.toPrecision(5),
+      });
+    });
   },
 
   async loadDbModels({ commit }) {

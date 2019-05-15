@@ -11,7 +11,7 @@
         size="small"
         ref="nameInput"
         v-model="structure.name"
-        @input="onStructureChange"
+        @input="onNameChange"
       />
     </FormItem>
 
@@ -83,6 +83,8 @@
 
 
 <script>
+  import get from 'lodash/get';
+
   import constants from '@/constants';
 
   import BnglInput from '@/components/shared/bngl-input.vue';
@@ -101,6 +103,18 @@
       };
     },
     methods: {
+      onNameChange(name) {
+        if (this.geometry) {
+          const geomStruct = this.geometry.structures
+            .find(struct => struct.name === name);
+
+          if (geomStruct) {
+            this.structure.size = geomStruct.size.toPrecision(5);
+          }
+        }
+
+        this.onStructureChange();
+      },
       onStructureChange() {
         this.structure.valid = this.isValid();
         this.$emit('input', this.structure);
@@ -130,6 +144,9 @@
       },
       nonBnglStructures() {
         return this.$store.state.model.nonBnglStructures;
+      },
+      geometry() {
+        return get(this.$store.state, 'model.geometry');
       },
     },
     watch: {
