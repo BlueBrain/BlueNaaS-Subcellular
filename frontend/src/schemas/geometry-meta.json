@@ -24,7 +24,7 @@
       "type": "number",
       "title": "The Scale Schema",
       "description": "Mesh scale",
-      "default": 0.0,
+      "default": 1,
       "examples": [
         1e-06
       ]
