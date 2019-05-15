@@ -98,7 +98,11 @@ export default {
 
   loadDbModel({ commit, dispatch }, model) {
     commit('loadDbModel', model);
-    dispatch('getSimulations');
+    if (model.public) {
+      dispatch('cloneSimulations', model.simulations);
+    } else {
+      dispatch('getSimulations');
+    }
   },
 
   async exportModel({ state }, exportFormat) {
@@ -121,6 +125,21 @@ export default {
 
   async getSimulations({ state, commit }) {
     const { simulations } = await socket.request('get_simulations', { modelId: state.model.id });
+    commit('setSimulations', simulations);
+  },
+
+  async cloneSimulations({ state, commit }, sampleSimulations) {
+    const { simulations: userSimulations } = await socket.request('get_simulations', { modelId: state.model.id });
+    if (userSimulations.length) {
+      commit('setSimulations', userSimulations);
+      return;
+    }
+
+    const uid = state.user.id;
+    const simulations = sampleSimulations
+      .map(sim => Object.assign({}, sim, { clientId: uid, id: uuidv4() }));
+
+    simulations.forEach(sim => socket.send('create_simulation', sim));
     commit('setSimulations', simulations);
   },
 
