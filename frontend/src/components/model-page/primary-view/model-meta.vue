@@ -1,7 +1,7 @@
 
 <template>
   <div class="p-12 h-100 o-scroll-y">
-    <h2>Model: {{ name || 'unspecified' }}</h2>
+    <h2>Subcellular model: {{ name || 'unspecified' }}</h2>
 
     <i-form
       class="mt-12"

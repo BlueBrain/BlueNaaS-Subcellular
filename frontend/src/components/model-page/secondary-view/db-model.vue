@@ -1,7 +1,7 @@
 
 <template>
   <div class="p-12">
-    <h2>Model: {{ model.name }}</h2>
+    <h2>Subcellular model: {{ model.name }}</h2>
 
     <br>
 

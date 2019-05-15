@@ -2,7 +2,7 @@
 <template>
   <div class="h-100 position-relative o-scroll-y">
     <div class="block-head">
-      <h3>Model DB</h3>
+      <h3>Subcellular model DB</h3>
     </div>
 
     <div class="block-main p-12">

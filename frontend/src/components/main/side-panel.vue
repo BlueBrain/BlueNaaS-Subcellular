@@ -2,14 +2,14 @@
 <template>
   <div class="side-panel-container">
     <Steps
-      class="steps-container"
       size="small"
+      class="steps-container"
       :current="currentStep"
     >
       <Step title="Cell selection"></Step>
       <Step title="Synapse selection"></Step>
-      <Step title="Proteins selection"></Step>
-      <Step title="Protein concentrations"></Step>
+      <Step title="Molecule selection"></Step>
+      <Step title="Molecule concentrations"></Step>
     </Steps>
 
     <Tabs v-model="currentStep" class="tabs-header--hidden">
