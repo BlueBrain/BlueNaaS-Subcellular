@@ -33,7 +33,7 @@ help:
 	@echo "$$HELPTEXT"
 
 $(TOOLS_VENV_DIR):
-	virtualenv --no-site-packages -p python3.7 $@
+	virtualenv --no-site-packages -p python3 $@
 
 install_bluepy: | $(TOOLS_VENV_DIR)
 	source $(TOOLS_VENV_DIR)/bin/activate && \
@@ -72,7 +72,7 @@ docker_push_version: docker_build_version
 
 	@echo 'backend version($(VERSION)) pushed to OpenShift registy'
 
-docker_push_latest:
+docker_push_latest: docker_build_latest
 	docker tag \
 		$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest \
 		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
