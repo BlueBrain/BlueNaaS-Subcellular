@@ -44,14 +44,14 @@ endif
 		if [ $$? -eq 0 ]; \
 		then \
 			echo "tagging $(VERSION)" && \
-			echo "VERSION = '$(VERSION)'" > backend/blue_pair/version.py && \
+			echo "VERSION = '$(VERSION)'" > backend/subcellular_experiment/version.py && \
 			sed -i 's/"version": "\([0-9.]\+\)"/"version": "$(VERSION)"/' frontend/package.json && \
 			CIRCUIT_PATH=$(CIRCUIT_PATH) \
 				CIRCUIT_NAME=$(CIRCUIT_NAME) \
 				$(MAKE) -C backend docker_push_version && \
 			CIRCUIT_NAME=$(CIRCUIT_NAME) \
 				$(MAKE) -C frontend docker_push_version && \
-			git add backend/blue_pair/version.py frontend/package.json && \
+			git add backend/subcellular_experiment/version.py frontend/package.json && \
 			git commit -m "release $(VERSION)" && \
 			git tag -a $(VERSION) -m $(VERSION) && \
 			git push origin HEAD:$$GERRIT_BRANCH && \
