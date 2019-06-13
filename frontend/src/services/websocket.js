@@ -34,10 +34,15 @@ class Ws {
     this.messageQueue = [];
     this.requestResolvers = new Map();
     this.socket = null;
-    this.clientId = null;
+    this.userId = null;
   }
 
   send(message, data, cmdId = null) {
+    if (!this.socket) {
+      this.messageQueue.push([message, data, cmdId]);
+      return;
+    }
+
     switch (this.socket.readyState) {
     case socketState.OPEN: {
       this.socket.send(JSON.stringify({
@@ -70,7 +75,7 @@ class Ws {
   }
 
   init() {
-    const socketUrl = `${getSocketUrlFromConfig(config)}?clientId=${this.clientId}`;
+    const socketUrl = `${getSocketUrlFromConfig(config)}?userId=${this.userId}`;
     this.socket = new WebSocket(socketUrl);
 
     this.socket.addEventListener('open', () => this.processQueue());
