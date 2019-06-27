@@ -83,7 +83,7 @@
 
   import bus from '@/services/event-bus';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+  import BnglText from '@/components/shared/bngl-text.vue';
   import ParameterForm from '@/components/shared/entities/parameter-form.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -117,10 +117,9 @@
           maxWidth: 300,
         }, {
           title: 'BioNetGen definition',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
-              readOnly: true,
               value: params.row.definition,
             },
           }),

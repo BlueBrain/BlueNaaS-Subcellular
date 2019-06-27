@@ -95,7 +95,7 @@
   import blockHeightWoPadding from '@/tools/block-height-wo-padding';
 
   import StructureForm from '@/components/shared/entities/structure-form.vue';
-  import BnglInput from '@/components/shared/bngl-input.vue';
+  import BnglText from '@/components/shared/bngl-text.vue';
 
   const { StructureType } = constants;
 
@@ -126,15 +126,15 @@
         }, {
           title: 'Type',
           key: 'type',
+          maxWidth: 140,
         }, {
           title: 'Parent',
           key: 'parentName',
         }, {
           title: 'Size',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
-              readOnly: true,
               value: params.row.size,
             },
           }),

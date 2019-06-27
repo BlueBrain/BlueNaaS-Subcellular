@@ -83,7 +83,7 @@
 
   import bus from '@/services/event-bus';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+  import BnglText from '@/components/shared/bngl-text.vue';
   import ReactionForm from '@/components/shared/entities/reaction-form.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -117,7 +117,7 @@
           maxWidth: 180,
         }, {
           title: 'Kf',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
               readOnly: true,
@@ -127,7 +127,7 @@
           maxWidth: 120,
         }, {
           title: 'Kr',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
               readOnly: true,
@@ -142,18 +142,12 @@
         }, {
           title: 'BioNetGen definition',
           render: (h, params) => {
-            return h(BnglInput, {
-              // class: {
-                // 'code-mirror-noborder': true,
-              // },
+            return h(BnglText, {
               props: {
                 entityType: 'reaction',
                 readOnly: true,
                 value: params.row.definition,
               },
-              // on: {
-                // input: this.onChange(params.index),
-              // },
             });
           },
         }],

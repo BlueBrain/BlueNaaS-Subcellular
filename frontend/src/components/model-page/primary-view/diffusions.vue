@@ -83,7 +83,7 @@
 
   import bus from '@/services/event-bus';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+  import BnglText from '@/components/shared/bngl-text.vue';
   import DiffusionForm from '@/components/shared/entities/diffusion-form.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -122,19 +122,17 @@
           maxWidth: 180,
         }, {
           title: 'Species BNG definition',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'diffusion',
-              readOnly: true,
               value: params.row.speciesDefinition,
             },
           }),
         }, {
           title: 'Diffusion constant',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
-              readOnly: true,
               value: params.row.diffusionConstant,
             },
           }),

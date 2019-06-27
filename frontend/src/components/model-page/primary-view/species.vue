@@ -83,7 +83,7 @@
 
   import bus from '@/services/event-bus';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+  import BnglText from '@/components/shared/bngl-text.vue';
   import SpeciesForm from '@/components/shared/entities/species-form.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -117,19 +117,17 @@
         }, {
           title: 'Concentration',
           maxWidth: 220,
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',
-              readOnly: true,
               value: params.row.concentration,
             },
           }),
         }, {
           title: 'BioNetGen definition',
-          render: (h, params) => h(BnglInput, {
+          render: (h, params) => h(BnglText, {
             props: {
               entityType: 'species',
-              readOnly: true,
               value: params.row.definition,
             },
           }),
