@@ -1,7 +1,7 @@
 
 <template>
   <file-import
-    :file-extensions="['tsv']"
+    :file-formats="importFileFormats"
     :errorMsg="errorMsg"
     @on-file-read="onFileRead"
   />
@@ -12,6 +12,8 @@
   import modelTools from '@/tools/model-tools';
   import FileImport from '@/components/shared/file-import.vue';
 
+  const importFileFormats = [{ type: 'TSV', extension: 'tsv' }];
+
   export default {
     name: 'steps-stimuli-import',
     components: {
@@ -19,6 +21,7 @@
     },
     data() {
       return {
+        importFileFormats,
         errorMsg: '',
         descriptionText: '',
       };

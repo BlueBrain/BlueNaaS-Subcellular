@@ -1,7 +1,7 @@
 
 <template>
   <file-import
-    :file-extensions="['rnf', 'tsv']"
+    :file-formats="importFileFormats"
     :errorMsg="errorMsg"
     @on-file-read="onFileRead"
   />
@@ -12,6 +12,11 @@
   import modelTools from '@/tools/model-tools';
   import FileImport from '@/components/shared/file-import.vue';
 
+  const importFileFormats = [
+    { type: 'RNF', extension: 'rnf' },
+    { type: 'TSV', extension: 'tsv' },
+  ];
+
   export default {
     name: 'nfsim-stimuli-import',
     components: {
@@ -19,6 +24,7 @@
     },
     data() {
       return {
+        importFileFormats,
         errorMsg: '',
         descriptionText: '',
       };

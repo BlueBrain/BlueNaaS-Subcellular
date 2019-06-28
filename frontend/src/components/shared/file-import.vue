@@ -3,7 +3,8 @@
   <Upload
     type="drag"
     action="/dummy-endpoint"
-    :format="fileExtensions"
+    :disabled="loading"
+    :format="supportedExtensions"
     :before-upload="beforeUpload"
   >
     <div class="container">
@@ -13,7 +14,7 @@
         style="color: #3399ff"
       />
       <p>Click or drag files here to upload</p>
-      <p>Supported formats: {{ supportedFormatsStr }}</p>
+      <p>Supported formats: {{ supportedTypeStr }}</p>
 
       <p v-if="descriptionText">
         {{ descriptionText }}
@@ -25,6 +26,16 @@
       >
         {{ errorMsg }}
       </p>
+
+      <br>
+
+      <slot/>
+
+      <Spin
+        v-if="loading"
+        size="large"
+        fix
+      />
     </div>
   </Upload>
 </template>
@@ -33,7 +44,7 @@
 <script>
   export default {
     name: 'file-import',
-    props: ['fileExtensions', 'errorMsg', 'descriptionText'],
+    props: ['fileFormats', 'errorMsg', 'descriptionText', 'loading'],
     methods: {
       beforeUpload(file) {
         const reader = new FileReader();
@@ -48,12 +59,15 @@
       },
     },
     computed: {
-      supportedFormatsStr() {
+      supportedTypeStr() {
         // ['rnf', 'tsv'] => '.rnf, .tsv'
-        return this.fileExtensions
-          .map(e => `.${e}, `)
+        return this.fileFormats
+          .map(f => `${f.type}, `)
           .join('')
           .slice(0, -2);
+      },
+      supportedExtensions() {
+        return this.fileFormats.map(f => f.extension);
       },
     },
   };
@@ -62,6 +76,7 @@
 
 <style lang="scss" scoped>
   .container {
-    padding: 20px;
+    padding: 12px;
+    padding-top: 20px;
   }
 </style>
