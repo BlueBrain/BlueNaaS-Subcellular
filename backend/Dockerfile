@@ -3,7 +3,7 @@ FROM python:3.7-slim-stretch
 WORKDIR /build
 
 RUN apt-get update && \
-  apt-get install -y g++ gcc cmake libopenblas-dev libmpich-dev git
+  apt-get install -y g++ gcc cmake libopenblas-dev libmpich-dev git libxslt1-dev zlib1g-dev
 
 RUN pip install numpy cython scipy
 
@@ -13,6 +13,12 @@ RUN git clone https://github.com/CNS-OIST/STEPS.git && \
   mkdir build && \
   cd build && \
   cmake .. && \
+  make && \
+  make install
+
+# TODO: Switch to main repo when https://github.com/RuleWorld/atomizer/issues/6 is fixed
+RUN git clone https://github.com/pgetta/atomizer.git && \
+  cd atomizer && \
   make && \
   make install
 
@@ -35,6 +41,7 @@ WORKDIR /opt/subcellular-experiment
 COPY dist/* ./dist/
 COPY entrypoint.sh .
 COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
+COPY --from=0 /build/atomizer/bin/sbmlTranslator sbmlTranslator
 
 RUN apt-get update && \
     apt-get install -y perl rsync wget wait-for-it libopenblas-base mpich && \
