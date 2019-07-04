@@ -3,7 +3,7 @@ import lowerCase from 'lodash/lowerCase';
 
 
 /**
- * Filter function to match given object properties by a string,
+ * Filter function to match given or all object properties by a string,
  * returns true if search string is empty (to match all objects
  * from collection)
  *
@@ -13,9 +13,11 @@ import lowerCase from 'lodash/lowerCase';
  *
  * @returns {Boolean}
  */
-function objStrSearchFilter(searchStr, obj, props) {
+function objStrSearchFilter(searchStr, obj, props = []) {
   if (!searchStr) return true;
-  return props.some(prop => lowerCase(obj[prop]).includes(lowerCase(searchStr)));
+
+  const filterProps = props.length ? props : Object.keys(obj);
+  return filterProps.some(prop => lowerCase(obj[prop]).includes(lowerCase(searchStr)));
 }
 
 
