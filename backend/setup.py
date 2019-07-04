@@ -20,7 +20,6 @@ setup(
         'numpy',
         'pymongo',
         'pysb',
-        'python-libsbml',
         'cython'
     ],
     tests_require=['pytest', 'pytest-cov'],
