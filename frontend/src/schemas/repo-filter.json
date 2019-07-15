@@ -1,0 +1,117 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "moleculeStr",
+    "structureStr",
+    "versions",
+    "entityTypes"
+  ],
+  "properties": {
+    "moleculeStr": {
+      "$id": "#/properties/moleculeStr",
+      "type": "string",
+      "title": "The Moleculestr Schema",
+      "default": "",
+      "examples": [
+        "NMDA"
+      ],
+      "pattern": "(.*)"
+    },
+    "structureStr": {
+      "$id": "#/properties/structureStr",
+      "type": "string",
+      "title": "The Structurestr Schema",
+      "default": "",
+      "examples": [
+        "PSD"
+      ],
+      "pattern": "(.*)"
+    },
+    "versions": {
+      "$id": "#/properties/versions",
+      "type": "array",
+      "title": "The Versions Schema",
+      "items": {
+        "$id": "#/properties/versions/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": [
+          "branch",
+          "revision",
+          "key"
+        ],
+        "properties": {
+          "branch": {
+            "$id": "#/properties/versions/items/properties/branch",
+            "type": "string",
+            "title": "The Branch Schema",
+            "default": "",
+            "examples": [
+              "master"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "revision": {
+            "$id": "#/properties/versions/items/properties/revision",
+            "type": ["string", "integer"],
+            "title": "The Revision Schema",
+            "default": "",
+            "examples": [
+              "latest",
+              1
+            ],
+            "pattern": "^(.*)$"
+          },
+          "key": {
+            "$id": "#/properties/versions/items/properties/key",
+            "type": "string",
+            "title": "The Key Schema",
+            "default": "",
+            "examples": [
+              "master:latest"
+            ],
+            "pattern": "^(.*)\\:(.*)$"
+          }
+        }
+      }
+    },
+    "entityTypes": {
+      "$id": "#/properties/entityTypes",
+      "type": "array",
+      "title": "The Entitytypes Schema",
+      "default": null,
+      "maxItems": 7,
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$id": "#/properties/entityTypes/items",
+        "type": "string",
+        "enum": [
+          "parameter",
+          "structure",
+          "molecule",
+          "species",
+          "observable",
+          "function",
+          "reaction"
+        ],
+        "title": "The Items Schema",
+        "default": "",
+        "examples": [
+          "parameter",
+          "structure",
+          "molecule",
+          "species",
+          "observable",
+          "function",
+          "reaction"
+        ],
+        "pattern": "^(.*)$"
+      }
+    }
+  }
+}
