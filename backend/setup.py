@@ -19,7 +19,7 @@ setup(
         'pandas',
         'numpy',
         'pymongo',
-        'pysb',
+        'pysb==1.8.1',
         'cython'
     ],
     tests_require=['pytest', 'pytest-cov'],
