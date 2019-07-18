@@ -2,7 +2,7 @@
 <template>
   <div class="h-100 position-relative o-scroll-y">
     <div class="block-head">
-      <h3>Subcellular model DB</h3>
+      <h3>Subcellular models repository</h3>
     </div>
 
     <div class="block-main p-12">
@@ -17,23 +17,14 @@
     </div>
 
     <div class="block-footer">
-      <Tooltip
-        class="w-100"
-        :transfer="true"
-        max-width="280"
+      <i-button
+        class="mb-12"
+        type="primary"
+        long
+        to="/molecular-repo"
       >
-        <i-button
-          type="primary"
-          long
-          @click="openModelBuilderPage"
-        >
-          Model builder
-        </i-button>
-        <div slot="content">
-          <p>Create a model based on available circuit data.</p>
-          <p>Includes proteins, ions, metabolites, their concentrations and reactions defined per each compartment.</p>
-        </div>
-      </Tooltip>
+        Open molecular repository
+      </i-button>
     </div>
   </div>
 </template>
@@ -51,20 +42,14 @@
     data() {
       return {
         dbData: [{
-          title: 'Biological models',
+          title: 'My models',
           expand: true,
-          children: [{
-            title: 'My',
-            expand: false,
-            children: [],
-          }, {
-            title: 'Shared',
-            expand: false,
-          }, {
-            title: 'Public',
-            expand: false,
-            children: publicModels.map(model => ({ title: model.name, type: 'model', model })),
-          }],
+          children: [],
+        }, {
+          title: 'Public models',
+          expand: false,
+          children: publicModels
+            .map(model => ({ title: model.name, type: 'model', model })),
         }],
       };
     },
@@ -92,8 +77,21 @@
     },
     watch: {
       modelNames(modelNames) {
-        this.dbData[0].children[0].children = modelNames.map(n => ({ title: n, type: 'model', model: this.dbModels[n] }));
+        this.dbData[0].children = modelNames
+          .map(n => ({ title: n, type: 'model', model: this.dbModels[n] }));
       },
     },
   };
 </script>
+
+
+<style lang="scss" scoped>
+  .block-db-footer {
+    position: absolute;
+    height: 84px;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 12px;
+  }
+</style>

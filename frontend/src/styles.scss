@@ -205,3 +205,34 @@ main {
     height: 72px;
   }
 }
+
+.poptip-long {
+  width: 100%;
+  .ivu-poptip-rel {
+    width: 100%;
+  }
+}
+
+.small-tag {
+  height: 18px;
+  line-height: 18px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}

@@ -1,4 +1,7 @@
 
+// TODO: split into different files
+
+
 const ServerMessageType = {
   SIM_TRACE_META: 'simTraceMeta',
   SIM_TRACE: 'simTrace',
@@ -7,6 +10,7 @@ const ServerMessageType = {
 };
 
 const EntityType = {
+  STRUCTURE_TYPE: 'structureType',
   STRUCTURE: 'structure',
   PARAMETER: 'parameter',
   FUNCTION: 'function',
@@ -21,6 +25,11 @@ const EntityType = {
 const StructureType = {
   COMPARTMENT: 'compartment',
   MEMBRANE: 'membrane',
+};
+
+const GeometryDisplayMode = {
+  DEFAULT: 'default',
+  WIREFRAME: 'wireframe',
 };
 
 const ModelExportFormats = {
@@ -109,6 +118,22 @@ const defaultEmptyModel = {
   simulations: [],
 };
 
+const defaultEmptyRevision = {
+  name: '',
+  description: '',
+  branch: '',
+  loading: false,
+
+  structures: [],
+  parameters: [],
+  functions: [],
+  molecules: [],
+  species: [],
+  observables: [],
+  reactions: [],
+  diffusions: [],
+};
+
 const defaultSolverConfig = {
   [SimSolver.STEPS]: {
     dt: 0.02,
@@ -116,10 +141,41 @@ const defaultSolverConfig = {
     stimuli: [],
   },
   [SimSolver.NFSIM]: {
-    nSteps: 200,
+    dt: 0.02,
     tEnd: 20,
     stimuli: [],
   },
+};
+
+const entityTypeCollectionMap = {
+  parameter: 'parameters',
+  function: 'functions',
+  structure: 'structures',
+  molecule: 'molecules',
+  species: 'species',
+  reaction: 'reactions',
+  observable: 'observables',
+  simulation: 'simulations',
+  diffusion: 'diffusions',
+};
+
+const formMode = {
+  CREATE_NEW: 'createNew',
+  EDIT: 'edit',
+};
+
+const agentType = {
+  ION: 'ion',
+  PROTEIN: 'protein',
+  PROTEIN_FAMILY: 'protein family',
+  PROTEIN_MULTIMER: 'protein multimer',
+  METABOLITE: 'metabolite',
+};
+
+const validationMessageType = {
+  ERROR: 'error',
+  WARNING: 'warning',
+  INFO: 'info',
 };
 
 export default {
@@ -132,7 +188,13 @@ export default {
   ModelExportFormats,
   ModelFormatExtensions,
   defaultEmptyModel,
+  defaultEmptyRevision,
   defaultSolverConfig,
   StimulusTypeEnum,
   ServerMessageType,
+  GeometryDisplayMode,
+  entityTypeCollectionMap,
+  formMode,
+  agentType,
+  validationMessageType,
 };

@@ -18,7 +18,6 @@ import ReactionsComponent from './components/model-page/primary-view/reactions.v
 import DiffusionsComponent from './components/model-page/primary-view/diffusions.vue';
 
 import SimulationsComponent from './components/model-page/primary-view/simulations.vue';
-import GeometryComponent from './components/model-page/primary-view/geometry.vue';
 
 
 const { EntityType } = constants;
@@ -62,11 +61,23 @@ export default new VueRouter({
       component: DiffusionsComponent,
     }, {
       path: EntityType.GEOMETRY,
-      component: GeometryComponent,
+      component: () => import(
+        /* webpackChunkName: "model-geometry" */
+        './components/model-page/primary-view/geometry.vue'
+      ),
     }],
   }, {
     path: '/model-builder',
-    component: () => import(/* webpackChunkName: "model-builder" */ './components/model-builder.vue'),
+    component: () => import(
+      /* webpackChunkName: "model-builder" */
+      './components/model-builder.vue'
+    ),
+  }, {
+    path: '/molecular-repo',
+    component: () => import(
+      /* webpackChunkName: "molecules-db" */
+      './components/molecular-repo-page.vue'
+    ),
   }, {
     path: '*',
     redirect: '/model/meta',

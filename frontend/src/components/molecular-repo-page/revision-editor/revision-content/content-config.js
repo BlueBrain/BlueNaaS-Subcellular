@@ -117,6 +117,7 @@ const revisionEditorColumnConfig = {
     }),
   }, {
     title: 'Units',
+    maxWidth: 120,
     key: 'units',
   }, {
     title: 'Actions',
