@@ -350,13 +350,20 @@ class StepsSim():
             if expr.name in param_dict:
                 return param_dict[expr.name]
 
+            def get_sub(e):
+                if e.name in param_dict:
+                    return custom_param_val_dict[e.name] if e.name in custom_param_val_dict else param_dict[e.name]
+                elif e.name in expr_dict:
+                    return eval_expr(expr_dict[e.name])
+                else:
+                    raise ValueError(f'Symbol not found: {e.name}')
+
             subs = {
-                e: param_dict[e.name] if e.name in param_dict else eval_expr(expr_dict[e.name])
+                e: get_sub(e)
                 for e in list(expr.expand_expr().atoms())
                 if e.is_symbol
             }
             return expr.expand_expr().evalf(subs=subs)
-
 
 
         def init_reac_rates():
@@ -477,15 +484,22 @@ class StepsSim():
             if stim['type'] == StimulusType.SET_PARAM:
                 param_name = stim['target']
                 value = stim['value']
+                L.debug(f'stim: setting param {param_name} to {value}')
                 custom_param_val_dict[param_name] = value
 
                 # TODO: move logic to apply rates outside
                 for reac_idx, steps_reac in enumerate(steps_reacs):
                     kinetic_rate_expr = pysb_model.reactions[reac_idx]['rate'].as_ordered_factors()[-1]
                     rate_val = eval_expr(kinetic_rate_expr)
-                    if (type(steps_reac) == smodel.Reac):
+                    if type(steps_reac) == smodel.Reac:
+                        curr_comp_reac_k = sim.getCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID())
+                        if curr_comp_reac_k != rate_val:
+                            L.debug(f'stim: update comp reacK for {steps_reac.getID()} from {curr_comp_reac_k} to {rate_val}')
                         sim.setCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID(), rate_val)
                     else:
+                        curr_patch_reac_k = sim.getPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID())
+                        if curr_patch_reac_k != rate_val:
+                            L.debug(f'stim: update surf reacK for {steps_reac.getID()} from {curr_patch_reac_k} to {rate_val}')
                         sim.setPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val)
 
             elif stim['type'] == StimulusType.SET_CONC:
@@ -526,10 +540,10 @@ class StepsSim():
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
 
         for tidx, tpnt in enumerate(tpnts):
-            L.debug('run step {} out of {}'.format(tidx + 1, len(tpnts)))
+            L.debug('run step {} out of {}, t: {} s'.format(tidx + 1, len(tpnts), tpnt))
 
             sim.run(tpnt)
-            L.debug('finished step {} out of {}'.format(tidx + 1, len(tpnts)))
+            L.debug('finished step {} out of {}, t: {} s'.format(tidx + 1, len(tpnts), tpnt))
             for pysb_spec_idx, pysb_spec in enumerate(pysb_model.species):
                 comp_name = pysb_spec.comp_name
                 comp_type = comp_type_by_name(comp_name)
