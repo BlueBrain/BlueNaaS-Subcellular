@@ -1,4 +1,4 @@
-.PHONY: help test build release run_dev_backend run_dev_frontend docker_push_latest create_oo_deployment
+.PHONY: help test build release run_dev run_dev_backend run_dev_frontend docker_push_latest create_oo_deployment
 
 VERSION:=$(shell cat VERSION)
 export VERSION
@@ -14,11 +14,12 @@ CIRCUIT_NAME?=o1
 define HELPTEXT
 Makefile usage
  Targets:
+    run_dev               Run backend and frontend in dev mode
     run_dev_backend       Run development instance of the backend.
     run_dev_frontend      Run development instance of the frontend.
     test                  Test and compile packages, rebuild docker images locally(latest tag).
     create_oo_deployment  Create OpenShift deployment. Docker images should be present
-	                        in the registry when executing  this task.
+                            in the registry when executing  this task.
     build                 Same as test. If VERSION has not been previously git tagged:
                             git tag it and push this version to docker registry.
     release               Same as build. Push the latest tag to the docker registy.
@@ -28,6 +29,9 @@ export HELPTEXT
 
 help:
 	@echo "$$HELPTEXT"
+
+run_dev:
+	$(MAKE) -C frontend run_dev & $(MAKE) -C backend run_dev & fg
 
 run_dev_backend:
 	$(MAKE) -C backend run_dev
