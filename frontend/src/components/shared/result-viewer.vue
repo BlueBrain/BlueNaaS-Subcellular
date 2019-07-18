@@ -51,6 +51,10 @@
       [downloadCsvBtn],
       plotlyDefaultButtons,
     ],
+    toImageButtonOptions: {
+      width: 1920,
+      height: 1080,
+    },
   };
 
   export default {
