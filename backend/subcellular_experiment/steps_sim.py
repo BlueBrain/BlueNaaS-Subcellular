@@ -516,7 +516,7 @@ class StepsSim():
                 # TODO: check if species are present in particular compartments
                 L.debug('set {}@{} conc to {}'.format(pysb_spec.name, pysb_spec.comp_name, stim['value']))
                 if comp_type == StructureType.COMPARTMENT:
-                    sim.setCompCount(pysb_spec.comp_name, pysb_spec.name, stim['value'])
+                    sim.setCompConc(pysb_spec.comp_name, pysb_spec.name, stim['value'])
                 else:
                     sim.setPatchCount(pysb_spec.comp_name, pysb_spec.name, stim['value'])
 
