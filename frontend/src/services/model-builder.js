@@ -375,8 +375,40 @@ function buildFromBngl(fileContent) {
     return model;
 }
 
+function parseExtendedBngl({ name, content }) {
+  const fileExt = name.split('.').slice(-1)[0];
+
+  const revisionData = {};
+
+  const collectionNames = [
+    'structures',
+    'molecules',
+    'species',
+    'reactions',
+    'diffusions',
+    'functions',
+    'observables',
+    'parameters',
+  ];
+
+  if (fileExt === 'bngl') {
+    const model = buildFromBngl(content);
+    collectionNames.forEach((collName) => {
+      revisionData[collName] = revisionData[collName] || [];
+      model[collName].forEach((entity) => {
+        const revisionEntity = Object.assign({}, entity);
+        revisionEntity.entityId = uuidv4();
+        revisionData[collName].push(revisionEntity);
+      });
+    });
+  }
+
+  return revisionData;
+}
+
 
 export default {
   buildFromProteins,
   buildFromBngl,
+  parseExtendedBngl,
 };
