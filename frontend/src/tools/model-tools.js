@@ -7,6 +7,24 @@ import constants from '@/constants';
 const { StructureType } = constants;
 
 
+function createSimulationTemplate(simulation) {
+  const simCleanupDefaults = {
+    status: constants.SimStatus.CREATED,
+    currentStepIdx: null,
+    observables: null,
+    species: null,
+    nSteps: null,
+    traceTarget: null,
+    times: [],
+    values: [],
+    log: null,
+    userId: null,
+    id: null,
+    _id: null,
+  };
+  return Object.assign({...simulation}, simCleanupDefaults);
+}
+
 function getEntityStructName(def) {
   const nameMatch = def.match(/@(\w*)/);
   return nameMatch ? nameMatch[1] : '';
@@ -146,4 +164,5 @@ export default {
   getDefaultForwardKineticRateUnit,
   getDefaultBackwardKineticRateUnit,
   parseStimuli,
+  createSimulationTemplate,
 };

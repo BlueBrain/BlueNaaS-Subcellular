@@ -3,14 +3,14 @@
   <Upload
     type="drag"
     action="/dummy-endpoint"
-    :format="['bngl', 'xml']"
+    :format="['bngl', 'json', 'xml']"
     :disabled="loading"
     :before-upload="beforeUpload"
   >
     <div class="container">
       <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
       <p>Click or drag files here to upload</p>
-      <p>Supported formats: BNGL, SBML*</p>
+      <p>Supported formats: BNGL, eBNGL, SBML*</p>
       <br>
       <div class="text-left">
         <small>* Experimental feature</small>
@@ -26,15 +26,28 @@
 
 
 <script>
-  const typeByExt = {
-    bngl: 'bngl',
-    xml: 'sbml',
+  const formatByExt = {
+    json: {
+      type: 'ebngl',
+      label: 'eBNGL',
+    },
+    bngl: {
+      type: 'bngl',
+      label: 'BNGL',
+    },
+    xml: {
+      type: 'sbml',
+      label: 'SBML',
+    },
   };
 
   export default {
     name: 'model-import',
     data() {
-      return { loading: false };
+      return {
+        allowedExtensions: Object.keys(formatByExt),
+        loading: false,
+      };
     },
     methods: {
       beforeUpload(file) {
@@ -49,7 +62,7 @@
           .slice(-1)[0]
           .toLowerCase();
 
-        this.type = typeByExt[fileExtNorm];
+        this.format = formatByExt[fileExtNorm];
         const reader = new FileReader();
         reader.onload = e => this.onFileRead(e.target.result);
         reader.readAsText(file);
@@ -63,7 +76,7 @@
       onImportSuccess() {
         this.$Notice.success({
           title: 'Import success',
-          desc: `${this.type.toUpperCase()} model has been imported successfully`,
+          desc: `${this.format.label} model has been imported successfully`,
         });
         this.$emit('import-finish');
       },
@@ -77,7 +90,7 @@
         const importModelPayload = {
           fileContent,
           modelName: this.modelName,
-          type: this.type,
+          type: this.format.type,
         };
         this.$store.dispatch('importModel', importModelPayload)
           .then(() => this.onImportSuccess())

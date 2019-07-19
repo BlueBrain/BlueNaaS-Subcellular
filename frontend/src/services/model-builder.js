@@ -39,6 +39,7 @@ function buildFromProteins(proteins) {
     species: [],
     observables: [],
     reactions: [],
+    diffusions: [],
   };
 
   const modelAgentMap = new Map();
@@ -242,6 +243,23 @@ function buildFromBngl(fileContent) {
       annotation: '',
     });
 
+    const partsToDiffusion = parts => {
+      const specPrefixCompR = /^@(\w+):(\w+\(.*\))$/;
+      const specSuffixCompR = /^(\w+\(.*\))@(\w+)$/
+
+      const definition = parts[1];
+      const prefixNotation = specPrefixCompR.test(definition);
+      const defParsed = definition.match(prefixNotation ? specPrefixCompR : specSuffixCompR);
+
+      return {
+        name: parts[0],
+        speciesDefinition: defParsed[prefixNotation ? 2 : 1],
+        compartment: defParsed[prefixNotation ? 1 : 2],
+        diffusionConstant: parts[2],
+        annotation: '',
+      }
+    };
+
     const structuresR = /begin compartments(.*)end compartments/s;
     const parametersR = /begin parameters(.*)end parameters/s;
     const functionsR = /begin functions(.*)end functions/s;
@@ -249,6 +267,7 @@ function buildFromBngl(fileContent) {
     const speciesR = /begin\s*\w*\s*species\s*\n(.*)end\s*\w*\s*species/s;
     const reactionsR = /begin reaction rules(.*)end reaction rules/s;
     const observablesR = /begin observables(.*)end observables/s;
+    const diffusionsR = /begin diffusions(.*)end diffusions/s;
 
     if (structuresR.test(fileContent)) {
       model.structures = fileContent
@@ -339,6 +358,19 @@ function buildFromBngl(fileContent) {
       .map(p => p.match(/[^#]*/)[0])
       .map(p => p.trim())
       .map(lineToReaction);
+
+    if (diffusionsR.test(fileContent)) {
+      model.diffusions = fileContent
+        .match(diffusionsR)[1]
+        .split(newLineR)
+        .map(d => d.trim())
+        .filter(d => !d.startsWith('#'))
+        .filter(d => d)
+        .map(d => d.match(/[^#]*/)[0])
+        .map(d => d.trim())
+        .map(d => d.split(/\t|\s/).filter(p => p))
+        .map(partsToDiffusion)
+    }
 
     return model;
 }

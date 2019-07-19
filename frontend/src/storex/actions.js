@@ -10,6 +10,7 @@ import storage from '@/services/storage';
 import socket from '@/services/websocket';
 import constants from '@/constants';
 import modelBuilder from '@/services/model-builder';
+import modelTools from '@/tools/model-tools';
 
 
 export default {
@@ -106,12 +107,18 @@ export default {
   },
 
   async exportModel({ state }, exportFormat) {
-    const { fileContent: modelText } = await socket.request('get_exported_model', {
-      model: state.model,
+    const cleanSimulations = state.model.simulations
+      .map(sim => modelTools.createSimulationTemplate(sim));
+
+    const model = Object.assign({}, state.model, { simulations: cleanSimulations });
+
+    const { fileContent: modelData } = await socket.request('get_exported_model', {
+      model,
       format: exportFormat,
     });
+
     const fileExtension = constants.ModelFormatExtensions[exportFormat];
-    saveAs(new Blob([modelText]), `${state.model.name}.${fileExtension}`);
+    saveAs(new Blob([modelData]), `${state.model.name}.${fileExtension}`);
   },
 
   addSimulation({ commit }, simulation) {
@@ -188,21 +195,119 @@ export default {
     commit('setModel', cloneDeep(constants.defaultEmptyModel));
   },
 
-  importModel({ commit }, { modelName, fileContent }) {
-    let model = null;
-    try {
-      model = modelBuilder.buildFromBngl(fileContent);
-    } catch (e) {
-      Sentry.configureScope((scope) => {
-        scope.setExtra('bnglModel', fileContent);
-      });
-      Sentry.captureEvent('bnglImportError');
+  async importRevisionFile({ dispatch }, { name, type, fileContent }) {
+    // TODO: DRY
+    let revision = null;
+    let bnglStr = null;
+
+    if (type === 'bngl') {
+      bnglStr = fileContent;
+    } else if (type === 'sbml') {
+      const translationResult = await socket.request('convert_from_sbml', { sbml: fileContent });
+      bnglStr = translationResult.bngl;
+      if (!bnglStr) throw new Error('Error in SBML translation');
     }
 
-    if (!model) return Promise.reject();
+    try {
+      revision = modelBuilder.buildFromBngl(bnglStr);
+    } catch (e) {
+      Sentry.configureScope((scope) => {
+        scope.setExtra('bnglModel', bnglStr);
+        scope.setExtra('importSource', type);
+      });
+      Sentry.captureEvent('bnglImportError');
+      throw new Error('Error while parsing BNGL');
+    }
+
+    dispatch('mergeRevision', {
+      revisionData: revision,
+      source: `file:${name}`,
+    });
+  },
+
+  async importModel({ commit, dispatch }, { modelName, type, fileContent }) {
+    let model = null;
+    let bnglStr = null;
+
+    if (type === 'ebngl') {
+      // TODO: add content type and schema validation
+      const model = JSON.parse(fileContent);
+
+      const simFreeModel = Object.assign({}, model, { simulations: [], id: uuidv4() });
+      commit('setModel', simFreeModel);
+
+      dispatch('cloneSimulations', model.simulations);
+      return;
+    }
+
+    if (type === 'bngl') {
+      bnglStr = fileContent;
+    } else if (type === 'sbml') {
+      const translationResult = await socket.request('convert_from_sbml', { sbml: fileContent });
+      bnglStr = translationResult.bngl;
+      if (!bnglStr) throw new Error('Error in SBML translation');
+    }
+
+    try {
+      model = modelBuilder.buildFromBngl(bnglStr);
+    } catch (e) {
+      Sentry.configureScope((scope) => {
+        scope.setExtra('bnglModel', bnglStr);
+        scope.setExtra('importSource', type);
+      });
+      Sentry.captureEvent('bnglImportError');
+      throw new Error('Error while parsing BNGL');
+    }
 
     model.name = modelName;
     commit('setModel', model);
-    return Promise.resolve();
+  },
+
+  async queryMolecularRepo({ commit }, query) {
+    const { queryResult } = await socket.request('query_molecular_repo', query);
+    commit('setRepoQueryResult', queryResult);
+  },
+
+  saveRevision({ state }) {
+    return socket.request('save_revision', state.revision);
+  },
+
+  async mergeRevisionWithModel({ commit }, { branch, revision }) {
+    if (revision !== 'latest') {
+      commit('mergeRevisionWithModel', { branch, revision });
+      return;
+    }
+
+    const { rev: latestRev } = await socket.request('get_branch_latest_rev', branch);
+    commit('mergeRevisionWithModel', { branch, revision: latestRev });
+  },
+
+  async importRevision({ commit }, params) {
+    const { revision } = await socket.request('get_revision', params);
+    commit('mergeRevision', {
+      source: `rev:${params.branch}:${params.revision}`,
+      revisionData: revision,
+    });
+    commit('validateRevision');
+  },
+
+  mergeRevision({ commit }, { source, revisionData }) {
+    commit('mergeRevision', { source, revisionData });
+    commit('validateRevision');
+  },
+
+  updateRevisionEntity({ commit }, { type, entity }) {
+    commit('updateRevisionEntity', { type, entity });
+    commit('validateRevision');
+  },
+
+  removeRevisionEntities({ commit }, { type, entities }) {
+    commit('removeRevisionEntities', { type, entities });
+    commit('validateRevision');
+  },
+
+  setRepoQueryHighlightVersionKey({ commit }, versionKey) {
+    commit('setRepoQueryHighlightVersionKey', versionKey);
+    commit('updateRepoQueryEntityStyles');
   },
 };
