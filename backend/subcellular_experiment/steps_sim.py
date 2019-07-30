@@ -338,38 +338,42 @@ class StepsSim():
             steps_reac = create_reac(reac_name, comp_names[0], pysb_reac) if len(comp_names) == 1 and type(sys_dict[comp_names[0]]) is smodel.Volsys else create_sreac(reac_name, comp_names, pysb_reac)
             steps_reacs.append(steps_reac)
 
+        atom_dict = {a.name: a for a in list(pysb_model.parameters) + list(pysb_model.expressions)}
 
-        param_dict = {p.name: p.value for p in pysb_model.parameters}
-        expr_dict = {e.name: e for e in pysb_model.expressions}
-        custom_param_val_dict = {}
+        def set_atom(name, num_value):
+            atom = atom_dict[name]
+
+            if atom is None:
+                raise ValueError(f'Expression or Parameter {name} not found')
+
+            if isinstance(atom, pysb.core.Parameter):
+                atom.value = num_value
+            else:
+                atom.expr = sympy.Float(num_value)
+
+        def expand_expr(expr):
+            subs = []
+            for a in expr.atoms():
+                if isinstance(a, pysb.core.Expression):
+                    subs.append((a, a.expand_expr()))
+            return expr.subs(subs)
 
         def eval_expr(expr):
-            if expr.name in custom_param_val_dict:
-                return custom_param_val_dict[expr.name]
+            param_subs = {p: p.value for p in pysb_model.parameters}
 
-            if expr.name in param_dict:
-                return param_dict[expr.name]
+            if isinstance(expr, pysb.core.Parameter):
+                return expr.get_value()
+            elif isinstance(expr, pysb.core.Expression):
+                return expr.expand_expr().evalf(subs=param_subs)
+            else:
+                return expand_expr(expr).evalf(subs=param_subs)
 
-            def get_sub(e):
-                if e.name in param_dict:
-                    return custom_param_val_dict[e.name] if e.name in custom_param_val_dict else param_dict[e.name]
-                elif e.name in expr_dict:
-                    return eval_expr(expr_dict[e.name])
-                else:
-                    raise ValueError(f'Symbol not found: {e.name}')
-
-            subs = {
-                e: get_sub(e)
-                for e in list(expr.expand_expr().atoms())
-                if e.is_symbol
-            }
-            return expr.expand_expr().evalf(subs=subs)
-
+        def calculate_reac_rate(pysb_reac):
+            return eval_expr(pysb_reac['rate'].as_ordered_factors()[-1])
 
         def init_reac_rates():
             for idx, steps_reac in enumerate(steps_reacs):
-                kinetic_rate_expr = pysb_model.reactions[idx]['rate'].as_ordered_factors()[-1]
-                rate_val = eval_expr(kinetic_rate_expr)
+                rate_val = calculate_reac_rate(pysb_model.reactions[idx])
                 steps_reac.setKcst(rate_val)
         init_reac_rates()
 
@@ -483,14 +487,12 @@ class StepsSim():
         def apply_stimulus(stim):
             if stim['type'] == StimulusType.SET_PARAM:
                 param_name = stim['target']
-                value = stim['value']
+                value = float(stim['value'])
                 L.debug(f'stim: setting param {param_name} to {value}')
-                custom_param_val_dict[param_name] = value
+                set_atom(param_name, value)
 
-                # TODO: move logic to apply rates outside
                 for reac_idx, steps_reac in enumerate(steps_reacs):
-                    kinetic_rate_expr = pysb_model.reactions[reac_idx]['rate'].as_ordered_factors()[-1]
-                    rate_val = eval_expr(kinetic_rate_expr)
+                    rate_val = calculate_reac_rate(pysb_model.reactions[reac_idx])
                     if type(steps_reac) == smodel.Reac:
                         curr_comp_reac_k = sim.getCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID())
                         if curr_comp_reac_k != rate_val:
