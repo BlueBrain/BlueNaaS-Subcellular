@@ -14,16 +14,31 @@
     >
     </i-table>
 
-    <Row class="mt-12" :gutter="12">
-      <i-col span="12">
+    <Row
+      :gutter="12"
+      type="flex"
+    >
+      <i-col
+        class="mt-12"
+        :xs="{span: 24, order: 2}"
+        :xl="{span: 16, order: 1}"
+      >
         <i-button
           type="warning"
           @click="onRemoveSelectedClick"
         >
           Remove selected
         </i-button>
+        <component
+          class="inline-block"
+          :is="toolByEntityType[entityType]"
+        />
       </i-col>
-      <i-col span="12">
+      <i-col
+        class="mt-12"
+        :xs="{span: 24, order: 1}"
+        :xl="{span: 8, order: 2}"
+      >
         <i-input
           v-model="filterStr"
           clearable
@@ -36,21 +51,33 @@
 
 
 <script>
+  import get from 'lodash/get';
+
   import constants from '@/constants';
   import contentConfig from '../../revision-editor/revision-content/content-config';
   import objStrSearchFilter from '@/tools/obj-str-search-filter';
 
-  const { entityTypeCollectionMap } = constants;
+  import SpeciesTools from './search-entities/tools/species-tools';
+
+  const { entityTypeCollectionMap, EntityType } = constants;
+
+  const toolByEntityType = {
+    [EntityType.SPECIES]: SpeciesTools,
+  };
 
   export default {
     name: 'search-entities',
     props: ['entityType'],
     data() {
       return {
-        tableColumns: contentConfig.revisionSearchColumnConfig[this.entityType],
+        toolByEntityType,
+        tableColumns: [],
         selection: [],
         filterStr: '',
       };
+    },
+    mounted() {
+      this.initTableColumnConfig();
     },
     methods: {
       onSelectionChange(selection) {
@@ -65,6 +92,9 @@
       rowClassName(row, index) {
         return row.style ? `demo-table-${row.style}-${index % 2 ? 'odd' : 'even'}-row` : '';
       },
+      initTableColumnConfig() {
+        this.tableColumns = contentConfig.build(contentConfig.Type.VIEWER, this.entityType, this.queryConfig);
+      },
     },
     computed: {
       loading() {
@@ -73,6 +103,17 @@
       entities() {
         return this.$store.state.repoQueryResult[entityTypeCollectionMap[this.entityType]]
           .filter(e => objStrSearchFilter(this.filterStr, e));
+      },
+      queryConfig() {
+        return this.$store.state.repoQueryConfig;
+      },
+    },
+    watch: {
+      queryConfig: {
+        handler() {
+          this.initTableColumnConfig();
+        },
+        deep: true,
       },
     },
   };

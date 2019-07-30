@@ -12,12 +12,13 @@
           transfer
           width="300"
           placement="left-end"
-          title="Choose revision to merge"
+          title="Merge revision"
         >
           <div slot="content" class="p-6">
             <div class="mt-6">
               <i-select
                 v-model="versionKey"
+                placeholder="Choose a revision"
                 transfer
                 @on-change="onVersionKeyChange"
               >
@@ -28,6 +29,19 @@
                 >{{ version.key }}</i-option>
               </i-select>
             </div>
+            <div class="mt-12">
+              <i-select
+                v-model="concSource"
+                placeholder="Choose a concentration source"
+                transfer
+              >
+                <i-option
+                  v-for="source in concSources"
+                  :key="source"
+                  :value="source"
+                >{{ source }}</i-option>
+              </i-select>
+            </div>
             <Row
               class="mt-12 mb-6"
               :gutter="12"
@@ -35,7 +49,6 @@
               <i-col span="12">
                 <i-button
                   long
-                  :disabled="!versionKey"
                   @click="cancelMergeClicked"
                 >
                   Cancel
@@ -95,6 +108,7 @@
     data() {
       return {
         versionKey: null,
+        concSource: null,
         mergeFinishedModalVisible: false,
         poptipVisible: false,
       };
@@ -106,7 +120,11 @@
       async onMergeBtnClick() {
         this.poptipVisible = false;
         // TODO: add result validation
-        await this.$store.dispatch('mergeRevisionWithModel', this.getCurrentVersion());
+        const mergeRevisionActionParams = {
+          version: this.getCurrentVersion(),
+          concSource: this.concSource,
+        };
+        await this.$store.dispatch('mergeRevisionWithModel', mergeRevisionActionParams);
         this.versionKey = null;
         this.onVersionKeyChange();
         this.showModal();
@@ -122,8 +140,14 @@
       },
       cancelMergeClicked() {
         this.versionKey = null;
+        this.concSource = null;
         this.onVersionKeyChange();
         this.poptipVisible = false;
+      },
+    },
+    computed: {
+      concSources() {
+        return this.$store.state.repoQueryConfig.concSources;
       },
     },
     watch: {

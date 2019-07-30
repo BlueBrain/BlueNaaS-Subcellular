@@ -199,4 +199,52 @@ export default {
       state.model[entity] = state.model[entity].concat(modelDiff[entity]);
     });
   },
+
+  renameRevConcSource(state, { sourceIndex, newSource }) {
+    const currentConcentrationSources = state.revision.config.concSources;
+    const sourceToRename = currentConcentrationSources[sourceIndex];
+
+    state.revision.species.forEach((species) => {
+      const concValue = species.concentration[sourceToRename];
+      delete species.concentration[sourceToRename];
+      Vue.set(species.concentration, newSource, concValue);
+    });
+
+    Vue.set(currentConcentrationSources, sourceIndex, newSource);
+  },
+
+  removeRevConcSource(state, sourceIndex) {
+    const sourceToRemove = state.revision.config.concSources[sourceIndex];
+
+    state.revision.config.concSources.splice(sourceIndex, 1);
+    state.revision.species.forEach((species) => {
+      delete species.concentration[sourceToRemove];
+    });
+  },
+
+  addRevConcSource(state, concSource) {
+    state.revision.species.forEach((species) => {
+      Vue.set(species.concentration, concSource, '0');
+    });
+    state.revision.config.concSources.push(concSource);
+  },
+
+  setRevisionVisibleConcSources(state, visibleConcSources) {
+    Vue.set(state.revision.config, 'visibleConcSources', visibleConcSources);
+  },
+
+  setRevisionQueryVisibleConcSources(state, visibleConcSources) {
+    Vue.set(state.repoQueryConfig, 'visibleConcSources', visibleConcSources);
+  },
+
+  importConcentration(state, { importCollection, concSource }) {
+    importCollection.forEach((importObj) => {
+      const specEntityId = importObj.species[importObj.specIdx].entityId;
+      const revSpec = state.revision.species
+        .find(s => s.entityId === specEntityId);
+
+      const conc = importObj.newConcentrations[importObj.newConcentrationIdx];
+      Vue.set(revSpec.concentration, concSource, conc);
+    });
+  },
 };

@@ -54,6 +54,14 @@ main {
   font-family: 'Source Code Pro', monospace;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
+.block {
+  display: block;
+}
+
 .side-panel-container>div>.ivu-tabs-bar {
   display: none;
 }

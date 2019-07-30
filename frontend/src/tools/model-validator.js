@@ -339,26 +339,31 @@ class ModelValidator {
       });
     }
 
-    if (!species.concentration.trim()) {
-      validationResult.addMessage({
-        type: messageType.ERROR,
-        text: 'concentration is missing',
-      });
-    }
-
-    const modelParamNames = this.model.parameters.map(p => p.name);
-    const concDefParamNames = getDefParamNames(species.concentration);
-    const diffParamNames = difference(concDefParamNames, modelParamNames);
-
-    if (diffParamNames.length) {
-      diffParamNames.forEach((paramName) => {
+    const validateConcentration = (concentration, concSource) => {
+      if (!concentration.trim()) {
         validationResult.addMessage({
           type: messageType.ERROR,
-          text: `${paramName} parameter is not defined in the model`,
+          text: `${concSource} concentration is missing`,
         });
-      });
-    }
+      }
 
+      const modelParamNames = this.model.parameters.map(p => p.name);
+      const concDefParamNames = getDefParamNames(concentration);
+      const diffParamNames = difference(concDefParamNames, modelParamNames);
+
+      if (diffParamNames.length) {
+        diffParamNames.forEach((paramName) => {
+          validationResult.addMessage({
+            type: messageType.ERROR,
+            text: `${paramName} parameter is not defined in the model`,
+          });
+        });
+      }
+    };
+
+    this.model.config.concSources.forEach((concSource) => {
+      validateConcentration(species.concentration[concSource], concSource);
+    });
 
     return validationResult;
   }

@@ -41,6 +41,7 @@ const ModelExportFormats = {
 
 const ModelFormatExtensions = {
   bngl: 'bngl',
+  ebngl: 'json',
   pysb_flat: 'py',
   sbml: 'sbml',
   steps: 'py',
@@ -123,6 +124,10 @@ const defaultEmptyRevision = {
   description: '',
   branch: '',
   loading: false,
+  config: {
+    concSources: ['default'],
+    visibleConcSources: ['default'],
+  },
 
   structures: [],
   parameters: [],
@@ -178,6 +183,8 @@ const validationMessageType = {
   INFO: 'info',
 };
 
+const DEFAULT_VISIBLE_CONC_N_PER_REV = 5;
+
 export default {
   EntityType,
   StructureType,
@@ -197,4 +204,5 @@ export default {
   formMode,
   agentType,
   validationMessageType,
+  DEFAULT_VISIBLE_CONC_N_PER_REV,
 };

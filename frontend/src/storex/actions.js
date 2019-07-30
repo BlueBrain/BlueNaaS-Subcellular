@@ -310,4 +310,22 @@ export default {
     commit('setRepoQueryHighlightVersionKey', versionKey);
     commit('updateRepoQueryEntityStyles');
   },
+
+  renameRevConcSource({ commit }, { sourceIndex, newSource }) {
+    commit('renameRevConcSource', { sourceIndex, newSource });
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
+  },
+
+  removeRevConcSource({ commit }, sourceIndex) {
+    commit('removeRevConcSource', sourceIndex);
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
+  },
+
+  addRevConcSource({ commit }, concSource) {
+    commit('addRevConcSource', concSource);
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
+  },
 };

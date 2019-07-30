@@ -18,5 +18,9 @@ export default {
   },
   dbModels: {},
   repoQueryResult: null,
+  repoQueryConfig: {
+    concSources: ['default'],
+    visibleConcSources: ['default'],
+  },
   repoQueryHighlightVersionKey: null,
 };

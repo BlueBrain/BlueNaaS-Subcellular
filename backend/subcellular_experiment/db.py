@@ -4,7 +4,6 @@ import json
 import re
 
 import pymongo
-from bson.json_util import dumps
 from pymongo import MongoClient
 
 from .bngl_extended_model import EntityType, entity_coll_name_map
@@ -414,22 +413,25 @@ class Db():
             molecule_ids = get_def_molecule_ids(spec_def, saved_db_entities)
             # parameter_ids = get_spec_parameter_ids(spec['concentration'], saved_db_entities)
 
-            parameter_ids = [
-                entity['_id'] for entity
-                in get_expr_entities(spec['concentration'], dep_entity_dict)
-                if entity['entityType'] == EntityType.PARAMETER
-            ]
+            parameter_ids = []
+            conc_dic = spec['concentration']
+            for conc_source in conc_dic:
+                parameter_ids += [
+                    entity['_id'] for entity
+                    in get_expr_entities(conc_dic[conc_source], dep_entity_dict)
+                    if entity['entityType'] == EntityType.PARAMETER
+                ]
 
             db_entry = {
-                    **spec,
-                    'rev': rev,
-                    'branch': branch,
-                    'entityType': EntityType.SPECIES,
-                    'userId': user_id,
-                    'structureIds': structure_ids,
-                    'moleculeIds': molecule_ids,
-                    'parameterIds': parameter_ids
-                }
+                **spec,
+                'rev': rev,
+                'branch': branch,
+                'entityType': EntityType.SPECIES,
+                'userId': user_id,
+                'structureIds': structure_ids,
+                'moleculeIds': molecule_ids,
+                'parameterIds': parameter_ids
+            }
             db_entry.pop('_id', None)
             saved_id = self.db.repo.insert_one(db_entry).inserted_id
             db_entry['_id'] = saved_id

@@ -24,23 +24,38 @@
       </template>
     </i-table>
 
-    <Row class="mt-12" :gutter="12">
-      <i-col span="12">
+    <Row
+      :gutter="12"
+      type="flex"
+    >
+      <i-col
+        :xs="{span: 24, order: 2}"
+        :xl="{span: 16, order: 1}"
+      >
         <i-button
+          class="mt-12"
           type="primary"
           @click="onAddNewClick"
         >
           Add new
         </i-button>
         <i-button
-          class="ml-12"
+          class="ml-12 mt-12 mr-24"
           type="warning"
           @click="onRemoveSelectedClick"
         >
           Remove selected
         </i-button>
+        <component
+          class="inline-block"
+          :is="toolByEntityType[entityType]"
+        />
       </i-col>
-      <i-col span="12">
+      <i-col
+        class="mt-12"
+        :xs="{span:24, order: 1}"
+        :xl="{span: 8, order: 2}"
+      >
         <i-input
           v-model="filterStr"
           clearable
@@ -100,6 +115,8 @@
   import ParameterForm from './forms/parameter-form.vue';
   import FunctionForm from './forms/function-form.vue';
 
+  import SpeciesTools from './forms/tools/species-tools.vue';
+
   const { EntityType, entityTypeCollectionMap, formMode } = constants;
 
   const formByEntityType = {
@@ -113,13 +130,18 @@
     [EntityType.FUNCTION]: FunctionForm,
   };
 
+  const toolByEntityType = {
+    [EntityType.SPECIES]: SpeciesTools,
+  };
+
   export default {
     name: 'revision-entities',
     props: ['entityType'],
     data() {
       return {
         formByEntityType,
-        tableColumns: contentConfig.revisionEditorColumnConfig[this.entityType],
+        toolByEntityType,
+        tableColumns: [],
         selection: [],
         editFormVisible: false,
         tmpEntity: {},
@@ -127,10 +149,13 @@
         currentFormMode: '',
       };
     },
+    mounted() {
+      this.initTableColumnConfig();
+    },
     methods: {
       onAddNewClick() {
         const className = `Revision${capitalize(this.entityType)}`;
-        this.tmpEntity = new Entity[className]();
+        this.tmpEntity = new Entity[className](this.revisionConfig);
         this.currentFormMode = formMode.CREATE_NEW;
         this.showEditForm();
       },
@@ -165,6 +190,9 @@
           entities: this.selection,
         });
       },
+      initTableColumnConfig() {
+        this.tableColumns = contentConfig.build(contentConfig.Type.EDITOR, this.entityType, this.revisionConfig);
+      },
     },
     computed: {
       loading() {
@@ -176,6 +204,17 @@
       },
       modalTitle() {
         return this.currentFormMode === formMode.CREATE_NEW ? 'Create new' : 'Edit';
+      },
+      revisionConfig() {
+        return this.$store.state.revision.config;
+      },
+    },
+    watch: {
+      revisionConfig: {
+        handler() {
+          this.initTableColumnConfig();
+        },
+        deep: true,
       },
     },
   };

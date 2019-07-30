@@ -159,10 +159,97 @@ function parseStimuli(type, fileContent) {
   return parser[type](fileContent);
 }
 
+const bnglDefNameR = /(\w+)\(/;
+const bnglDefStructureR = /@(\w+)/;
+
+function getDefName(bnglDefinition) {
+  if (!bnglDefinition) return;
+
+  const match = bnglDefinition.match(bnglDefNameR);
+  return match && match[1];
+};
+
+function getDefStructure(bnglDefinition) {
+  if (!bnglDefinition) return;
+
+  const match = bnglDefinition.match(bnglDefStructureR);
+  return match && match[1];
+}
+
+/**
+ * Match model molecule definition/species with a concentration data by given importConfig
+ * and build a collection containing species and their old/new concentrations
+ *
+ * @param {Object} model See defaultModel in `@/src/constants`
+ * @param {Object} importConfig
+ * @param {String} importConfig.match.molecule.prop Molecule property used for matching
+ * @param {String} importConfig.match.molecule.tableColumn Column used for matching of molecules
+ * @param {Object[]} importConfig.match.structures Collection used to match structures,
+ *                                                   has `prop` and `tableColumn` props
+ * @param {Object[]} concentrationData             Parsed CSV/TSV with concentrations to import
+ */
+function buildConcImportCollection(model, importConfig, concentrationData) {
+  const molConf = importConfig.match.molecule;
+
+  const structureNameSet = new Set(importConfig.match.structures.map(s => s.name));
+
+  const molMatchPropValueSet = new Set(model.molecules.map(m => m[molConf.prop]));
+  const concDataRows = concentrationData
+    .filter(row => molMatchPropValueSet.has(row[molConf.tableColumn]));
+
+  const concImportCollBySpec = {};
+
+  const processConcRow = (concRow) => {
+    const molPropValue = concRow[molConf.tableColumn];
+    const molecule = model.molecules.find(m => m[molConf.prop] === molPropValue);
+    const molDefName = getDefName(molecule.definition);
+    const species = model.species
+      // filter out molecular complexes
+      .filter(s => !s.definition.includes('.'))
+      // filter matching molecule definition name
+      .filter(s => getDefName(s.definition) === molDefName)
+      // use species from structures defined in importConfig (present in concentration table)
+      .filter(s => structureNameSet.has(getDefStructure(s.definition)));
+
+    species.forEach((spec) => {
+      const defName = getDefName(spec.definition);
+      const structureName = getDefStructure(spec.definition);
+
+      const specKey = `${defName}@${structureName}`;
+
+      if (!concImportCollBySpec[specKey]) {
+        concImportCollBySpec[specKey] = {
+          species: [],
+          newConcentrations: [],
+          specIdx: 0,
+          newConcentrationIdx: 0,
+        };
+      }
+
+      if (!concImportCollBySpec[specKey].species.includes(spec)) {
+        concImportCollBySpec[specKey].species.push(spec);
+      }
+
+      const concTableColumn = importConfig.match.structures
+        .find(s => s.name === structureName).tableColumn;
+
+      const newConc = concRow[concTableColumn];
+      if (!concImportCollBySpec[specKey].newConcentrations.includes(newConc)) {
+        concImportCollBySpec[specKey].newConcentrations.push(newConc);
+      }
+    });
+  };
+
+  concDataRows.forEach(processConcRow);
+
+  return Object.values(concImportCollBySpec);
+}
+
 export default {
   getDefaultSpecUnit,
   getDefaultForwardKineticRateUnit,
   getDefaultBackwardKineticRateUnit,
   parseStimuli,
   createSimulationTemplate,
+  buildConcImportCollection,
 };

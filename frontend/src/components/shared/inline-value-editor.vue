@@ -11,11 +11,11 @@
       v-else
       ref="input"
       :class="{invalid: !valid}"
-      type="number"
-      min="0"
+      :type="type"
+      :min="min"
+      :max="max"
       step="any"
       v-model="currentValue"
-      @input="onInput"
       @keyup.enter="onEnter"
       @keyup.esc="onEsc"
       @blur="onBlur"
@@ -25,20 +25,32 @@
 
 
 <script>
+  import isNil from 'lodash/isNil';
+
   export default {
     name: 'inline-value-editor',
-    props: ['value'],
+    props: {
+      value: {
+        type: [String, Number],
+        required: true,
+      },
+      type: {
+        type: String,
+        default: 'text',
+      },
+      min: Number,
+      max: Number,
+      minLength: Number,
+      maxLength: Number,
+    },
     data() {
       return {
         editMode: false,
-        valid: true,
+        enteringEditMode: false,
         currentValue: this.value,
       };
     },
     methods: {
-      onInput() {
-        this.validate();
-      },
       onEnter() {
         if (!this.valid) return;
 
@@ -49,25 +61,40 @@
         this.exitEditMode();
       },
       onBlur() {
+        // workaround for bug in Firefox where inserted into DOM number input emits blur event
+        // see https://bugzilla.mozilla.org/show_bug.cgi?id=981248
+        if (this.enteringEditMode) return;
+
         if (this.valid && this.editMode) this.emitChange();
 
         this.exitEditMode();
       },
       emitChange() {
-        this.$emit('input', parseFloat(this.currentValue));
-      },
-      validate() {
-        const parsedNumber = parseFloat(this.currentValue);
-        this.valid = typeof parsedNumber === 'number' && parsedNumber >= 0;
+        const typedValue = this.type === 'number' ?
+          parseFloat(this.currentValue) :
+          this.currentValue;
+
+        this.$emit('input', typedValue);
       },
       enterEditMode() {
+        this.enteringEditMode = true;
         this.editMode = true;
         this.currentValue = this.value;
-        this.validate();
-        this.$nextTick(() => this.$refs.input.focus());
+        this.$nextTick(() => {
+          this.$refs.input.focus();
+          this.enteringEditMode = false;
+        });
       },
       exitEditMode() {
         this.editMode = false;
+      },
+    },
+    computed: {
+      valid() {
+        return (isNil(this.min) || this.min <= parseFloat(this.currentValue))
+          && (isNil(this.max) || parseFloat(this.currentValue) <= this.max)
+          && (isNil(this.minLength) || this.minLength <= this.currentValue.length)
+          && (isNil(this.maxLength) || this.currentValue.length <= this.maxLength);
       },
     },
   };
@@ -76,7 +103,7 @@
 
 <style lang="scss">
   .iva-container {
-    height: 100%;
+    height: 24px;
 
     span, input {
       box-sizing: border-box;
