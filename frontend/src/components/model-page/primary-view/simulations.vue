@@ -8,6 +8,7 @@
 
     <div class="block-main" ref="mainBlock">
       <i-table
+        ref="table"
         highlight-row
         :no-data-text="emptyTableText"
         :height="tableHeight"
@@ -90,7 +91,7 @@
     <Modal
       v-model="newSimulationModalVisible"
       title="New Simulation"
-      width="680"
+      width="800"
       class-name="vertical-center-modal modal-height-400"
       @on-ok="onOk"
     >
@@ -165,7 +166,7 @@
   const defaultSimulation = {
     valid: false,
     id: null,
-    clientId: null,
+    userId: null,
     modelId: null,
     status: SimStatus.CREATED,
     name: null,
@@ -240,7 +241,7 @@
         this.newSimulation = Object.assign({}, cloneDeep(defaultSimulation), {
           valid: false,
           id: uuidv1(),
-          clientId: this.$store.state.user.id,
+          userId: this.$store.state.user.id,
           modelId: this.$store.state.model.id,
           name: findUniqName(this.simulations, 'sim'),
         });
@@ -267,7 +268,7 @@
           values: [],
           times: [],
           log: null,
-        }, pick(this.selectedSimulation, ['clientId', 'modelId', 'solver', 'solverConf', 'annotation']));
+        }, pick(this.selectedSimulation, ['userId', 'modelId', 'solver', 'solverConf', 'annotation']));
         this.onOk();
       },
       onSimulationSelect(simulation, index) {

@@ -176,7 +176,7 @@
         return state.model.functions;
       },
       filteredFunctions() {
-        return this.functions.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'bioNetGenDef']));
+        return this.functions.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below';

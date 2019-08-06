@@ -90,6 +90,7 @@
       focus() {
         this.$refs.nameInput.focus();
       },
+      refresh() {},
       onChange() {
         // TODO: add validation
         this.structure.valid = true;

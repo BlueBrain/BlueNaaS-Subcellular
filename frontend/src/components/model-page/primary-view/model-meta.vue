@@ -1,7 +1,7 @@
 
 <template>
   <div class="p-12 h-100 o-scroll-y">
-    <h2>Subcellular model: {{ name || 'unspecified' }}</h2>
+    <h2>Subcellular model: {{ name || 'unnamed' }}</h2>
 
     <i-form
       class="mt-12"
@@ -27,6 +27,7 @@
       </FormItem>
       <FormItem>
         <i-button
+          class="width-82"
           type="warning"
           disabled
           @click="clearModel"
@@ -35,13 +36,14 @@
         </i-button>
         <i-button
           type="primary"
-          class="ml-12"
+          class="ml-12 width-82"
+          :loading="saveInProgress"
           @click="saveModel"
         >
-          Save
+          {{ saveBtnLabel }}
         </i-button>
         <i-button
-          class="ml-12"
+          class="ml-12 width-82"
           type="default"
           @click="showImportModal"
         >
@@ -54,13 +56,14 @@
         >
           <i-button
             type="primary"
-            class="ml-12"
+            class="ml-12 width-82"
           >
             Export
             <Icon type="ios-arrow-down"></Icon>
           </i-button>
           <DropdownMenu slot="list">
             <DropdownItem name="bngl">BNGL</DropdownItem>
+            <DropdownItem name="ebngl">eBNGL</DropdownItem>
             <DropdownItem name="pysb_flat">PySB</DropdownItem>
             <DropdownItem name="sbml" disabled>SBML</DropdownItem>
           </DropdownMenu>
@@ -93,6 +96,8 @@
     data() {
       return {
         importModalVisible: false,
+        saveInProgress: false,
+        saveBtnLabel: 'Save',
       };
     },
     methods: {
@@ -100,7 +105,14 @@
         this.$store.dispatch('clearModel');
       },
       saveModel() {
+        this.saveInProgress = true;
+        this.saveBtnLabel = 'Saving';
         this.$store.dispatch('saveModel');
+        setTimeout(() => { this.saveBtnLabel = 'Saved!'; }, 300);
+        setTimeout(() => {
+          this.saveBtnLabel = 'Save';
+          this.saveInProgress = false;
+        }, 1200);
       },
       exportModel(format) {
         this.$store.dispatch('exportModel', format);
@@ -124,3 +136,10 @@
     },
   };
 </script>
+
+
+<style lang="scss" scoped>
+  .width-82 {
+    width: 82px;
+  }
+</style>

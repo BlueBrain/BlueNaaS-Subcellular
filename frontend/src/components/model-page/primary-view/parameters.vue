@@ -175,7 +175,7 @@
         return state.model.parameters;
       },
       filteredParameters() {
-        return this.parameters.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'bioNetGenDef']));
+        return this.parameters.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching parameters' : 'Create a parameter by using buttons below';

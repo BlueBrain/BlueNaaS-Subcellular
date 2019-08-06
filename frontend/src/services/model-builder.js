@@ -64,7 +64,7 @@ function buildFromProteins(proteins) {
       return concValue ? Object.assign(acc, { [location]: concValue }) : acc;
     }, {});
 
-    modelAgentMap.set(currentAgent.bioNetGenDef, Object.assign({ conc: {} }, currentAgent, { conc }));
+    modelAgentMap.set(currentAgent.definition, Object.assign({ conc: {} }, currentAgent, { conc }));
   });
 
   const modelMoleculeNames = [];
@@ -115,7 +115,7 @@ function buildFromProteins(proteins) {
   // adding reaction rules
   const ruleReactantR = /(\w+)\(.*?\)/g;
   const modelRules = rules.filter((rule) => {
-    const ruleReactants = rule.bioNetGenDef.match(ruleReactantR);
+    const ruleReactants = rule.definition.match(ruleReactantR);
     const moleculeNameR = /(\w+)\(/;
     const ruleMoleculeNames = uniq(ruleReactants.map(reactant => reactant.match(moleculeNameR)[1]));
 
@@ -128,8 +128,8 @@ function buildFromProteins(proteins) {
   const reactionKfR = /.*\s+(\w+),\s*\w+/;
   const reactionKrR = /.*\s+\w+,\s*(\w+)/;
   modelRules.forEach((modelRule) => {
-    const kf = modelRule.bioNetGenDef.match(reactionKfR)[1];
-    const kr = modelRule.bioNetGenDef.match(reactionKrR)[1];
+    const kf = modelRule.definition.match(reactionKfR)[1];
+    const kr = modelRule.definition.match(reactionKrR)[1];
 
 
     // adding reaction rates as params as well
@@ -148,7 +148,7 @@ function buildFromProteins(proteins) {
 
     model.reactions.push({
       name: modelRule.name || `r${reactionNameIndex += 1}`,
-      definition: modelRule.bioNetGenDef.match(reactionDefinitionR)[1],
+      definition: modelRule.definition.match(reactionDefinitionR)[1],
       kf,
       kr,
       annotation: modelRule.description,
@@ -273,8 +273,8 @@ function buildFromBngl(fileContent) {
       model.structures = fileContent
         .match(structuresR)[1]
         .split(newLineR)
-        .filter(s => s)
         .map(s => s.trim())
+        .filter(s => s)
         .filter(s => !s.startsWith('#'))
         .map(p => p.match(/[^#]*/)[0])
         .map(p => p.trim())

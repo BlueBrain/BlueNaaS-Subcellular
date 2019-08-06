@@ -103,6 +103,9 @@
     name: '',
     valid: false,
     type: StructureType.COMPARTMENT,
+    unit: {
+      str: 'm³',
+    },
     parentName: '-',
     size: '',
     annotation: '',

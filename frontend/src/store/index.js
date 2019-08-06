@@ -43,6 +43,10 @@ class Store {
     this.eventBus.$on(action, handler);
   }
 
+  $off(action, handler) {
+    this.eventBus.$off(action, handler);
+  }
+
   $once(action, handler) {
     this.eventBus.$once(action, handler);
   }
