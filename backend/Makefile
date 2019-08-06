@@ -10,7 +10,7 @@ OO_PROJECT?=bbp-ou-nse
 DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 DB_HOST?=mongo
 
-BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioNetGen-2.4.0/BioNetGen-2.4.0-Linux.tgz
+BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioNetGen-2.5.0/BioNetGen-2.5.0-Linux.tgz
 
 CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
 CIRCUIT_NAME?=o1
