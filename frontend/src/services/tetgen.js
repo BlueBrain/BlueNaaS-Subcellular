@@ -1,4 +1,6 @@
 
+const NUMBER_R = /[\d.]+/g;
+
 
 /**
  * Parse TetGen line
@@ -6,11 +8,10 @@
  * @param {String} line
  */
 function parseLine(line) {
-  return line
-    .split(/(\s+)/)
-    .map(chunk => chunk.trim())
-    .filter(chunk => chunk)
-    .map(numStr => parseFloat(numStr));
+  const splitted = line.match(NUMBER_R);
+  const numbers = splitted.map(parseFloat);
+
+  return numbers;
 }
 
 /**
@@ -19,12 +20,23 @@ function parseLine(line) {
  * @param {String} fileContent
  */
 function parseFile(fileContent) {
-  return fileContent
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(line => line)
-    .filter(line => !line.startsWith('#'))
-    .map(line => parseLine(line));
+  const parsed = [];
+  let currentIdx = 0
+  let nextNewLineIdx = fileContent.indexOf('\n', currentIdx);
+  while (nextNewLineIdx !== -1) {
+    const line = fileContent
+      .slice(currentIdx, nextNewLineIdx)
+      .trim();
+
+    currentIdx = nextNewLineIdx + 1;
+    nextNewLineIdx = fileContent.indexOf('\n', currentIdx);
+
+    if (!line.startsWith('#')) {
+      parsed.push(parseLine(line));
+    };
+  }
+
+  return parsed;
 }
 
 /**
