@@ -81,7 +81,14 @@ export default {
   async loadDbModels({ commit }) {
     const storageModels = await storage.getItem('models');
     const models = storageModels || {};
-    commit('updateDbModels', cloneDeep(models));
+    // freeze potentially big objects to prevent perfarmance loss due to vue's reactivity design
+    Object.values(models).forEach(model => {
+      const { geometry } = model;
+      geometry.elements = Object.freeze(geometry.elements);
+      geometry.faces = Object.freeze(geometry.faces);
+      geometry.nodes = Object.freeze(geometry.nodes);
+    });
+    commit('updateDbModels', models);
   },
 
   async deleteDbModel({ state, commit }, model) {

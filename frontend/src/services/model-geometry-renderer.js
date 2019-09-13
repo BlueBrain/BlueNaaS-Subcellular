@@ -65,7 +65,7 @@ class ModelGeometryRenderer {
 
     const { clientWidth, clientHeight } = canvas.parentElement;
 
-    this.renderer.setSize(clientWidth, clientHeight);
+    this.renderer.setSize(clientWidth, clientHeight, false);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
     this.scene = new Scene();
@@ -124,7 +124,7 @@ class ModelGeometryRenderer {
     this.normScalar = getNormScalar(modelGeometry.nodes);
 
     const createCompartmentGeometry = (compartment) => {
-      const vertexMap = {};
+      const vertexMap = new Map();
 
       const tets = compartment.tetIdxs
         .map(elIdx => modelGeometry.elements[elIdx]);
@@ -138,15 +138,21 @@ class ModelGeometryRenderer {
           [vert1, vert2, vert4],
           [vert1, vert4, vert3],
         ].forEach((tri) => {
-          const key = tri.slice().sort().join('_');
-          vertexMap[key] = !vertexMap[key] && [...tri];
+          const key = tri.sort().join('_');
+
+          if (vertexMap.has(key)) {
+            vertexMap.delete(key);
+          } else {
+            vertexMap.set(key, tri);
+          }
         });
       });
 
-      const surfTris = Object.values(vertexMap).filter(val => val);
+      const surfTris = Array.from(vertexMap.values());
 
-      const allSurfVertices = surfTris.reduce((acc, cur) => acc.concat(cur));
-      const surfVertices = Array.from(new Set(allSurfVertices));
+      const vertexSet = new Set();
+      surfTris.forEach(vertices => vertices.forEach(vertex => vertexSet.add(vertex)));
+      const surfVertices = Array.from(vertexSet);
 
       const surfVertexIdxMap = new Map();
       surfVertices.forEach((v, idx) => { surfVertexIdxMap[v] = idx; });

@@ -188,7 +188,7 @@
           return;
         }
 
-        // structure type and indexes property accordance validation
+        // structure type and indexes property according to validation
         // TODO: move to json schema validation if possible
         const validateStructure = (st) => {
           const valid = (st.type === StructureType.COMPARTMENT && st.tetIdxs.length)
@@ -239,7 +239,7 @@
           this.tetGenFileNameBase = fileNameBase;
         }
 
-        this.file[meshTypeMap[fileExtension]] = content;
+        this.file[meshTypeMap[fileExtension]] = Object.freeze(content);
       },
       getMeshNameMismatchErrorStr(meshNameRoot, tetgenMeshName) {
         return `meshNameRoot property of JSON file: ${meshNameRoot}, `
@@ -301,9 +301,9 @@
         );
 
         return {
-          nodes: mesh.nodes,
-          faces: mesh.faces,
-          elements: mesh.elements,
+          nodes: Object.freeze(mesh.nodes),
+          faces: Object.freeze(mesh.faces),
+          elements: Object.freeze(mesh.elements),
           structures: get(this.geometry, 'structures'),
           freeDiffusionBoundaries: get(this.geometry, 'freeDiffusionBoundaries'),
           scale: get(this.geometry, 'scale'),
