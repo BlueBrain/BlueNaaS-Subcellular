@@ -1,6 +1,6 @@
 
 <template>
-  <div class="h-100 pos-relative canvas-container">
+  <div class="h-100 w-100 pos-relative" ref="container">
 
     <div
       class="compartment-agenda-container"
@@ -43,6 +43,15 @@
       <span>Wireframe</span>
     </div>
 
+    <div class="fullscreen-ctrl-container">
+      <i-button
+        type="text"
+        @click="toggleFullscreen"
+      >
+        <Icon type="ios-expand" size="18"/>
+      </i-button>
+    </div>
+
     <canvas ref="canvas"></canvas>
 
   </div>
@@ -50,6 +59,8 @@
 
 
 <script>
+  import toggleFullscreen from 'toggle-fullscreen';
+
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
   import constants from '@/constants';
   import bus from '@/services/event-bus';
@@ -112,6 +123,13 @@
       onDisplayModeChange(mode) {
         this.renderer.setDisplayMode(mode);
       },
+      async toggleFullscreen() {
+        await toggleFullscreen(this.$refs.container);
+        // TODO: investigate more, refactor
+        // workaround for Safari where size of the container
+        // is not updated immediately after entering full screen mode
+        setTimeout(() => this.renderer.onResize(), 500);
+      },
     },
     watch: {
       geometryData() {
@@ -124,12 +142,11 @@
 
 
 <style lang="scss" scoped>
-  .compartment-agenda-container, .display-conf-container {
+  .compartment-agenda-container, .display-conf-container, .fullscreen-ctrl-container {
     background-color: #f8f8f9;
     border: 1px solid #e9ebef;
     position: absolute;
-    z-index: 10;
-    bottom: 6px;
+    z-index: 2;
     padding: 6px;
   }
 
@@ -140,6 +157,7 @@
   .compartment-agenda-container {
     padding-bottom: 2px;
     left: 6px;
+    bottom: 6px;
 
     span {
       vertical-align: middle;
@@ -148,6 +166,12 @@
 
   .display-conf-container {
     right: 6px;
+    bottom: 6px;
+  }
+
+  .fullscreen-ctrl-container {
+    right: 6px;
+    top: 6px;
   }
 
   .color-block {
@@ -158,11 +182,9 @@
     vertical-align: middle;
   }
 
-  .canvas-container {
-    overflow: hidden;
-  }
-
   canvas {
     position: absolute;
+    height: 100% !important;
+    width: 100% !important;
   }
 </style>
