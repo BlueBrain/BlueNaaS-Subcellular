@@ -1,4 +1,5 @@
 
+import get from 'lodash/get';
 import SWorker from 'simple-web-worker';
 
 
@@ -175,6 +176,7 @@ class ModelGeometry {
   description = null;
   id = null;
   valid = false;
+  parsed = false;
   initialized = false;
   meta = null;
   mesh = {
@@ -195,6 +197,21 @@ class ModelGeometry {
     this.name = name;
   }
 
+  static from(modelGeometrySrc) {
+    const modelGeometry = new ModelGeometry();
+    const { name, id, description, initialized, parsed, meta, mesh } = modelGeometrySrc;
+    Object.assign(modelGeometry, { name, id, description, initialized, parsed, meta });
+
+    modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw);
+    modelGeometry.mesh.volume.nodes = Object.freeze(get(mesh, 'volume.nodes', []));
+    modelGeometry.mesh.volume.faces = Object.freeze(get(mesh, 'volume.faces', []));
+    modelGeometry.mesh.volume.elements = Object.freeze(get(mesh, 'volume.elements', []));
+    modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {}))
+      .reduce((acc, [structName, structMesh]) => ({...acc, ...{ [structName]: Object.freeze(structMesh) }}), {});
+
+    return modelGeometry;
+  }
+
   get complete() {
     const rawMesh = this.mesh.volume.raw
     const { meta } = this;
@@ -209,14 +226,19 @@ class ModelGeometry {
   }
 
   async init() {
-    await this.parseTetGen();
-    await this.generateSurfaceMeshes();
-    this.initialized = true;
+    if (!this.parsed) {
+      await this.parseTetGen();
+    }
+
+    if (!this.initialized) {
+      await this.generateSurfaceMeshes();
+    }
   }
 
   async addTetGenMesh({ nodes, faces, elements }) {
     this.mesh.volume.raw = { nodes, faces, elements };
     await this.parseTetGen();
+    this.parsed = true;
   }
 
   addMeta({ meshNameRoot, scale, structures, freeDiffusionBoundaries }) {
@@ -232,6 +254,8 @@ class ModelGeometry {
       const mesh = await genMeshFunc(this, structure);
       this.mesh.surface[structure.name] = Object.freeze(mesh);
     }
+
+    this.initialized = true;
   }
 
   /**
@@ -263,6 +287,8 @@ class ModelGeometry {
         .map(nodeNum => nodeIdxMap.get(nodeNum));
     });
     this.mesh.volume.elements = Object.freeze(elements);
+
+    this.parsed = true;
   }
 
   getClean() {

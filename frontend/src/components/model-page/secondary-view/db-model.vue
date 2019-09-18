@@ -37,10 +37,12 @@
     methods: {
       async loadModel() {
         const { model } = this;
-        this.$store.commit('resetEntitySelection');
         this.loading = true;
+
         await this.$store.dispatch('loadDbModel', model);
+
         this.loading = false;
+        this.$store.commit('resetEntitySelection');
         this.$router.push('/model/meta');
       },
       deleteModel() {

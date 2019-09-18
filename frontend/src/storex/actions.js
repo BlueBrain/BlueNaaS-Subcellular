@@ -6,6 +6,7 @@ import uuidv4 from 'uuid/v4';
 
 import * as Sentry from '@sentry/browser';
 
+import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
 import socket from '@/services/websocket';
 import constants from '@/constants';
@@ -74,6 +75,10 @@ export default {
     dispatch('setStructSizesFromGeometry');
   },
 
+  removeGeometry({ commit }) {
+    commit('removeGeometry');
+  },
+
   setStructSizesFromGeometry({ state, commit }) {
     const { structures } = state.model.geometry.meta;
     structures.forEach((geomStruct) => {
@@ -115,11 +120,68 @@ export default {
     commit('addToModel', modelDiff);
   },
 
-  async loadDbModel({ commit, dispatch }, dbModel) {
+  async loadDbModel({ commit, dispatch, state }, dbModel) {
     const model = {...dbModel};
     if (model.geometry && !model.geometry.name) {
       model.geometry = await storage.getItem(`geometry:${model.geometry.id}`);
     }
+
+    if (model.geometry && model.geometry.nodes) {
+      console.info(`Transforming model ${model.name} to new format`);
+      // this is an old format of geometry, needs to be restructures
+      // TODO: remove this after 20.10.2019
+      model.geometry.parsed = true;
+      model.geometry.initialized = false;
+      const {
+        name,
+        annotation,
+        id,
+        scale,
+        structures,
+        meshNameRoot,
+        freeDiffusionBoundaries,
+        nodes,
+        faces,
+        elements,
+      } = model.geometry;
+
+      const restructuredGeometry = {
+        name,
+        id,
+        parsed: true,
+        initialized: false,
+        description: annotation,
+        meta: {
+          scale,
+          structures,
+          meshNameRoot,
+          freeDiffusionBoundaries,
+        },
+        mesh: {
+          volume: {
+            nodes,
+            faces,
+            elements,
+          },
+          surface: {},
+        },
+      };
+
+      model.geometry = restructuredGeometry;
+
+      const models = cloneDeep(state.dbModels);
+      const tmpModel = {...model};
+      const geometryId = tmpModel.geometry.id;
+      await storage.setItem(`geometry:${geometryId}`, tmpModel.geometry);
+      tmpModel.geometry = { id: geometryId };
+
+      models[tmpModel.name] = tmpModel;
+      await storage.setItem('models', models);
+      commit('updateDbModels', cloneDeep(models));
+    }
+
+    model.geometry = ModelGeometry.from(model.geometry);
+    await model.geometry.init();
 
     commit('loadDbModel', model);
     if (model.public) {
