@@ -17,10 +17,10 @@
                 <FormItem label="Name">
                   <i-input type="text" :value="geometry.name" readonly/>
                 </FormItem>
-                <FormItem label="Annotation">
+                <FormItem label="Description">
                   <i-input
                     type="textarea"
-                    :value="geometry.annotation"
+                    :value="geometry.description"
                     :autosize="{minRows: 3, maxRows: 3}"
                     readonly
                   />
@@ -29,7 +29,7 @@
             </i-col>
             <i-col span="12">
               <div class="geometry-viewer-container h-100">
-                <geometry-viewer :geometry-data="geometry"/>
+                <geometry-viewer v-if="geometry && geometry.initialized" :geometry-data="geometry"/>
               </div>
             </i-col>
           </Row>
@@ -57,32 +57,50 @@
     </div>
     <div class="block-footer">
       <i-button
+        v-if="!geometry"
         type="default"
         @click="showNewGeometryModal"
       >
-        Create new geometry
+        Add geometry
+      </i-button>
+
+      <i-button
+        v-else
+        type="warning"
+        @click="removeGeometry"
+      >
+        Remove geometry
       </i-button>
     </div>
 
     <Modal
-      v-model="newGeometryModalVisible"
+      v-model="modelVisible"
       title="New Geometry"
       width="66"
+      :closable="!saving"
+      :mask-closable="!saving"
       class-name="vertical-center-modal"
+      @on-visible-change="onModalVisibleChange"
       @on-ok="onOk"
     >
-      <new-geometry-form v-model="newGeometry"/>
+      <new-geometry-form
+        v-if="modelVisible"
+        ref="newGeometryForm"
+        v-model="newModelGeometry"
+      />
       <div slot="footer">
         <i-button
           class="mr-6"
           type="text"
+          :disabled="saving"
           @click="hideNewGeometryModal"
         >
           Cancel
         </i-button>
         <i-button
           type="primary"
-          :disabled="!newGeometry.valid"
+          :loading="saving"
+          :disabled="!newModelGeometry || !newModelGeometry.initialized"
           @click="onOk"
         >
           OK
@@ -96,6 +114,7 @@
 <script>
   import NewGeometryForm from '@/components/shared/new-geometry-form.vue';
   import GeometryViewer from '@/components/shared/geometry-viewer.vue';
+  import ModelGeometry from '@/services/model-geometry';
 
 
   export default {
@@ -106,22 +125,34 @@
     },
     data() {
       return {
-        newGeometryModalVisible: false,
-        newGeometry: {
-          valid: false,
-        },
+        modelVisible: false,
+        newModelGeometry: null,
+        saving: false,
       };
     },
     methods: {
+      onModalVisibleChange(visible) {
+        if (!visible) this.reset();
+      },
       showNewGeometryModal() {
-        this.newGeometryModalVisible = true;
+        this.modelVisible = true;
+      },
+      reset() {
+        this.newModelGeometry = null;
+        this.saving = false;
+        this.$refs.newGeometryForm.reset();
       },
       hideNewGeometryModal() {
-        this.newGeometryModalVisible = false;
+        this.modelVisible = false;
+        this.reset();
       },
-      onOk() {
+      async onOk() {
+        this.saving = true
+        await this.$store.dispatch('createGeometry', this.newModelGeometry);
         this.hideNewGeometryModal();
-        this.$store.dispatch('createGeometry', this.newGeometry);
+      },
+      removeGeometry() {
+        this.$store.dispatch('removeGeometry');
       },
     },
     computed: {

@@ -80,12 +80,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         if cmd == 'create_geometry':
             geometry_config = msg['data']
-            id = str(uuid.uuid4())
-            geometry_config['id'] = id
             geometry = Geometry(geometry_config)
+            structure_size_dict = {st['name']:st['size'] for st in geometry.structures}
             self.send_message('geometry', {
                 'cmdid': cmdid,
-                'geometry': geometry.to_dict()
+                'id': geometry.id,
+                'structureSize': structure_size_dict
             })
 
         if cmd == 'get_exported_model':
@@ -220,7 +220,11 @@ app = tornado.web.Application([
     (r'/ws', WSHandler),
     (r'/sim', SimRunnerWSHandler),
     (r'/health', HealthHandler)
-], debug=os.getenv('DEBUG', False))
+],
+    debug=os.getenv('DEBUG', False),
+    websocket_max_message_size=20000000
+)
+
 L.debug('starting tornado io loop')
 app.listen(8000)
 tornado.ioloop.IOLoop.current().start()

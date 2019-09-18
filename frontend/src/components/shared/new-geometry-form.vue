@@ -9,14 +9,14 @@
         >
           <FormItem label="Name *">
             <i-input
-              v-model="name"
+              v-model="modelGeometry.name"
               @on-change="onChange"
             />
           </FormItem>
           <FormItem label="Annotation">
             <i-input
               type="textarea"
-              v-model="annotation"
+              v-model="modelGeometry.description"
               :autosize="{minRows: 3, maxRows: 3}"
               @on-change="onChange"
             />
@@ -24,22 +24,22 @@
           <FormItem label="TetGen mesh *">
             <p>
               <Tag
-                :color="file.nodes ? 'success' : 'default'"
-                :closable="!!file.nodes"
+                :color="modelGeometry.mesh.volume.raw.nodes ? 'success' : 'default'"
+                :closable="!!modelGeometry.mesh.volume.raw.nodes"
                 @on-close="removeFile('nodes')"
               >
                 Nodes
               </Tag>
               <Tag
-                :color="file.faces ? 'success' : 'default'"
-                :closable="!!file.faces"
+                :color="modelGeometry.mesh.volume.raw.faces ? 'success' : 'default'"
+                :closable="!!modelGeometry.mesh.volume.raw.faces"
                 @on-close="removeFile('faces')"
               >
                 Faces
               </Tag>
               <Tag
-                :color="file.elements ? 'success' : 'default'"
-                :closable="!!file.elements"
+                :color="modelGeometry.mesh.volume.raw.elements ? 'success' : 'default'"
+                :closable="!!modelGeometry.mesh.volume.raw.elements"
                 @on-close="removeFile('elements')"
               >
                 Elements
@@ -48,8 +48,8 @@
           </FormItem>
           <FormItem label="Geometry json *">
             <Tag
-              :color="geometry ? 'success' : 'default'"
-              :closable="!!geometry"
+              :color="modelGeometry.meta ? 'success' : 'default'"
+              :closable="!!modelGeometry.meta"
               @on-close="removeGeometry"
             >
               Geometry json
@@ -88,15 +88,31 @@
               </Poptip>
             </p>
             <p class="error">{{ error }}</p>
+            <Spin
+              v-if="loading"
+              size="large"
+              fix
+            />
           </div>
         </Upload>
       </i-col>
       <i-col span="12">
         <div class="geometry-viewer-container h-100">
           <geometry-viewer
-            v-if="geometryData"
-            :geometry-data="geometryData"
+            v-if="modelGeometry.initialized"
+            :geometry-data="modelGeometry"
           />
+          <div
+            v-else
+            class="p-12"
+          >
+            <p>Add geometry to visualize it</p>
+            <Spin
+              v-if="loading"
+              size="large"
+              fix
+            />
+          </div>
         </div>
       </i-col>
     </Row>
@@ -112,6 +128,7 @@
 
   import constants from '@/constants';
   import TetGenMesh from '@/services/tetgen';
+  import ModelGeometry from '@/services/model-geometry';
   import GeometryViewer from './geometry-viewer.vue';
 
   const validateGeometryMeta = new Ajv().compile(geometryMetaSchema);
@@ -128,6 +145,7 @@
     [StructureType.MEMBRANE]: 'triIdxs',
   };
 
+  // TODO: refactor
   export default {
     name: 'model-import',
     props: ['value'],
@@ -135,17 +153,13 @@
       'geometry-viewer': GeometryViewer,
     },
     data() {
+      const modelGeometry = new ModelGeometry();
+
       return {
         uploadComponentFormat,
-        name: '',
-        annotation: '',
-        file: {
-          nodes: null,
-          elements: null,
-          faces: null,
-        },
+        modelGeometry,
+        loading: false,
         tetGenFileNameBase: null,
-        geometry: null,
         error: '',
       };
     },
@@ -159,7 +173,10 @@
         // prevent default action to upload data to remote api
         return false;
       },
-
+      reset() {
+        this.modelGeometry = new ModelGeometry();
+        this.loading = false;
+      },
       onFileRead(fileName, fileContent) {
         const [fileExtension] = fileName.split('.').slice(-1);
 
@@ -171,17 +188,17 @@
         this.processMeshFile(fileName, fileContent);
       },
       processJson(name, content) {
-        let geometry = null;
+        let geometryMeta = null;
         try {
-          geometry = JSON.parse(content);
+          geometryMeta = JSON.parse(content);
         } catch (error) {
           this.error = `Can't parse ${name}, check if it's valid json file`;
         }
 
-        if (!geometry) return;
+        if (!geometryMeta) return;
 
         // json schema validation
-        const schemaValid = validateGeometryMeta(geometry);
+        const schemaValid = validateGeometryMeta(geometryMeta);
         if (!schemaValid) {
           const [errObj] = validateGeometryMeta.errors;
           this.error = `geometry.json error: ${errObj.dataPath} ${errObj.message}`;
@@ -200,25 +217,29 @@
 
           return valid;
         };
-        if (!geometry.structures.some(st => validateStructure(st))) return;
+        if (!geometryMeta.structures.some(st => validateStructure(st))) return;
 
         // TODO: DRY
         if (
           this.tetGenFileNameBase
-          && this.tetGenFileNameBase !== geometry.meshNameRoot
+          && this.tetGenFileNameBase !== geometryMeta.meshNameRoot
         ) {
           this.error = this.getMeshNameMismatchErrorStr(
-            geometry.meshNameRoot,
+            geometryMeta.meshNameRoot,
             this.tetGenFileNameBase,
           );
           return;
         }
 
         if (!this.tetGenFileNameBase) {
-          this.tetGenFileNameBase = geometry.meshNameRoot;
+          this.tetGenFileNameBase = get(this.modelGeometry, 'meta.meshNameRoot');
         }
 
-        this.geometry = geometry;
+        this.modelGeometry.addMeta(geometryMeta);
+
+        if (this.modelGeometry.complete) {
+          this.initModelGeometry();
+        }
       },
       processMeshFile(name, content) {
         const [fileExtension] = name.split('.').slice(-1);
@@ -239,75 +260,52 @@
           this.tetGenFileNameBase = fileNameBase;
         }
 
-        this.file[meshTypeMap[fileExtension]] = Object.freeze(content);
+        this.modelGeometry.mesh.volume.raw[meshTypeMap[fileExtension]] = content;
+
+        if (this.modelGeometry.complete) {
+          this.initModelGeometry();
+        }
+      },
+      async initModelGeometry() {
+        this.loading = true;
+        await this.modelGeometry.init();
+        this.loading = false;
       },
       getMeshNameMismatchErrorStr(meshNameRoot, tetgenMeshName) {
         return `meshNameRoot property of JSON file: ${meshNameRoot}, `
           + `doesn't match mesh file names: ${tetgenMeshName}`;
       },
       removeFile(type) {
-        this.file[type] = null;
+        const rawMesh = this.modelGeometry.mesh.volume.raw;
+        rawMesh[type] = null;
+
+        this.modelGeometry.initialized = false;
 
         if (
-          !this.file.values().reduce((acc, c) => acc && c, true)
-          && !this.geometry
+          !Object.values(rawMesh).reduce((acc, c) => acc && c, true)
+          && !this.modelGeometry.meshNameRoot
         ) {
           this.tetGenFileNameBase = null;
         }
+
+        this.onChange();
       },
       removeGeometry() {
-        this.geometry = null;
+        this.modelGeometry.meta = null;
+        this.modelGeometry.initialized = false;
+        this.onChange();
       },
       onChange() {
-        if (this.geometryValid) this.emitChange();
-      },
-      emitChange() {
-        const modelGeometry = {
-          ...this.geometry,
-          name: this.name,
-          annotation: this.annotation,
-          file: this.file,
-          valid: this.geometryValid,
-        };
-        this.$emit('input', Object.assign({}, this.value, modelGeometry));
-      },
-    },
-    watch: {
-      geometryValid() {
-        this.onChange();
+        this.$emit('input', this.modelGeometry);
       },
     },
     computed: {
       geometryValid() {
         return !!(
-          this.file.nodes
-          && this.file.elements
-          && this.file.faces
-          && this.geometry
-          && this.name
+          this.modelGeometry.complete
+          && this.modelGeometry.meta
+          && this.modelGeometry.name
         );
-      },
-      geometryData() {
-        if (
-          !this.file.nodes
-          || !this.file.elements
-          || !this.file.faces
-        ) return null;
-
-        const mesh = new TetGenMesh(
-          this.file.nodes,
-          this.file.faces,
-          this.file.elements,
-        );
-
-        return {
-          nodes: Object.freeze(mesh.nodes),
-          faces: Object.freeze(mesh.faces),
-          elements: Object.freeze(mesh.elements),
-          structures: get(this.geometry, 'structures'),
-          freeDiffusionBoundaries: get(this.geometry, 'freeDiffusionBoundaries'),
-          scale: get(this.geometry, 'scale'),
-        };
       },
     },
   };
@@ -318,12 +316,15 @@
   .container {
     padding: 20px;
   }
+
   .error {
     color: red;
   }
+
   .geometry-viewer-container {
     background-color: #f8f8f9;
     border: 1px solid #dcdee2;
     border-radius: 3px;
+    position: relative;
   }
 </style>

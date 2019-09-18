@@ -2,15 +2,16 @@
 import os
 import json
 
-
 import steps.utilities.meshio as meshio
 import numpy as np
 
+from .db import Db
 from .bngl_extended_model import StructureType
 from .logger import get_logger
 
 
 L = get_logger(__name__)
+db = Db()
 
 GEOMETRY_ROOT_PATH = '/data/geometries'
 TETGEN_TYPE_EXTENSION = {
@@ -26,13 +27,15 @@ if not os.path.exists(GEOMETRY_ROOT_PATH):
 
 class Geometry():
     def __init__(self, geometry_config):
-        self.id = geometry_config['id']
+        meta = geometry_config['meta']
+#
+        self.id = str(db.create_geometry(geometry_config).inserted_id)
         self.name = geometry_config['name']
-        self.annotation = geometry_config['annotation']
-        self.scale = geometry_config['scale']
-        self.structures = geometry_config['structures']
-        self.free_diffusion_boundaries = geometry_config['freeDiffusionBoundaries']
-        self.mesh_name_root = geometry_config['meshNameRoot']
+        self.description = geometry_config['description']
+        self.scale = meta['scale']
+        self.structures = meta['structures']
+        self.free_diffusion_boundaries = meta['freeDiffusionBoundaries']
+        self.mesh_name_root = meta['meshNameRoot']
 
         geometry_path = os.path.join(GEOMETRY_ROOT_PATH, self.id)
         os.makedirs(geometry_path)
@@ -40,13 +43,13 @@ class Geometry():
         for tetgen_type in TETGEN_TYPE_EXTENSION:
             filename = '{}.{}'.format(self.mesh_name_root, TETGEN_TYPE_EXTENSION[tetgen_type])
             with open(filename, 'w') as file:
-                file.write(geometry_config['file'][tetgen_type])
+                file.write(geometry_config['mesh']['volume']['raw'][tetgen_type])
 
-        mesh = meshio.importTetGen(self.mesh_name_root, geometry_config['scale'])[0]
+        mesh = meshio.importTetGen(self.mesh_name_root, self.scale)[0]
         meshio.saveMesh(os.path.join(geometry_path, 'mesh'), mesh)
 
         with open('geometry.json', 'w') as file:
-            file.write(json.dumps(geometry_config))
+            file.write(json.dumps(meta))
 
         self.nodes = [mesh.getVertex(idx) for idx in range(0, mesh.nverts)]
         self.faces = [mesh.getTri(idx) for idx in range(0, mesh.ntris)]
@@ -71,7 +74,7 @@ class Geometry():
         geometry_dict = {
             'id': self.id,
             'name': self.name,
-            'annotation': self.annotation,
+            'description': self.description,
             'nodes': self.nodes,
             'faces': self.faces,
             'elements': self.elements,

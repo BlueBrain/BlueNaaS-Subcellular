@@ -10,6 +10,7 @@
     <i-button
       class="mt-12 mr-12"
       type="primary"
+      :loading="loading"
       @click="loadModel"
     >
       Load
@@ -19,7 +20,7 @@
       class="mt-12"
       type="error"
       @click="deleteModel"
-      :disabled="model.public"
+      :disabled="model.public || loading"
     >
       Delete
     </i-button>
@@ -30,11 +31,16 @@
 <script>
   export default {
     name: 'db-model',
+    data() {
+      return { loading: false };
+    },
     methods: {
-      loadModel() {
+      async loadModel() {
         const { model } = this;
         this.$store.commit('resetEntitySelection');
-        this.$store.dispatch('loadDbModel', model);
+        this.loading = true;
+        await this.$store.dispatch('loadDbModel', model);
+        this.loading = false;
         this.$router.push('/model/meta');
       },
       deleteModel() {

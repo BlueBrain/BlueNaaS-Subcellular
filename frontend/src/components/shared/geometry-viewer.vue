@@ -14,12 +14,12 @@
         <div v-if="structure[stType].length">
           <p class="mb-6">{{ label }}:</p>
           <div
-            class="mb-6"
+            class="mb-4"
             v-for="st in structure[stType]"
             :key="st.name"
           >
             <i-switch
-              class="mr-6"
+              class="mr-6 switch--extra-small"
               v-model="st.visible"
               size="small"
               :style="st.visible ? {'background-color': st.color} : {}"
@@ -33,7 +33,7 @@
 
     <div class="display-conf-container">
       <i-switch
-        class="mr-6"
+        class="mr-6 switch--extra-small"
         size="small"
         v-model="displayMode"
         :false-value="GeometryDisplayMode.DEFAULT"
@@ -91,10 +91,11 @@
     },
     mounted() {
       this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
-      this.initGeometry();
 
       this.onLayoutChangeBinded = this.onLayoutChange.bind(this);
       bus.$on('layoutChange', this.onLayoutChangeBinded);
+
+      setTimeout(() => this.initGeometry(), 10);
     },
     beforeDestroy() {
       bus.$off('layoutChange', this.onLayoutChangeBinded);
@@ -103,7 +104,7 @@
     methods: {
       initGeometry() {
         this.renderer.initGeometry(this.geometryData, this.displayMode);
-        const structure = (this.geometryData.structures || [])
+        const structure = (this.geometryData.meta.structures || [])
           .map((st, idx) => ({
             name: st.name,
             color: this.renderer.colors[idx].css(),

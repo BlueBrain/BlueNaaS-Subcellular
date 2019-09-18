@@ -52,19 +52,30 @@ export default {
 
   async saveModel({ state, commit }) {
     const models = cloneDeep(state.dbModels);
-    models[state.model.name] = state.model;
+    const currentModel = {...state.model};
+    if (currentModel.geometry) {
+      const geometryId = currentModel.geometry.id;
+      await storage.setItem(`geometry:${geometryId}`, currentModel.geometry);
+      currentModel.geometry = { id: geometryId };
+    }
+
+    models[currentModel.name] = currentModel;
     await storage.setItem('models', models);
     commit('updateDbModels', cloneDeep(models));
   },
 
-  async createGeometry({ commit, dispatch }, geometryRaw) {
-    const { geometry } = await socket.request('create_geometry', geometryRaw);
+  async createGeometry({ state, commit, dispatch }, geometry) {
+    const { id, structureSize } = await socket.request('create_geometry', geometry.getClean());
+    geometry.id = id;
+    geometry.meta.structures.forEach((structure) => {
+      structure.size = structureSize[structure.name];
+    });
     commit('setGeometry', geometry);
     dispatch('setStructSizesFromGeometry');
   },
 
   setStructSizesFromGeometry({ state, commit }) {
-    const { structures } = state.model.geometry;
+    const { structures } = state.model.geometry.meta;
     structures.forEach((geomStruct) => {
       const modelStructIdx = state.model.structures.findIndex(s => s.name === geomStruct.name);
       if (modelStructIdx === -1) return;
@@ -81,7 +92,7 @@ export default {
   async loadDbModels({ commit }) {
     const storageModels = await storage.getItem('models');
     const models = storageModels || {};
-    // freeze potentially big objects to prevent perfarmance loss due to vue's reactivity design
+    // freeze potentially big objects to prevent performance loss due to vue's reactivity design
     Object.values(models).forEach(model => {
       const { geometry } = model;
       geometry.elements = Object.freeze(geometry.elements);
@@ -104,7 +115,12 @@ export default {
     commit('addToModel', modelDiff);
   },
 
-  loadDbModel({ commit, dispatch }, model) {
+  async loadDbModel({ commit, dispatch }, dbModel) {
+    const model = {...dbModel};
+    if (model.geometry && !model.geometry.name) {
+      model.geometry = await storage.getItem(`geometry:${model.geometry.id}`);
+    }
+
     commit('loadDbModel', model);
     if (model.public) {
       dispatch('cloneSimulations', model.simulations);

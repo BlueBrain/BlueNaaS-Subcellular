@@ -112,7 +112,10 @@ class Db():
 
     def create_geometry(self, geometry_config):
         geometry_config['deleted'] = False
-        self.db.geometries.insert_one(geometry_config)
+        return self.db.geometries.insert_one(geometry_config)
+
+    def get_geometry(self, geometry_id):
+        return self.db.find_one({ 'id': geometry_id })
 
     def get_geometries(self, user_id):
         return list(self.db.geometries.find({

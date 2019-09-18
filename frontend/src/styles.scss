@@ -96,6 +96,11 @@ main {
 .pl-6 { padding-left: 6px; }
 .pr-6 { padding-right: 6px; }
 
+.pt-4 { padding-top: 4px; }
+.pb-4 { padding-bottom: 4px; }
+.pl-4 { padding-left: 4px; }
+.pr-4 { padding-right: 4px; }
+
 .pt-12 { padding-top: 12px; }
 .pb-12 { padding-bottom: 12px; }
 .pl-12 { padding-left: 12px; }
@@ -243,4 +248,19 @@ main {
 
 .text-right {
   text-align: right;
+}
+
+.switch--extra-small {
+  height: 12px;
+
+  &:after {
+    width: 10px;
+    height: 8px;
+  }
+}
+
+.switch--extra-small.ivu-switch-checked {
+  &:after {
+    left: 15px;
+  }
 }

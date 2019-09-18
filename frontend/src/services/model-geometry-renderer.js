@@ -27,7 +27,7 @@ import TrackballControls from './trackball-controls';
 import utils from '@/tools/neuron-renderer-utils';
 import constants from '@/constants';
 
-const { StructureType, GeometryDisplayMode } = constants;
+const { GeometryDisplayMode } = constants;
 
 
 const FOG_COLOR = 0xffffff;
@@ -103,114 +103,40 @@ class ModelGeometryRenderer {
 
     if (this.meshes) throw new Error('Model geometry has been already initialized');
 
-    const defaultStructure = {
-      name: 'main',
-      type: 'compartment',
-      tetIdxs: range(modelGeometry.elements.length),
-    };
+    const getDefaultStructure = () => {
+      return {
+        name: 'main',
+        type: 'compartment',
+        tetIdxs: range(modelGeometry.mesh.volume.elements.length),
+      };
+    }
 
-    const structures = modelGeometry.structures || [defaultStructure];
+    const structures = modelGeometry.meta.structures || [getDefaultStructure()];
 
     this.colors = new DistinctColors({
       count: structures.length,
-      hueMin: 0,
-      hueMax: 360,
       chromaMin: 60,
       chromaMax: 100,
-      lightMin: 20,
-      lightMax: 90,
     });
 
-    this.normScalar = getNormScalar(modelGeometry.nodes);
+    this.normScalar = getNormScalar(modelGeometry.mesh.volume.nodes);
 
-    const createCompartmentGeometry = (compartment) => {
-      const vertexMap = new Map();
-
-      const tets = compartment.tetIdxs
-        .map(elIdx => modelGeometry.elements[elIdx]);
-
-      tets.forEach((tet) => {
-        const [vert1, vert2, vert3, vert4] = tet;
-
-        [
-          [vert1, vert3, vert2],
-          [vert2, vert3, vert4],
-          [vert1, vert2, vert4],
-          [vert1, vert4, vert3],
-        ].forEach((tri) => {
-          const key = tri.sort().join('_');
-
-          if (vertexMap.has(key)) {
-            vertexMap.delete(key);
-          } else {
-            vertexMap.set(key, tri);
-          }
-        });
+    const createGeometry = (structureName) => {
+      // TODO: switch to BufferGeometry
+      const geometry = new Geometry();
+      modelGeometry.mesh.surface[structureName].vertices.forEach((coords) => {
+        const vertexVec = new Vector3(...coords.map(coord => coord * this.normScalar));
+        geometry.vertices.push(vertexVec);
       });
 
-      const surfTris = Array.from(vertexMap.values());
+      modelGeometry.mesh.surface[structureName].faces
+        .forEach((triIdxs) => geometry.faces.push(new Face3(...triIdxs)));
 
-      const vertexSet = new Set();
-      surfTris.forEach(vertices => vertices.forEach(vertex => vertexSet.add(vertex)));
-      const surfVertices = Array.from(vertexSet);
-
-      const surfVertexIdxMap = new Map();
-      surfVertices.forEach((v, idx) => { surfVertexIdxMap[v] = idx; });
-
-      const compGeometry = new Geometry();
-      surfVertices.forEach((nodeIdx) => {
-        const coords = modelGeometry
-          .nodes[nodeIdx]
-          .map(coord => coord * this.normScalar);
-        const vec = new Vector3(...coords);
-        compGeometry.vertices.push(vec);
-      });
-
-      surfTris.forEach((tris) => {
-        const face = new Face3(...tris.map(triIdx => surfVertexIdxMap[triIdx]));
-        compGeometry.faces.push(face);
-      });
-
-      return compGeometry;
-    };
-
-    const createMembraneGeometry = (membrane) => {
-      const { triIdxs } = membrane;
-
-      const vertexIdxSet = new Set();
-      triIdxs.forEach((triIdx) => {
-        modelGeometry.faces[triIdx]
-          .forEach(vertexIdx => vertexIdxSet.add(vertexIdx));
-      });
-
-      const vertexIdxs = Array.from(vertexIdxSet);
-      const vertexIdxMap = vertexIdxs
-        .reduce((acc, vertexIdx, idx) => Object.assign(acc, { [vertexIdx]: idx }), {});
-
-      const membGeometry = new Geometry();
-
-      vertexIdxs.forEach((vertexIdx) => {
-        const coords = modelGeometry
-          .nodes[vertexIdx]
-          .map(coord => coord * this.normScalar);
-        const vec = new Vector3(...coords);
-        membGeometry.vertices.push(vec);
-      });
-
-      membrane.triIdxs.forEach((triIdx) => {
-        const faceReindexedVertexIdxs = modelGeometry.faces[triIdx]
-          .map(vertexIdx => vertexIdxMap[vertexIdx]);
-        const face = new Face3(...faceReindexedVertexIdxs);
-        membGeometry.faces.push(face);
-      });
-
-      return membGeometry;
+      return geometry;
     };
 
     structures.forEach((structure, idx) => {
-      const geometry = structure.type === StructureType.COMPARTMENT
-        ? createCompartmentGeometry(structure)
-        : createMembraneGeometry(structure);
+      const geometry = createGeometry(structure.name);
 
       geometry.mergeVertices();
       geometry.computeFaceNormals();
