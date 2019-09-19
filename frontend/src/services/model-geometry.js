@@ -246,14 +246,22 @@ class ModelGeometry {
   }
 
   async generateSurfaceMeshes() {
-    for (const structure of this.meta.structures) {
-      const genMeshFunc = structure.type === 'compartment'
-        ? generateCompartmentSurfaceMesh
-        : generateMembraneSurfaceMesh;
+    const surfGenPromises = [];
 
-      const mesh = await genMeshFunc(this, structure);
-      this.mesh.surface[structure.name] = Object.freeze(mesh);
-    }
+    this.meta.structures.forEach((structure) => {
+      surfGenPromises.push(new Promise(async (done) => {
+        const genMeshFunc = structure.type === 'compartment'
+          ? generateCompartmentSurfaceMesh
+          : generateMembraneSurfaceMesh;
+
+        const mesh = await genMeshFunc(this, structure);
+        this.mesh.surface[structure.name] = Object.freeze(mesh);
+
+        done();
+      }));
+    });
+
+    await Promise.all(surfGenPromises);
 
     this.initialized = true;
   }
@@ -264,29 +272,40 @@ class ModelGeometry {
   async parseTetGen() {
     const nodeIdxMap = new Map();
 
-    const nodesRaw = await parseTetGenFile(this.mesh.volume.raw.nodes);
-    const nodes = nodesRaw.map((node, nodeIdx) => {
-      const [nodeNum, x, y, z] = node;
-      nodeIdxMap.set(nodeNum, nodeIdx);
-      return [x, y, z];
+    const parseNodes = new Promise(async (done) => {
+      const nodesRaw = await parseTetGenFile(this.mesh.volume.raw.nodes);
+      const nodes = nodesRaw.map((node, nodeIdx) => {
+        const [nodeNum, x, y, z] = node;
+        nodeIdxMap.set(nodeNum, nodeIdx);
+        return [x, y, z];
+      });
+      this.mesh.volume.nodes = Object.freeze(nodes);
+      done();
     });
-    this.mesh.volume.nodes = Object.freeze(nodes);
 
-    const facesRaw = await parseTetGenFile(this.mesh.volume.raw.faces);
-    const faces = facesRaw.map((face) => {
-      return face
-        .splice(1, 3)
-        .map(nodeNum => nodeIdxMap.get(nodeNum));
+    const parseFaces = new Promise(async (done) => {
+      const facesRaw = await parseTetGenFile(this.mesh.volume.raw.faces);
+      const faces = facesRaw.map((face) => {
+        return face
+          .splice(1, 3)
+          .map(nodeNum => nodeIdxMap.get(nodeNum));
+      });
+      this.mesh.volume.faces = Object.freeze(faces);
+      done();
     });
-    this.mesh.volume.faces = Object.freeze(faces);
 
-    const elementsRaw = await parseTetGenFile(this.mesh.volume.raw.elements);
-    const elements = elementsRaw.map((element) => {
-      return element
-        .splice(1, 4)
-        .map(nodeNum => nodeIdxMap.get(nodeNum));
+    const parseElements = new Promise(async (done) => {
+      const elementsRaw = await parseTetGenFile(this.mesh.volume.raw.elements);
+      const elements = elementsRaw.map((element) => {
+        return element
+          .splice(1, 4)
+          .map(nodeNum => nodeIdxMap.get(nodeNum));
+      });
+      this.mesh.volume.elements = Object.freeze(elements);
+      done();
     });
-    this.mesh.volume.elements = Object.freeze(elements);
+
+    await Promise.all([parseNodes, parseFaces, parseElements]);
 
     this.parsed = true;
   }
