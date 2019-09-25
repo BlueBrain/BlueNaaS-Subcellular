@@ -1,18 +1,9 @@
 
 import get from 'lodash/get';
-import SWorker from 'simple-web-worker';
+import webWorker from 'simple-web-worker';
 
+import writeArrayChunk from '@/tools/write-array-chunk';
 
-const webWorker = SWorker.create([{
-  message: 'parseTetGenFile',
-  func: parseTetGenFileSync,
-}, {
-  message: 'generateCompartmentSurfaceMesh',
-  func: generateCompartmentSurfaceMeshSync,
-}, {
-  message: 'generateMembraneSurfaceMesh',
-  func: generateMembraneSurfaceMeshSync,
-}]);
 
 /**
  * Parse TetGen text based file
@@ -20,7 +11,7 @@ const webWorker = SWorker.create([{
  * @param {String} fileContent
  */
 function parseTetGenFileSync(fileContent) {
-  const NUMBER_R = /[\d.]+/g;
+  const NUMBER_R = /[\d.-]+/g;
 
   const parseLine = line => line.match(NUMBER_R).map(parseFloat);
 
@@ -53,7 +44,7 @@ function parseTetGenFileSync(fileContent) {
  * @param {String} fileContent
  */
 function parseTetGenFile(fileContent) {
-  return webWorker.postMessage('parseTetGenFile', [fileContent]);
+  return webWorker.run(parseTetGenFileSync, [fileContent]);
 }
 
 class GeometryCompartment {
@@ -65,11 +56,28 @@ class GeometryCompartment {
   }
 }
 
-function generateCompartmentSurfaceMeshSync(modelGeometry, compartment) {
+function generateCompartmentSurfaceMeshSync(volMesh, compartment) {
+  function getElementByIdx(idx) {
+    return [
+      volMesh.elements[idx * 4],
+      volMesh.elements[idx * 4 + 1],
+      volMesh.elements[idx * 4 + 2],
+      volMesh.elements[idx * 4 + 3],
+    ];
+  }
+
+  function getNodeByIdx(idx) {
+    return [
+      volMesh.nodes[idx * 3],
+      volMesh.nodes[idx * 3 + 1],
+      volMesh.nodes[idx * 3 + 2],
+    ];
+  }
+
   const vertexMap = new Map();
 
   const tets = compartment.tetIdxs
-    .map(elIdx => modelGeometry.mesh.volume.elements[elIdx]);
+    .map(elIdx => getElementByIdx(elIdx));
 
   tets.forEach((tet) => {
     const vert1 = tet[0];
@@ -108,7 +116,7 @@ function generateCompartmentSurfaceMeshSync(modelGeometry, compartment) {
   };
 
   surfVertices.forEach((nodeIdx) => {
-    const coords = modelGeometry.mesh.volume.nodes[nodeIdx];
+    const coords = getNodeByIdx(nodeIdx);
     mesh.vertices.push(coords);
   });
 
@@ -120,16 +128,24 @@ function generateCompartmentSurfaceMeshSync(modelGeometry, compartment) {
   return mesh;
 }
 
-function generateCompartmentSurfaceMesh(modelGeometry, compartment) {
-  return webWorker.postMessage('generateCompartmentSurfaceMesh', [modelGeometry, compartment]);
+function generateCompartmentSurfaceMesh(volMesh, compartment) {
+  return webWorker.run(generateCompartmentSurfaceMeshSync, [volMesh, compartment]);
 }
 
-function generateMembraneSurfaceMeshSync(modelGeometry, compartment) {
+function generateMembraneSurfaceMeshSync(volMesh, compartment) {
+  function getFaceByIdx(idx) {
+    return [ volMesh.faces[idx * 3], volMesh.faces[idx * 3 + 1], volMesh.faces[idx * 3 + 2]];
+  }
+
+  function getNodeByIdx(idx) {
+    return [volMesh.nodes[idx * 3], volMesh.nodes[idx * 3 + 1], volMesh.nodes[idx * 3 + 2]];
+  }
+
   const { triIdxs } = compartment;
 
   const vertexIdxSet = new Set();
   triIdxs.forEach((triIdx) => {
-    modelGeometry.mesh.volume.faces[triIdx]
+    getFaceByIdx(triIdx)
       .forEach(vertexIdx => vertexIdxSet.add(vertexIdx));
   });
 
@@ -145,12 +161,12 @@ function generateMembraneSurfaceMeshSync(modelGeometry, compartment) {
   };
 
   vertexIdxs.forEach((vertexIdx) => {
-    const coords = modelGeometry.mesh.volume.nodes[vertexIdx];
+    const coords = getNodeByIdx(vertexIdx);
     mesh.vertices.push(coords);
   });
 
   triIdxs.forEach((triIdx) => {
-    const faceReindexedVertexIdxs = modelGeometry.mesh.volume.faces[triIdx]
+    const faceReindexedVertexIdxs = getFaceByIdx(triIdx)
       .map(vertexIdx => vertexIdxMap[vertexIdx]);
     mesh.faces.push(faceReindexedVertexIdxs);
   });
@@ -158,8 +174,8 @@ function generateMembraneSurfaceMeshSync(modelGeometry, compartment) {
   return mesh;
 }
 
-function generateMembraneSurfaceMesh(modelGeometry, compartment) {
-  return webWorker.postMessage('generateMembraneSurfaceMesh', [modelGeometry, compartment]);
+function generateMembraneSurfaceMesh(volMesh, compartment) {
+  return webWorker.run(generateMembraneSurfaceMeshSync, [volMesh, compartment]);
 }
 
 class GeometryMembrane {
@@ -254,7 +270,9 @@ class ModelGeometry {
           ? generateCompartmentSurfaceMesh
           : generateMembraneSurfaceMesh;
 
-        const mesh = await genMeshFunc(this, structure);
+        const { nodes, faces, elements } = this.mesh.volume;
+        const volMesh = { nodes, faces, elements };
+        const mesh = await genMeshFunc(volMesh, structure);
         this.mesh.surface[structure.name] = Object.freeze(mesh);
 
         done();
@@ -272,40 +290,42 @@ class ModelGeometry {
   async parseTetGen() {
     const nodeIdxMap = new Map();
 
-    const parseNodes = new Promise(async (done) => {
-      const nodesRaw = await parseTetGenFile(this.mesh.volume.raw.nodes);
-      const nodes = nodesRaw.map((node, nodeIdx) => {
-        const [nodeNum, x, y, z] = node;
-        nodeIdxMap.set(nodeNum, nodeIdx);
-        return [x, y, z];
-      });
-      this.mesh.volume.nodes = Object.freeze(nodes);
-      done();
+    const nodesRaw = await parseTetGenFile(this.mesh.volume.raw.nodes);
+    const nodes = new Float64Array(nodesRaw.length * 3);
+    nodesRaw.forEach((node, nodeIdx) => {
+      const [nodeNum, x, y, z] = node;
+      nodeIdxMap.set(nodeNum, nodeIdx);
+      writeArrayChunk([x, y, z], nodes, nodeIdx * 3);
     });
+    this.mesh.volume.nodes = nodes;
 
     const parseFaces = new Promise(async (done) => {
       const facesRaw = await parseTetGenFile(this.mesh.volume.raw.faces);
-      const faces = facesRaw.map((face) => {
-        return face
+      const faces = new Uint32Array(facesRaw.length * 3);
+      facesRaw.forEach((rawFace, faceIdx) => {
+        const face = rawFace
           .splice(1, 3)
           .map(nodeNum => nodeIdxMap.get(nodeNum));
+        writeArrayChunk(face, faces, faceIdx * 3);
       });
-      this.mesh.volume.faces = Object.freeze(faces);
+      this.mesh.volume.faces = faces;
       done();
     });
 
     const parseElements = new Promise(async (done) => {
       const elementsRaw = await parseTetGenFile(this.mesh.volume.raw.elements);
-      const elements = elementsRaw.map((element) => {
-        return element
+      const elements = new Uint32Array(elementsRaw.length * 4);
+      elementsRaw.map((rawElement, elementIdx) => {
+        const element = rawElement
           .splice(1, 4)
           .map(nodeNum => nodeIdxMap.get(nodeNum));
+        writeArrayChunk(element, elements, elementIdx * 4);
       });
-      this.mesh.volume.elements = Object.freeze(elements);
+      this.mesh.volume.elements = elements;
       done();
     });
 
-    await Promise.all([parseNodes, parseFaces, parseElements]);
+    await Promise.all([parseFaces, parseElements]);
 
     this.parsed = true;
   }

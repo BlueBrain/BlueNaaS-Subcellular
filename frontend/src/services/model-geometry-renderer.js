@@ -39,9 +39,15 @@ const BACKGROUND_COLOR = 0xf8f8f9;
 
 
 function getNormScalar(nodes) {
-  const xVec = nodes.map(node => node[0]);
-  const yVec = nodes.map(node => node[1]);
-  const zVec = nodes.map(node => node[2]);
+  const xVec = [];
+  const yVec = [];
+  const zVec = [];
+
+  for (let i = 0; i < nodes.length / 3; i += 3) {
+    xVec.push(nodes[i]);
+    yVec.push(nodes[i + 1]);
+    zVec.push(nodes[i + 2]);
+  }
 
   const deltaX = Math.max(...xVec) - Math.min(...xVec);
   const deltaY = Math.max(...yVec) - Math.min(...yVec);
