@@ -2,7 +2,7 @@
 import get from 'lodash/get';
 import webWorker from 'simple-web-worker';
 
-import writeArrayChunk from '@/tools/write-array-chunk';
+import writeArray from '@/tools/write-array';
 
 
 /**
@@ -295,7 +295,7 @@ class ModelGeometry {
     nodesRaw.forEach((node, nodeIdx) => {
       const [nodeNum, x, y, z] = node;
       nodeIdxMap.set(nodeNum, nodeIdx);
-      writeArrayChunk([x, y, z], nodes, nodeIdx * 3);
+      writeArray([x, y, z], nodes, nodeIdx * 3);
     });
     this.mesh.volume.nodes = nodes;
 
@@ -306,7 +306,7 @@ class ModelGeometry {
         const face = rawFace
           .splice(1, 3)
           .map(nodeNum => nodeIdxMap.get(nodeNum));
-        writeArrayChunk(face, faces, faceIdx * 3);
+        writeArray(face, faces, faceIdx * 3);
       });
       this.mesh.volume.faces = faces;
       done();
@@ -319,7 +319,7 @@ class ModelGeometry {
         const element = rawElement
           .splice(1, 4)
           .map(nodeNum => nodeIdxMap.get(nodeNum));
-        writeArrayChunk(element, elements, elementIdx * 4);
+        writeArray(element, elements, elementIdx * 4);
       });
       this.mesh.volume.elements = elements;
       done();
