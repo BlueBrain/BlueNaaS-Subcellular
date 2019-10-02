@@ -36,9 +36,37 @@ PATCH_COMP_TYPE_DICT = {
         2: 'o'  # outer
     }
 
+STIMULUS_TYPE_CODE = {
+    'setParam': 0,
+    'setConc': 1,
+    'clampConc': 2,
+}
+
+STIMULUS_TYPE_BY_CODE = {
+    0: 'setParam',
+    1: 'setConc',
+    2: 'clampConc',
+}
+
 def get_pysb_spec_comp_name(pysb_spec):
     spec_str = str(pysb_spec)
     return re.search('.*\*\*\s+(\w+)', spec_str).groups()[0]
+
+def decompress_stimulation(stimulation):
+    stimuli = []
+    for idx in range(stimulation['size']):
+        t = stimulation['data'][idx * 4]
+        stim_type = STIMULUS_TYPE_BY_CODE[stimulation['data'][idx * 4 + 1]]
+        target = stimulation['targetValues'][stimulation['data'][idx * 4 + 2]]
+        value = stimulation['data'][idx * 4 + 3]
+        stimuli.append({
+            't': t,
+            'type': stim_type,
+            'target': target,
+            'value': value
+        })
+
+    return stimuli
 
 
 class StepsSim():
@@ -91,7 +119,7 @@ class StepsSim():
         model_dict = self.sim_config['model']
 
         L.debug('extend model observables with those used in stimuli')
-        stimuli = self.sim_config['solverConf']['stimuli']
+        stimuli = decompress_stimulation(self.sim_config['solverConf']['stimulation'])
         # TODO: refactor weird use of simplify_string, remove stim_name
         stim_name = lambda stim: 'stim___{}'.format(simplify_string(stim['target']))
         model_stim_observable_dict = {

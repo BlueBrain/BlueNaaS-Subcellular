@@ -2,6 +2,7 @@
 <template>
   <div>
     <i-table
+      v-if="!largeStimulation"
       class="stimuli-table"
       highlight-row
       no-data-text="No stimuli"
@@ -15,10 +16,26 @@
           @click="removeStimulus(index)"
         />
       </template>
+      <template slot-scope="{ row }" slot="value">
+        <span v-if="row.type === 'clampConc'">
+          {{ row.value ? 'On' : 'Off' }}
+        </span>
+        <span v-else>
+          {{ row.value }}
+        </span>
+      </template>
     </i-table>
 
+    <p
+      v-else
+      class="ml-6"
+    >
+      Stimuli set is too big to display
+    </p>
+
     <Row
-      class="p-6 mt-12"
+      v-if="!largeStimulation"
+      class="p-6 mt-6"
       :gutter="6"
     >
       <i-col span="3">
@@ -40,9 +57,7 @@
             v-for="stimType in stimulusTypes"
             :key="stimType.type"
             :value="stimType.type"
-          >
-            {{ stimType.label }}
-          </i-option>
+          >{{ stimType.label }}</i-option>
         </i-select>
       </i-col>
 
@@ -59,9 +74,7 @@
             v-for="parameter in parameters"
             :value="parameter.name"
             :key="parameter.name"
-          >
-            {{ parameter.name }}
-          </i-option>
+          >{{ parameter.name }}</i-option>
         </i-select>
         <i-input
           v-else-if="stimulus.type === 'setConc'"
@@ -87,8 +100,8 @@
           v-model="stimulus.value"
           placeholder="value"
         >
-          <i-option :value="1">True</i-option>
-          <i-option :value="0">False</i-option>
+          <i-option :value="1">On</i-option>
+          <i-option :value="0">Off</i-option>
         </i-select>
       </i-col>
 
@@ -110,6 +123,14 @@
       >
         Import from file
       </i-button>
+
+      <i-button
+        class="ml-12"
+        type="warning"
+        @click="onClearClick"
+      >
+        Clear
+      </i-button>
     </div>
 
     <Modal
@@ -126,8 +147,9 @@
 <script>
   import sortBy from 'lodash/sortBy';
 
-  import StepsStimuliImport from './steps-stimuli-import.vue';
+  import StepsStimuliImport from './steps-stimulation-import.vue';
   import constants from '@/constants';
+  import tools from '@/tools/model-tools';
 
   const { StimulusTypeEnum: StimType } = constants;
 
@@ -145,7 +167,7 @@
   const tableColumns = [{
     title: 'Time, s',
     key: 't',
-    width: 70,
+    maxWidth: 140,
   }, {
     title: 'Operation',
     key: 'type',
@@ -153,10 +175,10 @@
   }, {
     title: 'Target',
     key: 'target',
-    width: 200,
+    maxWidth: 280,
   }, {
     title: 'Value',
-    key: 'value',
+    slot: 'value',
   }, {
     title: ' ',
     slot: 'action',
@@ -180,20 +202,41 @@
       return {
         tableColumns,
         stimulusTypes,
-        stimuli: this.value.slice(),
+        largeStimulation: false,
+        stimuli: [],
+        stimulation: {
+          size: 0,
+          data: [],
+          targetValues: [],
+        },
         stimulus: Object.assign({}, defaultStimulus),
         importModalVisible: false,
       };
     },
+    mounted() {
+      this.init();
+    },
     methods: {
+      init() {
+        this.largeStimulation = this.value.size > 100;
+        this.stimuli = this.getStimuli();
+      },
+      getStimuli() {
+        return this.value.size < 100
+          ? tools.decompressStimulation(this.value)
+          : [];
+      },
       addStimulus() {
         this.stimuli.push(this.stimulus);
         this.stimuli = sortBy(this.stimuli, stimulus => stimulus.t);
         this.setDefaultStimulusValue();
+        this.updateStimulation();
         this.onStimuliChange();
       },
       removeStimulus(index) {
         this.stimuli.splice(index, 1);
+        this.updateStimulation();
+        this.onStimuliChange();
       },
       setDefaultStimulusValue() {
         this.stimulus = Object.assign({}, defaultStimulus);
@@ -202,16 +245,27 @@
         Object.assign(this.stimulus, { target: null, value: null });
       },
       onStimuliChange() {
-        this.$emit('input', this.stimuli.slice());
+        this.$emit('input', {...this.stimulation});
       },
       onImportClick() {
         this.importModalVisible = true;
       },
-      onImport(stimuli) {
-        this.stimuli = stimuli;
+      onImport(stimulation) {
+        this.stimulation = stimulation;
+        this.largeStimulation = stimulation.size > 100;
+        this.stimuli = this.getStimuli(stimulation);
         this.importModalVisible = false;
         this.onStimuliChange();
       },
+      onClearClick() {
+        this.stimuli = [];
+        this.updateStimulation();
+        this.largeStimulation = false;
+        this.onStimuliChange();
+      },
+      updateStimulation() {
+        this.stimulation = tools.compressStimuli(this.stimuli);
+      }
     },
     computed: {
       parameters() {
@@ -229,8 +283,9 @@
       },
     },
     watch: {
-      value() {
-        this.stimuli = this.value.slice();
+      value(stimulation) {
+        this.stimulation = {...stimulation};
+        this.stimuli = this.getStimuli();
       },
     },
   };

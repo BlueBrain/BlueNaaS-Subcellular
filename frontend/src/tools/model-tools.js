@@ -1,10 +1,11 @@
 
 import sup from 'superscript-text';
+import webWorker from 'simple-web-worker';
 
 import constants from '@/constants';
 
 
-const { StructureType } = constants;
+const { StructureType, StimulusTypeEnum } = constants;
 
 
 function createSimulationTemplate(simulation) {
@@ -95,7 +96,65 @@ function getMatches(string, regex, index = 1) {
   return matches;
 }
 
-function parseStimuliRnf(fileContent) {
+const stimulusTypeCode = {
+  [StimulusTypeEnum.SET_PARAM]: 0,
+  [StimulusTypeEnum.SET_CONC]: 1,
+  [StimulusTypeEnum.CLAMP_CONC]: 2,
+};
+
+const stimulusTypeByCode = {
+  0: StimulusTypeEnum.SET_PARAM,
+  1: StimulusTypeEnum.SET_CONC,
+  2: StimulusTypeEnum.CLAMP_CONC,
+};
+
+function compressStimuli(stimuli) {
+  const size = stimuli.length;
+
+  const targetValues = [];
+  // data structure: [time1, type1, targetIdx1, value1, ...]
+  const data = new Float64Array(size * 4);
+
+  const targetIdxMap = new Map();
+
+  stimuli.forEach((stimulus, idx) => {
+    // time
+    data[idx * 4] = stimulus.t;
+
+    // type
+    data[idx * 4 + 1] = stimulusTypeCode[stimulus.type];
+
+    // target
+    if (targetIdxMap.has(stimulus.target)) {
+      data[idx * 4 + 2] = targetIdxMap.get(stimulus.target);
+    } else {
+      const targetIdx = targetValues.length;
+      targetValues.push(stimulus.target);
+      targetIdxMap.set(stimulus.target, targetIdx);
+      data[idx * 4 + 2] = targetIdx;
+    }
+
+    // value
+    data[idx * 4 + 3] = stimulus.value;
+  });
+
+  return { size, targetValues, data };
+}
+
+function decompressStimulation(stimulation) {
+  const stimuli = [];
+  for (let idx = 0; idx < stimulation.size; idx += 1) {
+    const t = stimulation.data[idx * 4];
+    const type = stimulusTypeByCode[stimulation.data[idx * 4 + 1]];
+    const target = stimulation.targetValues[stimulation.data[idx * 4 + 2]];
+    const value = stimulation.data[idx * 4 + 3];
+    stimuli.push({ t, type, target, value });
+  }
+
+  return stimuli;
+}
+
+function parseStimuliRnfSync(fileContent) {
   const actionR = /(?:^|\r?\n)(?:\s*)((?:set|sim)(.*))(?:\r?\n|$)/gm;
   const actionStrings = getMatches(fileContent, actionR);
 
@@ -106,7 +165,12 @@ function parseStimuliRnf(fileContent) {
   let time = 0;
   const stimuli = actionStrings
     .map((actionString) => {
-      const [action, param1, param2] = actionString.split(/\s+/);
+      const splittedActionStr = actionString.split(/\s+/);
+
+      const action = splittedActionStr[0];
+      const param1 = splittedActionStr[1];
+      const param2 = splittedActionStr[2];
+
       const stimulus = {
         t: time,
         type: actionToStimMap[action],
@@ -125,38 +189,45 @@ function parseStimuliRnf(fileContent) {
   return stimuli;
 }
 
-function parseStimuliTsv(fileContent) {
-  return fileContent
+function parseStimuliTsvSync(fileContent) {
+  const stimuli = fileContent
     .split(/\r?\n/)
     .map(line => line.trim())
     .filter(line => line)
     .map((stimStr) => {
-      const [t, type, target, value] = stimStr.trim().split(/\t/);
+      const parsed = stimStr.trim().split(/\s+/);
       return {
-        t,
-        type,
-        target,
-        value,
+        t: parsed[0],
+        type: parsed[1],
+        target: parsed[2],
+        value: parsed[3],
       };
     });
+
+  return stimuli;
 }
 
 /**
- * Parse stimuli file and return model representation of it
+ * Parse stimulation file and return model representation of it
  * @param {String} type Format of stimuli input source, can be `rnf` or `tsv`
  * @param {String} fileContent String to parse
  */
-function parseStimuli(type, fileContent) {
+async function parseStimulation(type, fileContent) {
   const parser = {
-    rnf: parseStimuliRnf,
-    tsv: parseStimuliTsv,
+    rnf: parseStimuliRnfSync,
+    tsv: parseStimuliTsvSync,
   };
 
-  if (!parser[type]) {
+  const parserFn = parser[type];
+
+  if (!parserFn) {
     throw new Error(`Unknown stimuli format ${type}`);
   }
 
-  return parser[type](fileContent);
+  const stimuli = await webWorker.run(parserFn, [fileContent]);
+  const stimulation = compressStimuli(stimuli)
+
+  return stimulation;
 }
 
 const bnglDefNameR = /(\w+)\(/;
@@ -245,11 +316,33 @@ function buildConcImportCollection(model, importConfig, concentrationData) {
   return Object.values(concImportCollBySpec);
 }
 
+/**
+ * Upgrade simulation to conform new memory efficient format
+ * If the format is ok, ensure it uses typed structures
+ */
+function upgradeSimStimulation(sim) {
+  const conf = sim.solverConf;
+
+  if (conf.stimulation && conf.stimulation.data.constructor !== Float64Array) {
+    conf.stimulation.data = Float64Array.from(conf.stimulation.data);
+  }
+
+  if (conf.stimuli) {
+    conf.stimulation = compressStimuli(conf.stimuli);
+    delete conf.stimuli;
+  }
+
+  return sim
+}
+
 export default {
   getDefaultSpecUnit,
   getDefaultForwardKineticRateUnit,
   getDefaultBackwardKineticRateUnit,
-  parseStimuli,
+  parseStimulation,
   createSimulationTemplate,
   buildConcImportCollection,
+  compressStimuli,
+  decompressStimulation,
+  upgradeSimStimulation,
 };

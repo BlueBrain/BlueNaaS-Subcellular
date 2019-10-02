@@ -23,17 +23,17 @@
         @input="onChange"
       />
     </FormItem>
-    <FormItem label="Stimuli">
+    <FormItem label="Stimulation">
       <Collapse class="small-collapse">
         <Panel>
           <span
             class="grey-text"
           >
-            {{ conf.stimuli.length ? `${conf.stimuli.length} operation(s)` : 'Not set' }}
+            {{ conf.stimulation.length ? `${conf.stimulation.length} operation(s)` : 'Not set' }}
           </span>
           <div slot="content">
-            <nfsim-stimuli-form
-              v-model="conf.stimuli"
+            <nfsim-stimulation-form
+              v-model="conf.stimulation"
               @input="onChange"
             />
           </div>
@@ -45,14 +45,14 @@
 
 
 <script>
-  import NfsimStimuliForm from './nfsim-stimuli-form.vue';
+  import NfsimStimulationForm from './nfsim-stimulation-form.vue';
 
 
   export default {
     name: 'sim-nfsim-conf-form',
     props: ['value'],
     components: {
-      'nfsim-stimuli-form': NfsimStimuliForm,
+      'nfsim-stimulation-form': NfsimStimulationForm,
     },
     data() {
       return {

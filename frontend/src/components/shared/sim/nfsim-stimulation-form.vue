@@ -131,7 +131,7 @@
 
   import constants from '@/constants';
 
-  import NfsimStimuliImport from './nfsim-stimuli-import.vue';
+  import NfsimStimuliImport from './nfsim-stimulation-import.vue';
 
   const { StimulusTypeEnum: StimType } = constants;
 

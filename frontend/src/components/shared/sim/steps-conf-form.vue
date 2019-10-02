@@ -23,17 +23,17 @@
         @input="onChange"
       />
     </FormItem>
-    <FormItem label="Stimuli">
+    <FormItem label="Stimulation">
       <Collapse class="small-collapse">
         <Panel>
           <span
             class="grey-text"
           >
-            {{ conf.stimuli.length ? `${conf.stimuli.length} operation(s)` : 'Not set' }}
+            {{ conf.stimulation.size ? `${conf.stimulation.size} operation(s)` : 'Not set' }}
           </span>
           <div slot="content">
-            <steps-stimuli-form
-              v-model="conf.stimuli"
+            <steps-stimulation-form
+              v-model="conf.stimulation"
               @input="onChange"
             />
           </div>
@@ -45,13 +45,13 @@
 
 
 <script>
-  import StepsStimuliForm from './steps-stimuli-form.vue';
+  import StepsStimulationForm from './steps-stimulation-form.vue';
 
   export default {
     name: 'sim-steps-conf-form',
     props: ['value'],
     components: {
-      'steps-stimuli-form': StepsStimuliForm,
+      'steps-stimulation-form': StepsStimulationForm,
     },
     data() {
       return {

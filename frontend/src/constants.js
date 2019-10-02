@@ -50,6 +50,7 @@ const ModelFormatExtensions = {
 const SimStatus = {
   CREATED: 'created',
   READY_TO_RUN: 'readyToRun',
+  INIT: 'init',
   QUEUED: 'queued',
   STARTED: 'started',
   CANCELLED: 'cancelled',
@@ -143,12 +144,20 @@ const defaultSolverConfig = {
   [SimSolver.STEPS]: {
     dt: 0.02,
     tEnd: 20,
-    stimuli: [],
+    stimulation: {
+      size: 0,
+      targetValues: [],
+      data: [],
+    },
   },
   [SimSolver.NFSIM]: {
     dt: 0.02,
     tEnd: 20,
-    stimuli: [],
+    stimulation: {
+      size: 0,
+      targetValues: [],
+      data: [],
+    },
   },
 };
 

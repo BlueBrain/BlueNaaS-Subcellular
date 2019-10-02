@@ -3,6 +3,7 @@
   <file-import
     :file-formats="importFileFormats"
     :errorMsg="errorMsg"
+    :loading="loading"
     @on-file-read="onFileRead"
   />
 </template>
@@ -15,7 +16,7 @@
   const importFileFormats = [{ type: 'TSV', extension: 'tsv' }];
 
   export default {
-    name: 'steps-stimuli-import',
+    name: 'steps-stimulation-import',
     components: {
       'file-import': FileImport,
     },
@@ -24,13 +25,16 @@
         importFileFormats,
         errorMsg: '',
         descriptionText: '',
+        loading: false,
       };
     },
     methods: {
-      onFileRead({ name, content }) {
+      async onFileRead({ name, content }) {
+        this.loading = true;
         const type = name.split('.').slice(-1)[0];
-        const stimuli = modelTools.parseStimuli(type, content);
-        this.$emit('on-import', stimuli);
+        const stimulation = await modelTools.parseStimulation(type, content);
+        this.$emit('on-import', stimulation);
+        this.loading = false;
       },
     },
   };

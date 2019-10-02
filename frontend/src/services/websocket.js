@@ -14,6 +14,31 @@ const socketState = {
 
 const reconnectTimeout = 2000;
 
+/**
+ * Replacer function for JSON.stringify to produce JSON arrays from typed arrays
+ * instead of objects (which is default behaviour)
+ *
+ * @param {String} key
+ * @param {*} value
+ */
+function stringifyReplacer(key, value) {
+  const convertToArrayCtors = [
+    Float32Array,
+    Float64Array,
+    Uint8Array,
+    Int8Array,
+    Uint16Array,
+    Int16Array,
+    Uint32Array,
+    Int32Array,
+  ];
+  if (value && convertToArrayCtors.includes(value.constructor)) {
+    return Array.from(value);
+  }
+
+  return value;
+}
+
 
 function getSocketUrlFromConfig(conf) {
   const { location } = window;
@@ -50,7 +75,7 @@ class Ws {
         cmd: message,
         cmdid: cmdId,
         timestamp: Date.now(),
-      }));
+      }, stringifyReplacer));
       break;
     }
     case socketState.CONNECTING:

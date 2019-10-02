@@ -18,7 +18,7 @@
   ];
 
   export default {
-    name: 'nfsim-stimuli-import',
+    name: 'nfsim-stimulation-import',
     components: {
       'file-import': FileImport,
     },
@@ -32,8 +32,8 @@
     methods: {
       onFileRead({ name, content }) {
         const type = name.split('.').slice(-1)[0];
-        const stimuli = modelTools.parseStimuli(type, content);
-        this.$emit('on-import', stimuli);
+        const stimulation = modelTools.parseStimulation(type, content);
+        this.$emit('on-import', stimulation);
       },
     },
   };

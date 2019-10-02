@@ -271,7 +271,8 @@
         }, pick(this.selectedSimulation, ['userId', 'modelId', 'solver', 'solverConf', 'annotation']));
         this.onOk();
       },
-      onSimulationSelect(simulation, index) {
+      onSimulationSelect(tableSimulation, index) {
+        const simulation = this.$store.state.model.simulations[index];
         this.$store.commit('setEntitySelection', { index, type: 'simulation', entity: simulation });
       },
       onOk() {
@@ -296,7 +297,11 @@
     },
     computed: mapState({
       simulations(state) {
-        return state.model.simulations;
+        return state.model.simulations.map((sim) => {
+          const solverConf = pick(sim.solverConf, ['tEnd']);
+          const strippedSim = pick(sim, ['name', 'solver', 'nSteps', 'status', 'annotation']);
+          return { ...strippedSim, ...{ solverConf }};
+        });
       },
       filteredSimulations() {
         return this.simulations.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));

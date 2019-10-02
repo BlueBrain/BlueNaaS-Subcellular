@@ -44,7 +44,7 @@ export default {
 
   modifySelectedEntity({ state, commit }, entity) {
     if (state.selectedEntity.type === 'simulation') {
-      const simUpdateObj = pick(entity, ['id', 'clientId', 'modelId', 'name', 'solver', 'tStop', 'nSteps', 'stimuli', 'annotation']);
+      const simUpdateObj = pick(entity, ['id', 'userId', 'modelId', 'name', 'solver', 'solverConf', 'tStop', 'nSteps', 'annotation']);
       socket.send('update_simulation', simUpdateObj);
     }
 
@@ -97,13 +97,6 @@ export default {
   async loadDbModels({ commit }) {
     const storageModels = await storage.getItem('models');
     const models = storageModels || {};
-    // freeze potentially big objects to prevent performance loss due to vue's reactivity design
-    Object.values(models).forEach(model => {
-      const { geometry } = model;
-      geometry.elements = Object.freeze(geometry.elements);
-      geometry.faces = Object.freeze(geometry.faces);
-      geometry.nodes = Object.freeze(geometry.nodes);
-    });
     commit('updateDbModels', models);
   },
 
@@ -177,7 +170,11 @@ export default {
 
       models[tmpModel.name] = tmpModel;
       await storage.setItem('models', models);
-      commit('updateDbModels', cloneDeep(models));
+      commit('updateDbModels', { ...models });
+    }
+
+    if (model.simulations) {
+      model.simulations.forEach(modelTools.upgradeSimStimulation);
     }
 
     model.geometry = ModelGeometry.from(model.geometry);
@@ -217,19 +214,23 @@ export default {
 
   async getSimulations({ state, commit }) {
     const { simulations } = await socket.request('get_simulations', { modelId: state.model.id });
+    simulations.forEach(modelTools.upgradeSimStimulation);
     commit('setSimulations', simulations);
   },
 
   async cloneSimulations({ state, commit }, sampleSimulations) {
     const { simulations: userSimulations } = await socket.request('get_simulations', { modelId: state.model.id });
     if (userSimulations.length) {
+      userSimulations.forEach(modelTools.upgradeSimStimulation);
+
       commit('setSimulations', userSimulations);
       return;
     }
 
     const uid = state.user.id;
     const simulations = sampleSimulations
-      .map(sim => Object.assign({}, sim, { clientId: uid, id: uuidv4() }));
+      .map(sim => Object.assign({}, sim, { userId: uid, id: uuidv4() }))
+      .map(modelTools.upgradeSimStimulation);
 
     simulations.forEach(sim => socket.send('create_simulation', sim));
     commit('setSimulations', simulations);
@@ -242,7 +243,8 @@ export default {
     });
     commit('setEntitySelectionProp', { propName: 'status', value: constants.SimStatus.READY_TO_RUN });
 
-    const { model } = state;
+    const model = {...state.model};
+    delete model.simulations;
 
     // TODO: rnf generation from stimuli on backend
     const rnf = [
