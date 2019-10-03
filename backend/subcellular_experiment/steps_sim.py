@@ -74,6 +74,8 @@ class StepsSim():
         self.sim_config = sim_config
 
     def run(self):
+        yield SimStatus(SimStatus.INIT)
+
         def simplify_string(st, compartments=True, bngl=False):
             st0 = str(st)
 
@@ -568,6 +570,8 @@ class StepsSim():
                         sim.setCompClamped(comp_name, pysb_spec.name, clamp)
                     else:
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
+
+        yield SimStatus(SimStatus.STARTED)
 
         for tidx, tpnt in enumerate(tpnts):
             L.debug('run step {} out of {}, t: {} s'.format(tidx + 1, len(tpnts), tpnt))

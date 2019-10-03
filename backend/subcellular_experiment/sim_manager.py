@@ -186,5 +186,4 @@ class SimManager():
         L.debug('ready to run simulation, sending sim config to sim worker')
         worker.ws.send_message('run_sim', sim_conf)
 
-        self.process_sim_status(sim_conf, SimStatus.STARTED)
         self.run_available()

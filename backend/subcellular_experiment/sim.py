@@ -74,6 +74,7 @@ class SimTrace:
 
 class SimStatus:
     QUEUED = 'queued'
+    INIT = 'init'
     STARTED = 'started'
     ERROR = 'error'
     FINISHED = 'finished'

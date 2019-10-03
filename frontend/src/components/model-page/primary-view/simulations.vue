@@ -179,13 +179,14 @@
   };
 
   const simulationStatusText = {
-    created: 'Created',
-    readyToRun: 'Ready to run',
-    queued: 'Queued',
-    started: 'Started',
-    cancelled: 'Cancelled',
-    error: 'Error',
-    finished: 'Finished',
+    [SimStatus.CREATED]: 'Created',
+    [SimStatus.READY_TO_RUN]: 'Ready to run',
+    [SimStatus.QUEUED]: 'Queued',
+    [SimStatus.INIT]: 'Simulator init',
+    [SimStatus.STARTED]: 'Started',
+    [SimStatus.CANCELLED]: 'Cancelled',
+    [SimStatus.ERROR]: 'Error',
+    [SimStatus.FINISHED]: 'Finished',
   };
 
   export default {
@@ -304,7 +305,7 @@
         });
       },
       filteredSimulations() {
-        return this.simulations.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.simulations.filter(e => objStrSearchFilter(this.searchStr, e, ['name']));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching simulations' : 'Create a simulation by using buttons below';

@@ -28,7 +28,7 @@ if not os.path.exists(GEOMETRY_ROOT_PATH):
 class Geometry():
     def __init__(self, geometry_config):
         meta = geometry_config['meta']
-#
+
         self.id = str(db.create_geometry(geometry_config).inserted_id)
         self.name = geometry_config['name']
         self.description = geometry_config['description']
