@@ -8,7 +8,7 @@ import numpy as np
 import pysb
 from pysb.importers import bngl
 
-from sympy import Symbol
+import sympy
 
 import steps
 import steps.model as smodel

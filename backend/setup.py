@@ -20,7 +20,8 @@ setup(
         'numpy',
         'pymongo',
         'pysb',
-        'cython'
+        'cython',
+        'sympy'
     ],
     tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=[]),
