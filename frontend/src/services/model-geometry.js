@@ -219,9 +219,22 @@ class ModelGeometry {
     Object.assign(modelGeometry, { name, id, description, initialized, parsed, meta });
 
     modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw);
-    modelGeometry.mesh.volume.nodes = Object.freeze(get(mesh, 'volume.nodes', []));
-    modelGeometry.mesh.volume.faces = Object.freeze(get(mesh, 'volume.faces', []));
-    modelGeometry.mesh.volume.elements = Object.freeze(get(mesh, 'volume.elements', []));
+
+    const srcNodes = get(mesh, 'volume.nodes', []);
+    modelGeometry.mesh.volume.nodes = srcNodes instanceof Float64Array
+      ? srcNodes
+      : Float64Array.from(srcNodes);
+
+    const srcFaces = get(mesh, 'volume.faces', []);
+    modelGeometry.mesh.volume.faces = srcFaces instanceof Uint32Array
+      ? srcFaces
+      : Uint32Array.from(srcFaces);
+
+    const srcElements = get(mesh, 'volume.elements', []);
+    modelGeometry.mesh.volume.elements = srcElements instanceof Uint32Array
+      ? srcElements
+      : Uint32Array.from(srcElements);
+
     modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {}))
       .reduce((acc, [structName, structMesh]) => ({...acc, ...{ [structName]: Object.freeze(structMesh) }}), {});
 
@@ -252,7 +265,7 @@ class ModelGeometry {
   }
 
   async addTetGenMesh({ nodes, faces, elements }) {
-    this.mesh.volume.raw = { nodes, faces, elements };
+    this.mesh.volume.raw = Object.freeze({ nodes, faces, elements });
     await this.parseTetGen();
     this.parsed = true;
   }
