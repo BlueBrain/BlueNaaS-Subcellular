@@ -32,6 +32,7 @@
     "lodash": "^4.17.15",
     "papaparse": "^5.0.1",
     "plotly.js-basic-dist": "^1.49.0",
+    "simple-web-worker": "^1.2.0",
     "superscript-text": "^1.0.0",
     "three": "^0.106.2",
     "toggle-fullscreen": "^0.4.2",
