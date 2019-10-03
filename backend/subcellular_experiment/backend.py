@@ -222,7 +222,7 @@ app = tornado.web.Application([
     (r'/health', HealthHandler)
 ],
     debug=os.getenv('DEBUG', False),
-    websocket_max_message_size=20000000
+    websocket_max_message_size=30000000
 )
 
 L.debug('starting tornado io loop')
