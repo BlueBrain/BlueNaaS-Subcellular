@@ -132,7 +132,7 @@ class StepsSim():
         model_dict['observables'].extend(model_stim_observable_dict.values())
 
         bngl_ext_model = BnglExtModel(self.sim_config['model'])
-        bngl_str = bngl_ext_model.to_bngl()
+        bngl_str = bngl_ext_model.to_bngl(artificial_structures=True, add_diff_observables=True)
 
         L.debug('write BNGL file')
         with open('model.bngl', 'w') as model_file:

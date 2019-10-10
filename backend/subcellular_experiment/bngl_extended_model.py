@@ -6,6 +6,9 @@ import re
 NA = 6.02214086e23
 
 
+DIFF_PREFIX = '___int_sys_diff___'
+STIM_PREFIX = '___int_sys_stim___'
+
 class StructureType:
     COMPARTMENT = 'compartment'
     MEMBRANE = 'membrane'
@@ -39,7 +42,7 @@ entity_helper_dict = {
         'blockEnd': 'end parameters'
     },
     'structure': {
-        'modelProp': 'bngl_structures',
+        'modelProp': 'structures',
         'blockStart': 'begin compartments',
         'blockEnd': 'end compartments'
     },
@@ -79,9 +82,7 @@ bngl_standard_entity_types = ['parameter', 'structure', 'molecule', 'species', '
 
 class BnglExtModel():
     def __init__(self, model_dict):
-        self.non_bngl_structures = model_dict['nonBnglStructures']
         self.model_dict = model_dict
-        self.model_dict['bngl_structures'] = self.generate_fake_bngl_structures() if self.non_bngl_structures else model_dict['structures']
 
         self.entity_to_string_dict = {
             'parameter': self.param_to_str,
@@ -121,7 +122,8 @@ class BnglExtModel():
         return '  Molecules {} {}'.format(o['name'], o['definition'])
 
     def diffusion_to_str_as_observable(self, diff):
-        return '  Molecules diff___{} {}@{}'.format(
+        return '  Molecules {}{} {}@{}'.format(
+            DIFF_PREFIX,
             diff['name'],
             diff['speciesDefinition'],
             diff['compartment']
@@ -152,7 +154,7 @@ class BnglExtModel():
             ', {}'.format(reac['kr']) if '<->' in reac['definition'] else ''
         )
 
-    def generate_fake_bngl_structures(self):
+    def generate_artificial_structures(self):
         root_structure_name = 'ext_comp___'
         real_structures = self.model_dict['structures'].copy()
         structures = [{
@@ -163,23 +165,28 @@ class BnglExtModel():
         }]
 
         for structure in real_structures:
-            parent_structure_name = root_structure_name
-            if structure['type'] == StructureType.COMPARTMENT:
-                parent_structure_name = '{}_enc_memb___'.format(structure['name'])
-                membrane = {
-                    'name': parent_structure_name,
-                    'type': StructureType.MEMBRANE,
-                    'parentName': root_structure_name,
-                    'size': 1.0
-                }
-                structures.append(membrane)
+            parent_structure_name = '{}_enc_memb___'.format(structure['name'])
+            membrane = {
+                'name': parent_structure_name,
+                'type': StructureType.MEMBRANE,
+                'parentName': root_structure_name,
+                'size': 1.0
+            }
+            structures.append(membrane)
 
-            structure['parentName'] = parent_structure_name
-            structures.append(structure)
+            compartment = {
+                'name': structure['name'],
+                'type': StructureType.COMPARTMENT,
+                'parentName': parent_structure_name,
+                'size': 1
+            }
+            structures.append(compartment)
 
         return structures
 
-    def to_bngl(self, write_xml_op=False, unit_conversion=False):
+    def to_bngl(self, write_xml_op=False, unit_conversion=False,
+                artificial_structures=False, add_diff_observables=False):
+
         self.unit_conversion = unit_conversion
         bngl_lines = []
 
@@ -191,10 +198,16 @@ class BnglExtModel():
                 continue;
 
             bngl_lines.append(entity_helper['blockStart'])
-            for entity in self.model_dict[entity_helper['modelProp']]:
+
+            if entity_type == 'structure' and artificial_structures:
+                entities = self.generate_artificial_structures()
+            else:
+                entities = self.model_dict[entity_helper['modelProp']]
+
+            for entity in entities:
                 entity_str = self.entity_to_string_dict[entity_type](entity)
                 bngl_lines.append(entity_str)
-            if entity_type == 'observable':
+            if entity_type == 'observable' and add_diff_observables:
                 diffusion_helper = entity_helper_dict['diffusion']
                 for diffusion in self.model_dict['diffusions']:
                     bngl_lines.append(self.entity_to_string_dict['diffusion'](diffusion))
@@ -204,4 +217,4 @@ class BnglExtModel():
         if write_xml_op:
             bngl_lines.append('writeXML({prefix=>"model"})')
 
-        return '\n'.join(bngl_lines)
+        return '\n'.join(bngl_lines) + '\n'
