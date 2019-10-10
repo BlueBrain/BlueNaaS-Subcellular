@@ -18,7 +18,7 @@ import steps.solver as ssolver
 import steps.utilities.meshio as meshio
 
 from .bngl_extended_model import BnglExtModel
-from .sim import SimTraceMeta, SimStepTrace, SimTrace, SimStatus, TraceTarget, StimulusType
+from .sim import SimTraceMeta, SimStepTrace, SimTrace, SimStatus, SimLog, TraceTarget, StimulusType, decompress_stimulation
 from .logger import get_logger
 
 
@@ -31,42 +31,15 @@ class StructureType():
     MEMBRANE = 'membrane'
 
 PATCH_COMP_TYPE_DICT = {
-        0: 'i', # inner
-        1: 's', # surface
-        2: 'o'  # outer
-    }
-
-STIMULUS_TYPE_CODE = {
-    'setParam': 0,
-    'setConc': 1,
-    'clampConc': 2,
+    0: 'i', # inner
+    1: 's', # surface
+    2: 'o'  # outer
 }
 
-STIMULUS_TYPE_BY_CODE = {
-    0: 'setParam',
-    1: 'setConc',
-    2: 'clampConc',
-}
 
 def get_pysb_spec_comp_name(pysb_spec):
     spec_str = str(pysb_spec)
     return re.search('.*\*\*\s+(\w+)', spec_str).groups()[0]
-
-def decompress_stimulation(stimulation):
-    stimuli = []
-    for idx in range(stimulation['size']):
-        t = stimulation['data'][idx * 4]
-        stim_type = STIMULUS_TYPE_BY_CODE[stimulation['data'][idx * 4 + 1]]
-        target = stimulation['targetValues'][stimulation['data'][idx * 4 + 2]]
-        value = stimulation['data'][idx * 4 + 3]
-        stimuli.append({
-            't': t,
-            'type': stim_type,
-            'target': target,
-            'value': value
-        })
-
-    return stimuli
 
 
 class StepsSim():

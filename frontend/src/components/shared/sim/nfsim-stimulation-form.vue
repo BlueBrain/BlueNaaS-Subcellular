@@ -2,6 +2,7 @@
 <template>
   <div>
     <i-table
+      v-if="!largeStimulation"
       class="stimuli-table"
       highlight-row
       no-data-text="No stimuli"
@@ -15,9 +16,25 @@
           @click="removeStimulus(index)"
         />
       </template>
+      <template slot-scope="{ row }" slot="value">
+        <span v-if="row.type === 'clampConc'">
+          {{ row.value ? 'On' : 'Off' }}
+        </span>
+        <span v-else>
+          {{ row.value }}
+        </span>
+      </template>
     </i-table>
 
+    <p
+      v-else
+      class="ml-6"
+    >
+      Stimuli set is too big to display
+    </p>
+
     <Row
+      v-if="!largeStimulation"
       class="p-6 mt-12"
       :gutter="6"
     >
@@ -88,8 +105,8 @@
           v-model="stimulus.value"
           placeholder="value"
         >
-          <i-option :value="1">True</i-option>
-          <i-option :value="0">False</i-option>
+          <i-option :value="1">On</i-option>
+          <i-option :value="0">Off</i-option>
         </i-select>
       </i-col>
 
@@ -103,7 +120,6 @@
           Add
         </i-button>
       </i-col>
-
     </Row>
 
     <div class="p-6 mt-6">
@@ -111,6 +127,14 @@
         @click="onImportClick"
       >
         Import from file
+      </i-button>
+
+      <i-button
+        class="ml-12"
+        type="warning"
+        @click="onClearClick"
+      >
+        Clear
       </i-button>
     </div>
 
@@ -130,6 +154,7 @@
   import sortBy from 'lodash/sortBy';
 
   import constants from '@/constants';
+  import tools from '@/tools/model-tools';
 
   import NfsimStimuliImport from './nfsim-stimulation-import.vue';
 
@@ -143,7 +168,7 @@
   const tableColumns = [{
     title: 'Time, s',
     key: 't',
-    width: 70,
+    maxWidth: 140,
   }, {
     title: 'Operation',
     key: 'type',
@@ -151,10 +176,10 @@
   }, {
     title: 'Target',
     key: 'target',
-    width: 200,
+    maxWidth: 280,
   }, {
     title: 'Value',
-    key: 'value',
+    slot: 'value',
   }, {
     title: ' ',
     slot: 'action',
@@ -178,20 +203,42 @@
       return {
         tableColumns,
         stimulusTypes,
-        stimuli: this.value.slice(),
+        largeStimulation: false,
+        stimuli: [],
+        stimulation: {
+          size: 0,
+          data: [],
+          targetValues: [],
+        },
         stimulus: Object.assign({}, defaultStimulus),
         importModalVisible: false,
       };
     },
+    mounted() {
+      this.init();
+    },
     methods: {
+      init() {
+        this.stimulation = { ...this.value };
+        this.largeStimulation = this.stimulation.size > 100;
+        this.stimuli = this.getStimuli();
+      },
+      getStimuli() {
+        return this.stimulation.size < 100
+          ? tools.decompressStimulation(this.stimulation)
+          : [];
+      },
       addStimulus() {
         this.stimuli.push(this.stimulus);
         this.stimuli = sortBy(this.stimuli, stimulus => stimulus.t);
         this.setDefaultStimulusValue();
+        this.updateStimulation();
         this.onStimuliChange();
       },
       removeStimulus(index) {
         this.stimuli.splice(index, 1);
+        this.updateStimulation();
+        this.onStimuliChange();
       },
       setDefaultStimulusValue() {
         this.stimulus = Object.assign({}, defaultStimulus);
@@ -200,16 +247,27 @@
         Object.assign(this.stimulus, { target: null, value: null });
       },
       onStimuliChange() {
-        this.$emit('input', this.stimuli.slice());
+        this.$emit('input', {...this.stimulation});
       },
       onImportClick() {
         this.importModalVisible = true;
       },
-      onImport(stimuli) {
-        this.stimuli = stimuli;
+      onImport(stimulation) {
+        this.stimulation = stimulation;
+        this.largeStimulation = stimulation.size > 100;
+        this.stimuli = this.getStimuli();
         this.importModalVisible = false;
         this.onStimuliChange();
       },
+      onClearClick() {
+        this.stimuli = [];
+        this.updateStimulation();
+        this.largeStimulation = false;
+        this.onStimuliChange();
+      },
+      updateStimulation() {
+        this.stimulation = tools.compressStimuli(this.stimuli);
+      }
     },
     computed: {
       parameters() {
@@ -227,8 +285,9 @@
       },
     },
     watch: {
-      value() {
-        this.stimuli = this.value.slice();
+      value(stimulation) {
+        this.stimulation = {...stimulation};
+        this.stimuli = this.getStimuli();
       },
     },
   };

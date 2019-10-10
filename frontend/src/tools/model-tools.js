@@ -86,16 +86,6 @@ function getDefaultBackwardKineticRateUnit(model, reacDef) {
   return getDefaultKineticRateUnit(model, reacRHS);
 }
 
-function getMatches(string, regex, index = 1) {
-  const matches = [];
-  let match = regex.exec(string);
-  while (match) {
-    matches.push(match[index]);
-    match = regex.exec(string);
-  }
-  return matches;
-}
-
 const stimulusTypeCode = {
   [StimulusTypeEnum.SET_PARAM]: 0,
   [StimulusTypeEnum.SET_CONC]: 1,
@@ -155,6 +145,16 @@ function decompressStimulation(stimulation) {
 }
 
 function parseStimuliRnfSync(fileContent) {
+  const getMatches = (string, regex, index = 1) => {
+    const matches = [];
+    let match = regex.exec(string);
+    while (match) {
+      matches.push(match[index]);
+      match = regex.exec(string);
+    }
+    return matches;
+  }
+
   const actionR = /(?:^|\r?\n)(?:\s*)((?:set|sim)(.*))(?:\r?\n|$)/gm;
   const actionStrings = getMatches(fileContent, actionR);
 
@@ -224,6 +224,9 @@ async function parseStimulation(type, fileContent) {
     throw new Error(`Unknown stimuli format ${type}`);
   }
 
+  // TODO: refactor parsers:
+  // * to use streaming reader to reduce memory footprint
+  // * to produce compressed stimulation format
   const stimuli = await webWorker.run(parserFn, [fileContent]);
   const stimulation = compressStimuli(stimuli)
 

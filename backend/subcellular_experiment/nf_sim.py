@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget, Sim, StimulusType
+from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget, SimLog, Sim, StimulusType, decompress_stimulation
 from .bngl_extended_model import BnglExtModel
 from .logger import get_logger
 
@@ -25,7 +25,7 @@ class NfSim(Sim):
 
     def generate_rnf(self):
         solver_conf = self.sim_config['solverConf']
-        stimuli = solver_conf['stimuli']
+        stimuli = decompress_stimulation(solver_conf['stimulation'])
         t_end = solver_conf['tEnd']
         dt = solver_conf['dt']
         next_step_dt = None

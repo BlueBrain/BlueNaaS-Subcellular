@@ -218,12 +218,13 @@
     },
     methods: {
       init() {
+        this.stimulation = { ...this.value };
         this.largeStimulation = this.value.size > 100;
         this.stimuli = this.getStimuli();
       },
       getStimuli() {
-        return this.value.size < 100
-          ? tools.decompressStimulation(this.value)
+        return this.stimulation.size < 100
+          ? tools.decompressStimulation(this.stimulation)
           : [];
       },
       addStimulus() {
@@ -253,7 +254,7 @@
       onImport(stimulation) {
         this.stimulation = stimulation;
         this.largeStimulation = stimulation.size > 100;
-        this.stimuli = this.getStimuli(stimulation);
+        this.stimuli = this.getStimuli();
         this.importModalVisible = false;
         this.onStimuliChange();
       },
