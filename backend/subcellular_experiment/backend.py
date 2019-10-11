@@ -82,6 +82,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             geometry_config = msg['data']
             geometry = Geometry(geometry_config)
             structure_size_dict = {st['name']:st['size'] for st in geometry.structures}
+            L.debug(f'new geometry {str(geometry.id)} has been created')
             self.send_message('geometry', {
                 'cmdid': cmdid,
                 'id': geometry.id,
@@ -196,7 +197,6 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         parsedMessage = json.loads(rawMessage)
         msg = parsedMessage['message']
         data = parsedMessage['data']
-        L.debug('got {} message from sim runner'.format(msg))
 
         sim_manager.process_worker_message(self.sim_worker, msg, data)
 

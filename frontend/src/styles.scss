@@ -264,3 +264,28 @@ main {
     left: 15px;
   }
 }
+
+.ivu-input--no-resize > textarea {
+  resize: none;
+}
+
+.text-error {
+  color: #ed4014;
+}
+
+.text-warning {
+  color: #ff9900;
+}
+
+.text-info {
+  color: #2db7f5;
+}
+
+.text-success {
+  color: #19be6b;
+}
+
+.wide-button {
+  padding-left: 32px;
+  padding-right: 32px;
+}

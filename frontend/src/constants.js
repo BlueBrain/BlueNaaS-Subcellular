@@ -105,7 +105,6 @@ const defaultEmptyModel = {
   id: null,
   name: '',
   annotation: '',
-  nonBnglStructures: false,
 
   structures: [],
   parameters: [],
@@ -142,8 +141,8 @@ const defaultEmptyRevision = {
 
 const defaultSolverConfig = {
   [SimSolver.STEPS]: {
-    dt: 0.02,
-    tEnd: 20,
+    dt: 0.01,
+    tEnd: 10,
     stimulation: {
       size: 0,
       targetValues: [],
@@ -151,8 +150,8 @@ const defaultSolverConfig = {
     },
   },
   [SimSolver.NFSIM]: {
-    dt: 0.02,
-    tEnd: 20,
+    dt: 0.01,
+    tEnd: 10,
     stimulation: {
       size: 0,
       targetValues: [],

@@ -35,7 +35,7 @@
     [UnitType.VOL_SIZE]: 'Vol. size',
     [UnitType.SURF_SIZE]: 'Surf. size',
     [UnitType.VOL_REAC_RATE]: 'Vol. reac rate',
-    [UnitType.SURF_REAC_RATE]: 'Serf. reac rate',
+    [UnitType.SURF_REAC_RATE]: 'Surf. reac rate',
     [UnitType.TIME]: 'Time',
     [UnitType.OTHER]: 'Other',
   };

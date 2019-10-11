@@ -3,15 +3,15 @@
   <Upload
     type="drag"
     action="/dummy-endpoint"
-    :disabled="loading"
+    :disabled="loading || disabled"
     :format="supportedExtensions"
     :before-upload="beforeUpload"
   >
     <div class="container">
       <Icon
+        class="upload-icon"
         type="ios-cloud-upload"
         size="52"
-        style="color: #3399ff"
       />
       <p>Click or drag files here to upload</p>
       <p>Supported formats: {{ supportedTypeStr }}</p>
@@ -44,7 +44,7 @@
 <script>
   export default {
     name: 'file-import',
-    props: ['fileFormats', 'errorMsg', 'descriptionText', 'loading'],
+    props: ['fileFormats', 'errorMsg', 'descriptionText', 'loading', 'disabled'],
     methods: {
       beforeUpload(file) {
         const reader = new FileReader();
@@ -78,5 +78,9 @@
   .container {
     padding: 12px;
     padding-top: 20px;
+
+    .upload-icon {
+      color: #3399ff;
+    }
   }
 </style>

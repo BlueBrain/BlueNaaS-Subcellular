@@ -15,6 +15,7 @@
           </FormItem>
           <FormItem label="Annotation">
             <i-input
+              class="ivu-input--no-resize"
               type="textarea"
               v-model="modelGeometry.description"
               :autosize="{minRows: 3, maxRows: 3}"

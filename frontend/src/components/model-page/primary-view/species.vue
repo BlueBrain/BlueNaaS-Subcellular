@@ -113,10 +113,10 @@
         columns: [{
           title: 'Name',
           key: 'name',
-          maxWidth: 120,
+          maxWidth: 180,
         }, {
           title: 'Concentration',
-          maxWidth: 220,
+          maxWidth: 280,
           render: (h, params) => h(BnglText, {
             props: {
               entityType: 'parameter',

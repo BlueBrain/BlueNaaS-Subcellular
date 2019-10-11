@@ -124,7 +124,7 @@
               value: params.row.kf,
             },
           }),
-          maxWidth: 120,
+          maxWidth: 180,
         }, {
           title: 'Kr',
           render: (h, params) => h(BnglText, {
@@ -134,11 +134,7 @@
               value: params.row.kr,
             },
           }),
-          maxWidth: 120,
-        }, {
-          title: 'Annotation',
-          render: (h, params) => h('span', params.row.annotation.split('\n')[0]),
-          maxWidth: 280,
+          maxWidth: 180,
         }, {
           title: 'BioNetGen definition',
           render: (h, params) => {

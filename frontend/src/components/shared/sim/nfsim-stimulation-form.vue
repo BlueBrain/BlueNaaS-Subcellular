@@ -57,9 +57,7 @@
             v-for="stimType in stimulusTypes"
             :key="stimType.type"
             :value="stimType.type"
-          >
-            {{ stimType.label }}
-          </i-option>
+          >{{ stimType.label }}</i-option>
         </i-select>
       </i-col>
 
@@ -76,9 +74,7 @@
             v-for="parameter in parameters"
             :value="parameter.name"
             :key="parameter.name"
-          >
-            {{ parameter.name }}
-          </i-option>
+          >{{ parameter.name }}</i-option>
         </i-select>
         <i-input
           v-else-if="stimulus.type === 'setConc'"

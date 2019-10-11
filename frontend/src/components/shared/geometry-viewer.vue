@@ -149,6 +149,8 @@
     position: absolute;
     z-index: 2;
     padding: 6px;
+    max-height: calc(100% - 12px);
+    overflow-y: scroll;
   }
 
   .comp-type-agenda {
