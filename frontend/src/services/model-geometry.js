@@ -6,6 +6,18 @@ import writeArray from '@/tools/write-array';
 
 
 /**
+ * Get array representation of a particular type
+ *
+ * @param {Array} array
+ * @param {Function} TypedArrayCtor
+ */
+function getTypedArray(array, TypedArrayCtor) {
+  return array instanceof ArrayType
+      ? array
+      : ArrayType.from(array);
+}
+
+/**
  * Parse TetGen text based file
  *
  * @param {String} fileContent
@@ -220,20 +232,14 @@ class ModelGeometry {
 
     modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw);
 
-    const srcNodes = get(mesh, 'volume.nodes', []);
-    modelGeometry.mesh.volume.nodes = srcNodes instanceof Float64Array
-      ? srcNodes
-      : Float64Array.from(srcNodes);
+    const srcNodes = get(mesh, 'volume.nodes', []).flat();
+    modelGeometry.mesh.volume.nodes = getTypedArray(srcNodes, Float64Array);
 
-    const srcFaces = get(mesh, 'volume.faces', []);
-    modelGeometry.mesh.volume.faces = srcFaces instanceof Uint32Array
-      ? srcFaces
-      : Uint32Array.from(srcFaces);
+    const srcFaces = get(mesh, 'volume.faces', []).flat();
+    modelGeometry.mesh.volume.faces = getTypedArray(srcFaces, Uint32Array);
 
-    const srcElements = get(mesh, 'volume.elements', []);
-    modelGeometry.mesh.volume.elements = srcElements instanceof Uint32Array
-      ? srcElements
-      : Uint32Array.from(srcElements);
+    const srcElements = get(mesh, 'volume.elements', []).flat();
+    modelGeometry.mesh.volume.elements = getTypedArray(srcElements, Uint32Array);
 
     modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {}))
       .reduce((acc, [structName, structMesh]) => ({...acc, ...{ [structName]: Object.freeze(structMesh) }}), {});
