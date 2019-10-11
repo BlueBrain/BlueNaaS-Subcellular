@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget
+from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget, SimLog
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
@@ -119,13 +119,14 @@ class SimWorker():
             'message': message,
             'data': data
         }, cls=ExtendedJSONEncoder)
-        L.debug('sending {} to the backend'.format(message))
+
         self.socket.send(payload)
 
 
 def run_sim_proc(result_queue, sim_config):
     def on_sigterm(signal, frame):
         L.debug('got SIGTERM on simulation process')
+        result_queue.put(SimLog('STOP'))
         result_queue.put(None)
         sys.exit(0)
 
@@ -134,25 +135,26 @@ def run_sim_proc(result_queue, sim_config):
     tmp_dir = tempfile.mkdtemp()
     os.chdir(tmp_dir)
 
+    def progress_cb(result):
+        result_queue.put(result)
+
+    if sim_config['solver'] == 'nfsim':
+        sim = NfSim(sim_config, progress_cb)
+    elif sim_config['solver'] == 'steps':
+        sim = StepsSim(sim_config, progress_cb)
+    else:
+        raise NotImplementedError('solver {} is not supported'.format(sim_config['solver']))
+
     L.debug('sim proc started')
     try:
-        if sim_config['solver'] == 'nfsim':
-            sim = NfSim(sim_config)
-        elif sim_config['solver'] == 'steps':
-            sim = StepsSim(sim_config)
-        else:
-            raise NotImplementedError('solver {} is not supported'.format(sim_config['solver']))
-
-        sim_trace_gen = sim.run()
-
-        for result in sim_trace_gen:
-            result_queue.put(result)
+        sim.run()
         result_queue.put(None)
-
     except Exception as error:
         L.debug('Sim error')
         L.exception(error)
-        sim_status = SimStatus(SimStatus.ERROR, description=str(error))
+        sim_status = SimStatus(SimStatus.ERROR)
+        sim_log = SimLog(str(error))
+        result_queue.put(sim_log)
         result_queue.put(sim_status)
         result_queue.put(None)
 

@@ -2,28 +2,35 @@
 <template>
   <div class="container">
     <div class="log-type-block">
-      <i-form>
-        <FormItem label="Log type:">
-          <i-select
-            class="select"
-            size="small"
-            v-model="logType"
-            @on-change="onLogTypeChange"
-          >
-            <i-option
-              v-for="logType in logTypes"
-              :key="logType"
-              :value="logType"
-            >
-              {{ LogTypeEnum[logType] }}
-            </i-option>
-          </i-select>
-        </FormItem>
-      </i-form>
+      Log type:
+
+      <i-select
+        class="select ml-6"
+        size="small"
+        v-model="logType"
+        @on-change="onLogTypeChange"
+      >
+        <i-option
+          v-for="logType in logTypes"
+          :key="logType"
+          :value="logType"
+        >
+          {{ LogTypeEnum[logType] }}
+        </i-option>
+      </i-select>
+
+      <Checkbox
+        class="ml-12"
+        v-model="follow"
+      >
+        Follow logs
+      </Checkbox>
     </div>
-    <pre class="log-content-block">
-      {{ logContent }}
-    </pre>
+
+    <pre
+      ref="log"
+      class="log-content-block"
+    >{{ logContent }}</pre>
   </div>
 </template>
 
@@ -65,13 +72,30 @@
         simName: sim.name,
         log: sim.log,
         logType: initialLogType,
-        logContent: sim.log[initialLogType],
+        follow: true,
       };
     },
     methods: {
       onLogTypeChange(logType) {
         this.logContent = this.log[logType];
       },
+    },
+    computed: {
+      logContent() {
+        if (!this.log || !this.logType) return '';
+
+        return this.log[this.logType];
+      },
+    },
+    watch: {
+      logContent() {
+        if (!this.follow) return;
+
+        this.$nextTick(() => {
+          const logContainer = this.$refs.log;
+          logContainer.scrollTop = logContainer.scrollHeight;
+        });
+      }
     },
   };
 </script>
@@ -96,9 +120,10 @@
   .log-content-block {
     height: calc(100% - 40px);
     padding: 12px;
-    overflow: scroll;
+    overflow-y: scroll;
+    white-space: pre-wrap;
     background-color:#263238;
     color: #e9eded;
-    font-size: 14px;
+    font-size: 12px;
   }
 </style>

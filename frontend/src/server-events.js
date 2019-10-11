@@ -18,3 +18,7 @@ bus.$on('ws:simTrace', (simTrace) => {
 bus.$on('ws:simStatus', (simStatus) => {
   store.commit('setSimStatus', simStatus);
 });
+
+bus.$on('ws:simLog', (simLog) => {
+  store.commit('addSimLog', simLog)
+});

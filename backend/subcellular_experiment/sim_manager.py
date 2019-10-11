@@ -6,7 +6,7 @@ import signal
 import tornado
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace
+from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, SimLog
 from .logger import get_logger
 
 
@@ -83,6 +83,8 @@ class SimManager():
             self.process_sim_trace(worker.sim_conf, data)
         elif msg == SimStatus.TYPE:
             self.process_sim_status(data, data['status'], data)
+        elif msg == SimLog.TYPE:
+            self.process_sim_log(worker.sim_conf, data)
 
     def schedule_sim(self, sim_conf):
         L.debug('scheduling a simulation')
@@ -120,6 +122,12 @@ class SimManager():
         })
 
         self.send_sim_status(sim_conf, status, context=context)
+
+    def process_sim_log(self, sim_conf, log):
+        self.send_message(sim_conf['userId'], SimLog.TYPE, {
+            **log,
+            'id': sim_conf['id']
+        })
 
     def process_sim_trace_meta(self, sim_conf, trace_meta):
         msg = {
@@ -163,7 +171,6 @@ class SimManager():
             return
 
         connections = self.clients[user_id]
-        L.debug('sending sim result to {} connection(s) of client: {}'.format(len(connections), user_id))
         for connection in connections:
             connection.send_message(name, message)
 

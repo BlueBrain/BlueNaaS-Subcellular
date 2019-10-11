@@ -106,6 +106,15 @@ export default {
     }
   },
 
+  addSimLog(state, simLog) {
+    const sim = state.model.simulations
+      .find(sim => sim.id === simLog.id);
+
+    if (!sim.log || !sim.log.system) sim.log = { system: '' };
+
+    sim.log.system += `${simLog.message}\n`;
+  },
+
   setSimTraceMeta(state, simTraceMeta) {
     const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simTraceMeta.id);
     const currentSimulation = state.model.simulations[simIndex];

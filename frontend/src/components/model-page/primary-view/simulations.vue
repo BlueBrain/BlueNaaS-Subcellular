@@ -137,6 +137,15 @@
         v-if="simLogViewerVisible"
         :sim-id="selectedSimulation.id"
       />
+      <div slot="footer">
+        <i-button
+          class="wide-button"
+          type="primary"
+          @click="hideSimLogs"
+        >
+          OK
+        </i-button>
+      </div>
     </Modal>
 
   </div>
@@ -295,6 +304,9 @@
       showSimLogs() {
         this.simLogViewerVisible = true;
       },
+      hideSimLogs() {
+        this.simLogViewerVisible = false;
+      }
     },
     computed: mapState({
       simulations(state) {

@@ -32,6 +32,22 @@ class TraceTarget:
     SPECIES = 'species'
     TET = 'tet'
 
+
+class SimLog:
+    TYPE = 'simLog'
+
+    def __init__(self, message, source='system'):
+        self.type = self.TYPE
+        self.message = message
+        self.source = source
+
+    def to_dict(self):
+        return {
+            'message': self.message,
+            'source': self.source
+        }
+
+
 class SimTraceMeta:
     TYPE = 'simTraceMeta'
 
@@ -73,7 +89,7 @@ class SimStepTrace:
 class SimTrace:
     TYPE = 'simTrace'
 
-    def __init__(self, trace_target, times, values, observables=[], species=[], structures=[], log=None):
+    def __init__(self, trace_target, times, values, observables=[], species=[], structures=[]):
         self.type = self.TYPE
         self.trace_target = trace_target
         self.n_steps = len(times)
@@ -82,7 +98,6 @@ class SimTrace:
         self.observables = observables
         self.species = species
         self.structures = structures
-        self.log = log
 
     def to_dict(self):
         return {
@@ -92,7 +107,6 @@ class SimTrace:
             'values': self.values,
             'observables': self.observables,
             'species': self.species,
-            'log': self.log
         }
 
 
@@ -106,17 +120,15 @@ class SimStatus:
 
     TYPE = 'simStatus'
 
-    def __init__(self, status, description=None, log=None):
+    def __init__(self, status, description=None):
         self.type = self.TYPE
         self.status = status
         self.description = description
-        self.log = log
 
     def to_dict(self):
         return {
             'status': self.status,
             'description': self.description,
-            'log': self.log
         }
 
 class StimulusType:

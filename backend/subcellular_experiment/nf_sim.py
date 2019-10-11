@@ -19,9 +19,14 @@ NFSIM_PATH = '/opt/subcellular-experiment/BioNetGen/bin/NFsim'
 
 
 class NfSim(Sim):
-    def __init__(self, sim_config):
+    def __init__(self, sim_config, progress_cb):
         self.sim_config = sim_config
+        self.send_progress = progress_cb
         self.prepare_tmp_dir()
+
+    def log(self, message, source=None):
+        sim_log = SimLog(message, source)
+        self.send_progress(sim_log)
 
     def generate_rnf(self):
         solver_conf = self.sim_config['solverConf']
@@ -94,14 +99,14 @@ class NfSim(Sim):
                 timeout=BNG_MODEL_EXPORT_TIMEOUT
             )
         except subprocess.TimeoutExpired:
-            log['system'] = 'BNGL was not been able to convert a model into xml within 5 seconds'
-            yield SimStatus(SimStatus.ERROR, log=log)
+            self.log('BNGL was not been able to convert a model into xml within 5 seconds')
+            self.send_progress(SimStatus(SimStatus.ERROR))
             return
 
-        log['bng_stdout'] = bng_run.stdout.decode('utf-8')
-        log['bng_stderr'] = bng_run.stderr.decode('utf-8')
+        self.log(bng_run.stdout.decode('utf-8'), 'bng_stdout')
+        self.log(bng_run.stderr.decode('utf-8'), 'bng_stderr')
         if bng_run.returncode is not 0:
-            yield SimStatus(SimStatus.ERROR, log=log)
+            self.send_progress(SimStatus(SimStatus.ERROR))
             return
         L.debug('BNG xml model export has been finished')
 
@@ -111,17 +116,17 @@ class NfSim(Sim):
             check=False,
             capture_output=True
         )
-        log['nfsim_stdout'] = nfsim_run.stdout.decode('utf-8')
-        log['nfsim_stderr'] = nfsim_run.stderr.decode('utf-8')
+        self.log(nfsim_run.stdout.decode('utf-8'), 'nfsim_stdout')
+        self.log(nfsim_run.stderr.decode('utf-8'), 'nfsim_stderr')
 
         L.debug('NFsim return code is {}'.format(nfsim_run.returncode))
         if nfsim_run.returncode is not 0:
-            yield SimStatus(SimStatus.ERROR, log=log)
+            self.send_progress(SimStatus(SimStatus.ERROR))
             return
 
         if not os.path.isfile('model.gdat'):
-            log['system'] = 'NFsim hasn\t generated model.gdat, check the logs for more information'
-            yield SimStatus(SimStatus.ERROR, log=log)
+            self.log('NFsim hasn\t generated model.gdat, check the logs for more information')
+            self.send_progress(SimStatus(SimStatus.ERROR))
             return
 
         sim_traces = pd.read_csv('model.gdat')
@@ -129,12 +134,11 @@ class NfSim(Sim):
         times = np.array(sim_traces.values.tolist())[:,0]
         values = np.array(sim_traces.values.tolist())[:,1:]
 
-        yield SimTrace(TraceTarget.OBSERVABLE,
-                       times,
-                       values,
-                       observables=observables,
-                       log=log)
+        self.send_progress(SimTrace(TraceTarget.OBSERVABLE,
+                                    times,
+                                    values,
+                                    observables=observables))
 
-        yield SimStatus(SimStatus.FINISHED)
+        self.send_progress(SimStatus(SimStatus.FINISHED))
 
         self.rm_tmp_dir()

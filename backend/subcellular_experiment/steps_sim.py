@@ -3,6 +3,8 @@ import os
 import json
 import re
 
+from datetime import datetime
+
 import numpy as np
 
 import pysb
@@ -17,7 +19,7 @@ import steps.rng as srng
 import steps.solver as ssolver
 import steps.utilities.meshio as meshio
 
-from .bngl_extended_model import BnglExtModel
+from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX
 from .sim import SimTraceMeta, SimStepTrace, SimTrace, SimStatus, SimLog, TraceTarget, StimulusType, decompress_stimulation
 from .logger import get_logger
 
@@ -43,11 +45,23 @@ def get_pysb_spec_comp_name(pysb_spec):
 
 
 class StepsSim():
-    def __init__(self, sim_config):
+    def __init__(self, sim_config, progress_cb):
         self.sim_config = sim_config
+        self.t_start = datetime.now()
+        self.send_progress = progress_cb
+
+    def log(self, message):
+        sim_time = datetime.now() - self.t_start
+        hours, remainder = divmod(sim_time.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        timestamp = '{:02}:{:02}:{:02}'.format(int(hours), int(minutes), int(seconds))
+
+        sim_log = SimLog(f'{timestamp} {message}')
+        self.send_progress(sim_log)
 
     def run(self):
-        yield SimStatus(SimStatus.INIT)
+        self.send_progress(SimStatus(SimStatus.INIT))
+        self.log('init sim')
 
         def simplify_string(st, compartments=True, bngl=False):
             st0 = str(st)
@@ -84,19 +98,31 @@ class StepsSim():
 
 
         def get_comp_name_by_tet_idx(tet_idx):
-            return next(
+            geom_comp_name = next(
                 st['name']
-                for st in geometry['structures']
+                for st in geometry['meta']['structures']
                 if st['type'] == StructureType.COMPARTMENT and tet_idx in st['tetIdxs']
             )
 
-        L.debug('create BNGL Extended model')
+            comp_name = next(
+                (
+                    st['name']
+                    for st in model_dict['structures']
+                    if st['type'] == StructureType.COMPARTMENT and
+                        st['geometryStructureName'] == geom_comp_name
+                ),
+                ''
+            )
+
+            return comp_name
+
+
         model_dict = self.sim_config['model']
 
-        L.debug('extend model observables with those used in stimuli')
+        self.log('extend model observables with molecule definitions from stimulation')
         stimuli = decompress_stimulation(self.sim_config['solverConf']['stimulation'])
         # TODO: refactor weird use of simplify_string, remove stim_name
-        stim_name = lambda stim: 'stim___{}'.format(simplify_string(stim['target']))
+        stim_name = lambda stim: '{}{}'.format(STIM_PREFIX, simplify_string(stim['target']))
         model_stim_observable_dict = {
             stim_name(stim): {'name': stim_name(stim), 'definition': stim['target']}
             for stim in stimuli
@@ -104,21 +130,21 @@ class StepsSim():
         }
         model_dict['observables'].extend(model_stim_observable_dict.values())
 
+        self.log('generate BNGL model file with artificial structures')
         bngl_ext_model = BnglExtModel(self.sim_config['model'])
         bngl_str = bngl_ext_model.to_bngl(artificial_structures=True, add_diff_observables=True)
 
-        L.debug('write BNGL file')
+        self.log(f'write BNGL model file: \n\n {bngl_str}')
         with open('model.bngl', 'w') as model_file:
-            L.debug(json.dumps(bngl_str))
             model_file.write(bngl_str)
 
-        L.debug('create pySB model')
+        self.log('create pySB model from BNGL file')
         pysb_model = bngl.model_from_bngl(os.path.join(os.getcwd(), 'model.bngl'))
 
-        L.debug('generate equations')
+        self.log('generate equations')
         pysb.bng.generate_equations(pysb_model)
 
-        L.debug('generate pysb spec names')
+        self.log('generate pysb spec names')
         for pysb_spec in pysb_model.species:
             pysb_spec.name = simplify_string(pysb_spec, compartments=False)
             pysb_spec.full_name = simplify_string(pysb_spec, compartments=True)
@@ -127,13 +153,13 @@ class StepsSim():
 
         steps_model = smodel.Model()
 
-        L.debug('create STEPS species')
+        self.log('about to create STEPS species')
         steps_species = []
         spec_name_set = set()
         for pysb_spec_idx, pysb_spec in enumerate(pysb_model.species):
             if pysb_spec.name not in spec_name_set:
                 spec_name_set.add(pysb_spec.name)
-                L.debug('add spec: {}'.format(pysb_spec.name))
+                self.log('add STEPS spec: {}'.format(pysb_spec.name))
                 steps_species.append(smodel.Spec(pysb_spec.name, steps_model))
 
 
@@ -148,16 +174,46 @@ class StepsSim():
 
         geometry_id = self.sim_config['model']['geometry']['id']
         geometry_path = os.path.join(GEOMETRY_ROOT_PATH, geometry_id)
-        L.debug('load mesh id: {}'.format(geometry_id))
+        self.log('load mesh id: {}'.format(geometry_id))
         mesh = meshio.loadMesh(os.path.join(geometry_path, 'mesh'))[0]
-        L.debug('load geometry.json')
-        geometry = json.loads(open(os.path.join(geometry_path, 'geometry.json')).read())
+        self.log('load geometry.json')
+        with open(os.path.join(geometry_path, 'geometry.json'), 'r') as file:
+            geometry = json.loads(file.read())
+
+        # restructure geometry.json if it has old format
+        # mesh files are written as read only, can't resave file with preper format
+        # TODO: find solution to restructure existing files
+        if 'scale' in geometry:
+            geometry['meta'] = {
+                'scale': geometry['scale'],
+                'meshNameRoot': geometry['meshNameRoot'],
+                'structures': geometry['structures'],
+                'freeDiffusionBoundaries': geometry['freeDiffusionBoundaries']
+            }
+
+            geometry.pop('scale', None)
+            geometry.pop('meshNameRoot', None)
+            geometry.pop('structures', None)
+            geometry.pop('freeDiffusionBoundaries', None)
+
+        geom_struct_dict = {
+            structure['name']: structure
+            for structure
+            in geometry['meta']['structures']
+        }
 
 
-        L.debug('create STEPS Volume and Surface systems')
+        self.log('about to prepare STEPS Volume and Surface systems')
         sys_dict = {}
-        for structure in geometry['structures']:
+        for structure in model_dict['structures']:
             name = structure['name']
+
+            if structure['type'] == StructureType.COMPARTMENT:
+                log_struct_sys_type = 'Volume'
+            else:
+                log_struct_sys_type = 'Surface'
+
+            self.log(f'add STEPS {log_struct_sys_type} system for {name}')
 
             if structure['type'] == StructureType.COMPARTMENT:
                 sys = smodel.Volsys(name, steps_model)
@@ -167,16 +223,21 @@ class StepsSim():
             sys_dict[name] = sys
 
 
-        L.debug('create STEPS 3d compartments (TmComp)')
+        self.log('about to create STEPS compartments (TmComp)')
         tm_comp_dict = {}
         compartments = [
             structure
-            for structure in geometry['structures']
+            for structure in model_dict['structures']
             if structure['type'] == StructureType.COMPARTMENT
         ]
         for compartment in compartments:
             name = compartment['name']
-            tm_comp = sgeom.TmComp(name, mesh, compartment['tetIdxs'])
+            geom_struct_name = compartment['geometryStructureName']
+            tetIdxs = geom_struct_dict[geom_struct_name]['tetIdxs']
+
+            self.log(f'add STEPS compartment (TmComp) for {name}')
+
+            tm_comp = sgeom.TmComp(name, mesh, tetIdxs)
             tm_comp.addVolsys(name)
             tm_comp_dict[name] = tm_comp
 
@@ -184,7 +245,7 @@ class StepsSim():
         def comp_type_by_name(comp_name):
             return next(
                 structure['type']
-                for structure in geometry['structures']
+                for structure in model_dict['structures']
                 if structure['name'] == comp_name
             )
 
@@ -213,22 +274,31 @@ class StepsSim():
             raise NotImplementedError('Found multiple patches for compartments: {}'.format(comp_names))
 
 
-        L.debug('create STEPS 2d compartments (TmPatch)')
+        self.log('about to create STEPS membrane (TmPatch)')
         patch_dicts = []
         membranes = [
             structure
-            for structure in geometry['structures']
+            for structure in model_dict['structures']
             if structure['type'] == StructureType.MEMBRANE
         ]
         for membrane in membranes:
             name = membrane['name']
-            L.debug('adding patch for membrane: {}'.format(name))
+            geom_struct_name = membrane['geometryStructureName']
+            self.log(f'add STEPS membrane (TmPatch) for {name}')
             # .getTriTetNeighb might return -1 if triangle is situated on border of the mesh, and there is no tet
             # from one side
-            neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in membrane['triIdxs']]).flatten()
+            triIdxs = geom_struct_dict[geom_struct_name]['triIdxs']
+            neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in triIdxs]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
 
             compartment_names = list(set([get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered]))
+
+            if '' in compartment_names:
+                # compartment name can be empty string if there is no model structure
+                # corresponding to a given geometry structure. This can be caused
+                # by reusing geometry which has more structures then the model itself
+                continue
+
             if len(compartment_names) > 2:
                 raise ValueError('membrane {} connects more then 2 compartments'.format(name))
 
@@ -237,15 +307,16 @@ class StepsSim():
 
             icomp = tm_comp_dict[comp_names_directional[0]]
             ocomp = tm_comp_dict[comp_names_directional[2]] if len(comp_names_directional) == 3 else None
-            L.debug('Inner compartment: {}'.format(icomp.getID()))
-            L.debug('Outer compartment: {}'.format(ocomp.getID() if ocomp is not None else None))
+
+            ocomp_name = ocomp.getID() if ocomp is not None else None
+            self.log(f'inner compartment for {name} patch: {icomp.getID()}')
+            self.log(f'outer compartment for {name} patch: {ocomp_name}')
 
             tm_patch = sgeom.TmPatch(id=name,
-                                    container=mesh,
-                                    tris=membrane['triIdxs'],
-                                    icomp=icomp,
-                                    ocomp=ocomp
-                                    )
+                                     container=mesh,
+                                     tris=triIdxs,
+                                     icomp=icomp,
+                                     ocomp=ocomp)
 
             tm_patch.addSurfsys(name)
 
@@ -255,6 +326,13 @@ class StepsSim():
                 'tm_patch': tm_patch
             }
             patch_dicts.append(patch_dict)
+
+
+        def hs_to_str(hs):
+            if len(hs):
+                return ', '.join(map(lambda steps_spec: steps_spec.getID(), hs))
+            else:
+                return 'None'
 
 
         def create_sreac(reac_name, comp_names, pysb_reac):
@@ -281,16 +359,31 @@ class StepsSim():
             for spec_idx in pysb_reac['products']:
                 add_spec(spec_idx, 'r')
 
-            surfsys = sys_dict[patch_dict['name']]
+            patch_name = patch_dict['name']
+            surfsys = sys_dict[patch_name]
+
+            ilhs_str = hs_to_str(reac_param_dict['ilhs'])
+            slhs_str = hs_to_str(reac_param_dict['slhs'])
+            olhs_str = hs_to_str(reac_param_dict['olhs'])
+            irhs_str = hs_to_str(reac_param_dict['irhs'])
+            srhs_str = hs_to_str(reac_param_dict['srhs'])
+            orhs_str = hs_to_str(reac_param_dict['orhs'])
+            self.log(
+                f'create STEPS SReac {reac_name} '
+                f'using {patch_name} Surface system, '
+                f'where'
+                f'ilhs: {ilhs_str}, slhs: {slhs_str}, olhs: {olhs_str}, '
+                f'irhs: {irhs_str}, srhs: {srhs_str}, orhs: {orhs_str}, '
+            )
+
             steps_reac = smodel.SReac(reac_name,
-                                    surfsys,
-                                    ilhs=reac_param_dict['ilhs'],
-                                    slhs=reac_param_dict['slhs'],
-                                    olhs=reac_param_dict['olhs'],
-                                    irhs=reac_param_dict['irhs'],
-                                    srhs=reac_param_dict['srhs'],
-                                    orhs=reac_param_dict['orhs'],
-                                    )
+                                      surfsys,
+                                      ilhs=reac_param_dict['ilhs'],
+                                      slhs=reac_param_dict['slhs'],
+                                      olhs=reac_param_dict['olhs'],
+                                      irhs=reac_param_dict['irhs'],
+                                      srhs=reac_param_dict['srhs'],
+                                      orhs=reac_param_dict['orhs'])
 
             return steps_reac
 
@@ -305,16 +398,30 @@ class StepsSim():
             for spec_idx in pysb_reac['products']:
                 rhs.append(get_steps_spec_by_pysb_spec_idx(spec_idx))
 
+            lhs_str = hs_to_str(lhs)
+            rhs_str = hs_to_str(rhs)
+            self.log(
+                f'create STEPS Reac {reac_name} '
+                f'using {comp_name} Volume system, whith lhs: {lhs_str}, rhs: {rhs_str}'
+            )
+
             return smodel.Reac(reac_name, volsys, lhs=lhs, rhs=rhs)
 
 
-        L.debug('create STEPS diffusion rules')
+        self.log('about to create STEPS diffusion rules')
         steps_diffs = []
         diff_pysb_spec_idx_dict = {}
         model_diffs = self.sim_config['model']['diffusions']
-        diff_observables = [observable for observable in pysb_model.observables if re.match('diff___\w+', observable.name) is not None]
+
+        diff_observables = [
+            observable
+            for observable
+            in pysb_model.observables
+            if re.match(f'{DIFF_PREFIX}\w+', observable.name) is not None
+        ]
+
         for observable_idx, observable in enumerate(diff_observables):
-            diff_common_name = re.match('diff___(.*)', observable.name).groups()[0]
+            diff_common_name = re.match(f'{DIFF_PREFIX}(.*)', observable.name).groups()[0]
             for pysb_spec_idx in observable.species:
                 steps_spec = get_steps_spec_by_pysb_spec_idx(pysb_spec_idx)
                 pysb_spec = pysb_model.species[pysb_spec_idx]
@@ -322,7 +429,7 @@ class StepsSim():
                 sys = sys_dict[comp_name]
                 dcst = float(model_diffs[observable_idx]['diffusionConstant'])
                 diff_name = '{}_{}'.format(diff_common_name, pysb_spec.name)
-                L.debug('create diff for {} in {}'.format(pysb_spec.name, comp_name))
+                self.log(f'add diffusion for {pysb_spec.name} in {comp_name}')
                 diff = smodel.Diff(diff_name, sys, steps_spec, dcst=dcst)
                 steps_diffs.append(diff)
 
@@ -331,7 +438,7 @@ class StepsSim():
                 diff_pysb_spec_idx_dict[comp_name].append(pysb_spec_idx)
 
 
-        L.debug('create STEPS reactions')
+        self.log('about to create STEPS reactions')
         steps_reacs = []
         for idx, pysb_reac in enumerate(pysb_model.reactions):
             comp_names = get_pysb_reac_comp_names(pysb_reac)
@@ -381,15 +488,22 @@ class StepsSim():
         init_reac_rates()
 
 
-        L.debug('create STEPS diffusion boundaries')
+        self.log('about to create STEPS diffusion boundaries')
         diff_boundaries = []
         diff_boundary_spec_names_dict = {}
-        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry['freeDiffusionBoundaries']):
+        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry['meta']['freeDiffusionBoundaries']):
             tris = diff_boundary_dict['triIdxs']
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in tris]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
             comp_names = list(set([get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered]))
-            L.debug('creating diff boundary for comps: {} and {}'.format(comp_names[0], comp_names[1]))
+
+            if '' in comp_names:
+                # compartment name can be empty string if there is no model structure corresponding
+                # to a given geometry structure. Can be caused by using of geometry which has more
+                # structures then the model itself
+                continue
+
+            self.log('creating diff boundary between {} and {}'.format(comp_names[0], comp_names[1]))
             if len(comp_names) != 2:
                 raise ValueError('Diff boundary idx: {} should border two compartments'.format(diff_boundary_idx))
             name = 'diffb_{}_{}'.format(comp_names[0], comp_names[1])
@@ -404,18 +518,18 @@ class StepsSim():
 
             diff_spec_names = set(inner_spec_names).intersection(outer_spec_names)
             if len(diff_spec_names) == 0:
-                L.debug('no species with diffusion activated on both sides of diff boundary found')
+                self.log('no species with diffusion activated on both sides of diff boundary found')
             diff_boundary_spec_names_dict[name] = diff_spec_names
 
             diff_boundaries.append(diff_boundary)
 
 
-        L.debug('set up RNG')
+        self.log('set up RNG')
         rng = srng.create('mt19937', 512)
         rng.initialize(654)
 
 
-        L.debug('create STEPS solver')
+        self.log('create STEPS solver')
         sim = ssolver.Tetexact(steps_model, mesh, rng)
         sim.reset()
 
@@ -425,17 +539,17 @@ class StepsSim():
         tend = solver_config['tEnd']
 
         stim_tpnt_set = set([stim['t'] for stim in stimuli])
-        tpnts = np.unique(np.append(np.arange(0, tend, dt), list(stim_tpnt_set)))
+        sample_tpnt_set = set(np.arange(0, tend, dt))
+        tpnts = np.unique(np.append(list(sample_tpnt_set), list(stim_tpnt_set)))
         tpnts.sort()
 
-        L.debug('set STEPS initial concentrations')
+        self.log('about to set STEPS initial concentrations')
         for condition in pysb_model.initial_conditions:
             pysb_spec, expr = condition
             spec_name = simplify_string(pysb_spec, compartments=False)
             comp_name = get_pysb_spec_comp_name(pysb_spec)
             comp_type = comp_type_by_name(comp_name)
             value = eval_expr(expr)
-            L.debug('init cond: @{}:{}, val: {}'.format(comp_name, spec_name, value))
 
             # Unit conversion
             # BNGL units:
@@ -445,13 +559,15 @@ class StepsSim():
             # * 2d - # of molecules
             # * 3d - mM/m^3
             if comp_type == StructureType.COMPARTMENT:
+                self.log(f'set comp conc: @{comp_name}:{spec_name}, val: {value}')
                 sim.setCompConc(comp_name, spec_name, value)
             else:
+                self.log(f'set patch count: @{comp_name}:{spec_name}, val: {value}')
                 sim.setPatchCount(comp_name, spec_name, value)
 
-        L.debug('activate diffusion boundaries')
+        self.log('about to activate diffusion boundaries')
         for diff_boundary_name, spec_names in diff_boundary_spec_names_dict.items():
-            L.debug('activating diff boundary {} for {}'.format(
+            self.log('activate diff boundary {} for {}'.format(
                 diff_boundary_name,
                 ', '.join(spec_names)
             ))
@@ -459,19 +575,17 @@ class StepsSim():
                 sim.setDiffBoundaryDiffusionActive(diff_boundary_name, spec_name, True)
 
 
-        L.debug('run sim and calculate observable species')
         trace_observables = [
             observable
             for observable in pysb_model.observables
-            if re.match('(diff___|stim___)\w+', observable.name) is None
+            if re.match(f'({DIFF_PREFIX}|{STIM_PREFIX})\w+', observable.name) is None
         ]
         trace_observable_names = [observable.name for observable in trace_observables]
-        L.debug('observables to calculate: {}'.format(', '.join(trace_observable_names)))
         trace_values = np.zeros((len(tpnts), len(pysb_model.species)))
 
 
         # Send simulation meta
-        structures = [{'name': structure['name']} for structure in geometry['structures']]
+        structures = [{'name': structure['name']} for structure in model_dict['structures']]
         species = [{'name': simplify_string(spec, bngl=True)} for spec in pysb_model.species]
         observables = []
         for observable in trace_observables:
@@ -485,13 +599,13 @@ class StepsSim():
                                 structures=structures,
                                 species=species,
                                 observables=observables)
-        yield trace_meta
+        self.send_progress(trace_meta)
 
         def apply_stimulus(stim):
             if stim['type'] == StimulusType.SET_PARAM:
                 param_name = stim['target']
                 value = float(stim['value'])
-                L.debug(f'stim: setting param {param_name} to {value}')
+                self.log(f'stimulation: setting param {param_name} to {value}')
                 set_atom(param_name, value)
 
                 for reac_idx, steps_reac in enumerate(steps_reacs):
@@ -499,19 +613,25 @@ class StepsSim():
                     if type(steps_reac) == smodel.Reac:
                         curr_comp_reac_k = sim.getCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID())
                         if curr_comp_reac_k != rate_val:
-                            L.debug(f'stim: update comp reacK for {steps_reac.getID()} from {curr_comp_reac_k} to {rate_val}')
+                            self.log(
+                                f'stimulation: update comp reacK for {steps_reac.getID()} '
+                                f'from {curr_comp_reac_k} to {rate_val}'
+                            )
                         sim.setCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID(), rate_val)
                     else:
                         curr_patch_reac_k = sim.getPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID())
                         if curr_patch_reac_k != rate_val:
-                            L.debug(f'stim: update surf reacK for {steps_reac.getID()} from {curr_patch_reac_k} to {rate_val}')
+                            self.log(
+                                f'stim: update surf reacK for {steps_reac.getID()} '
+                                f'from {curr_patch_reac_k} to {rate_val}'
+                            )
                         sim.setPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val)
 
             elif stim['type'] == StimulusType.SET_CONC:
                 observable = next(
                     observable
                     for observable in pysb_model.observables
-                    if observable.name == 'stim___{}'.format(simplify_string(stim['target']))
+                    if observable.name == '{}{}'.format(STIM_PREFIX, simplify_string(stim['target']))
                 )
                 pysb_specs = [pysb_model.species[spec_idx] for spec_idx in observable.species]
                 if len(pysb_specs) > 1:
@@ -519,7 +639,13 @@ class StepsSim():
                 pysb_spec = pysb_specs[0]
                 comp_type = comp_type_by_name(pysb_spec.comp_name)
                 # TODO: check if species are present in particular compartments
-                L.debug('set {}@{} conc to {}'.format(pysb_spec.name, pysb_spec.comp_name, stim['value']))
+
+                target_str = 'comp conc' if comp_type == StructureType.COMPARTMENT else 'patch count'
+                self.log(
+                    f'set {target_str} for @{pysb_spec.comp_name}:{pysb_spec.name} '
+                    f'to {stim["value"]}'
+                )
+
                 if comp_type == StructureType.COMPARTMENT:
                     sim.setCompConc(pysb_spec.comp_name, pysb_spec.name, stim['value'])
                 else:
@@ -531,47 +657,50 @@ class StepsSim():
                 observable = next(
                     observable
                     for observable in pysb_model.observables
-                    if observable.name == 'stim___{}'.format(simplify_string(stim['target']))
+                    if observable.name == '{}{}'.format(STIM_PREFIX, simplify_string(stim['target']))
                 )
                 pysb_specs = [pysb_model.species[spec_idx] for spec_idx in observable.species]
                 for pysb_spec in pysb_specs:
                     comp_name = pysb_spec.comp_name
                     comp_type = comp_type_by_name(comp_name)
                     # TODO: check if species are present in particular compartments
-                    L.debug('set {}@{} clamped to {}'.format(pysb_spec.name, comp_name, clamp))
+                    self.log(f'set @{comp_name}:{pysb_spec.name} clamped to {clamp}')
                     if comp_type == StructureType.COMPARTMENT:
                         sim.setCompClamped(comp_name, pysb_spec.name, clamp)
                     else:
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
 
-        yield SimStatus(SimStatus.STARTED)
+        self.log('about to run sim')
+        self.send_progress(SimStatus(SimStatus.STARTED))
 
         for tidx, tpnt in enumerate(tpnts):
-            L.debug('run step {} out of {}, t: {} s'.format(tidx + 1, len(tpnts), tpnt))
+            self.log(f'run step {tidx + 1} out of {len(tpnts)}, t: {tpnt} s')
 
             sim.run(tpnt)
-            L.debug('finished step {} out of {}, t: {} s'.format(tidx + 1, len(tpnts), tpnt))
-            for pysb_spec_idx, pysb_spec in enumerate(pysb_model.species):
-                comp_name = pysb_spec.comp_name
-                comp_type = comp_type_by_name(comp_name)
-                if comp_type == StructureType.COMPARTMENT:
-                    trace_values[tidx, pysb_spec_idx] = sim.getCompCount(comp_name, pysb_spec.name)
-                else:
-                    trace_values[tidx, pysb_spec_idx] = sim.getPatchCount(comp_name, pysb_spec.name)
-            sim_step_trace = SimStepTrace(tpnt, tidx, trace_values[tidx])
-            yield sim_step_trace
 
             if tpnt in stim_tpnt_set:
-                L.debug('apply stimuli for t: {} s'.format(tpnt))
+                self.log(f'about to apply stimuli for t: {tpnt} s')
                 current_stimuli = [stim for stim in stimuli if stim['t'] == tpnt]
                 for stim in current_stimuli:
                     apply_stimulus(stim)
 
-        yield SimTrace(TraceTarget.SPECIES,
-                    tpnts,
-                    trace_values,
-                    structures=structures,
-                    species=species,
-                    observables=observables)
+            if tpnt in sample_tpnt_set:
+                for pysb_spec_idx, pysb_spec in enumerate(pysb_model.species):
+                    comp_name = pysb_spec.comp_name
+                    comp_type = comp_type_by_name(comp_name)
+                    if comp_type == StructureType.COMPARTMENT:
+                        trace_values[tidx, pysb_spec_idx] = sim.getCompCount(comp_name, pysb_spec.name)
+                    else:
+                        trace_values[tidx, pysb_spec_idx] = sim.getPatchCount(comp_name, pysb_spec.name)
+                sim_step_trace = SimStepTrace(tpnt, tidx, trace_values[tidx])
+                self.send_progress(sim_step_trace)
 
-        yield SimStatus(SimStatus.FINISHED)
+        self.send_progress(SimTrace(TraceTarget.SPECIES,
+                                    tpnts,
+                                    trace_values,
+                                    structures=structures,
+                                    species=species,
+                                    observables=observables))
+
+        self.log('done')
+        self.send_progress(SimStatus(SimStatus.FINISHED))
