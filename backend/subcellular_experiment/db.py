@@ -111,8 +111,13 @@ class Db():
         ], unique=True, background=True)
 
     def create_geometry(self, geometry_config):
-        geometry_config['deleted'] = False
-        return self.db.geometries.insert_one(geometry_config)
+        db_geometry = {
+            'name': geometry_config['name'],
+            'description': geometry_config['description'],
+            'meta': geometry_config['meta'],
+            'deleted': False
+        }
+        return self.db.geometries.insert_one(db_geometry)
 
     def get_geometry(self, geometry_id):
         return self.db.find_one({ 'id': geometry_id })
