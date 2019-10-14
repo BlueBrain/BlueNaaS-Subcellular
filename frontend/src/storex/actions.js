@@ -79,7 +79,7 @@ export default {
     commit('removeGeometry');
   },
 
-  setStructSizesFromGeometry({ state, commit }) {
+  setStructParamsFromGeometry({ state, commit }) {
     const { structures } = state.model.geometry.meta;
     structures.forEach((geomStruct) => {
       const modelStructIdx = state.model.structures.findIndex(s => s.name === geomStruct.name);
@@ -88,8 +88,22 @@ export default {
       commit('modifyEntity', {
         type: 'structure',
         entityIndex: modelStructIdx,
-        keyName: 'size',
+        keyName: 'geometryStructureSize',
         value: geomStruct.size.toPrecision(5),
+      });
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'geometryStructureName',
+        value: geomStruct.name,
+      });
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'type',
+        value: geomStruct.type,
       });
     });
   },
@@ -181,6 +195,8 @@ export default {
     await model.geometry.init();
 
     commit('loadDbModel', model);
+    dispatch('setStructParamsFromGeometry');
+
     if (model.public) {
       dispatch('cloneSimulations', model.simulations);
     } else {

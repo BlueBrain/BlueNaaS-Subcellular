@@ -1,7 +1,7 @@
 
 <template>
   <i-form
-    :label-width="100"
+    :label-width="130"
     @submit.native.prevent
   >
     <FormItem
@@ -39,19 +39,28 @@
         v-model="structure.parentName"
         @input="onStructureChange"
       >
-        <i-option
-          v-if="!isRootStructurePresent || nonBnglStructures"
-          value="-"
-        >
-          none
-        </i-option>
+        <i-option value="-">none</i-option>
         <i-option
           v-for="name in parentStructureNames"
           :value="name"
           :key="name"
-        >
-          {{ name }}
-        </i-option>
+        >{{ name }}</i-option>
+      </i-select>
+    </FormItem>
+
+    <FormItem
+      v-if="geometry"
+      label="Geometry structure *"
+    >
+      <i-select
+        v-model="structure.geometryStructureName"
+        @input="onStructureChange"
+      >
+        <i-option
+          v-for="name in geometryStructureNames"
+          :value="name"
+          :key="name"
+        >{{ name }}</i-option>
       </i-select>
     </FormItem>
 
@@ -63,6 +72,8 @@
         size="small"
         entity-type="parameter"
         v-model="structure.size"
+        :read-only="geometry"
+        :border="true"
         @tab="onSizeInputTab"
         @input="onStructureChange"
       />
@@ -120,7 +131,7 @@
         this.$emit('input', this.structure);
       },
       isValid() {
-        return this.structure.name.trim() && (this.nonBnglStructures || this.structure.parentName);
+        return this.structure.name.trim();
       },
       onSizeInputTab() {
         this.$refs.annotationInput.focus();
@@ -139,11 +150,14 @@
           .filter(s => s.name !== this.structure.name)
           .map(s => s.name);
       },
+      geometryStructureNames() {
+        if (!this.geometry) return [];
+
+        return this.geometry.meta.structures
+          .map(structure => structure.name);
+      },
       isRootStructurePresent() {
         return this.$store.state.model.structures.some(s => s.parentName === '-');
-      },
-      nonBnglStructures() {
-        return this.$store.state.model.nonBnglStructures;
       },
       geometry() {
         return get(this.$store.state, 'model.geometry');
