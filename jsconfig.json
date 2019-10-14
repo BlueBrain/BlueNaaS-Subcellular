@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
+        "module": "es2015",
         "target": "ES6",
-        "moduleResolution": "node",
-        "baseUrl": "./",
+        "baseUrl": "./frontend",
         "paths": {
             "@/*": ["src/*"]
         }
@@ -11,5 +11,9 @@
         "node_modules",
         "dist",
         "public"
-    ]
+    ],
+    "include": [
+        "src/**/*"
+    ],
+    "checkJs": true,
 }
