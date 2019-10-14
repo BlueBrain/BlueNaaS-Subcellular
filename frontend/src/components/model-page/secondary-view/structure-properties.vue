@@ -70,7 +70,11 @@
     },
     computed: {
       structureEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'type', 'parentName', 'size', 'annotation']);
+        return !isEqualBy(
+          this.selection.entity,
+          this.tmpEntity,
+          ['name', 'type', 'parentName', 'size', 'annotation', 'geometryStructureName'],
+        );
       },
       selection() {
         return this.$store.state.selectedEntity;

@@ -79,24 +79,18 @@
         currentEntityType: this.$route.path.split('/')[2],
       };
     },
+    methods: {
+      onEntityTypeSelect(entityType) {
+        this.$store.commit('resetEntitySelection');
+        this.$router.push({ path: `/model/${entityType}` });
+      },
+    },
     computed: {
       model() {
         return this.$store.state.model;
       },
       routePath() {
         return this.$route.path;
-      },
-    },
-    watch: {
-      routePath(val) {
-        this.currentEntityType = val.split('/')[2];
-        this.onEntityTypeSelect(this.currentEntityType);
-      },
-    },
-    methods: {
-      onEntityTypeSelect(entityType) {
-        this.$store.commit('resetEntitySelection');
-        this.$router.push({ path: `/model/${entityType}` });
       },
     },
   };

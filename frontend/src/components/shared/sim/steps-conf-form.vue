@@ -7,8 +7,8 @@
     <FormItem label="max_dt, s *">
       <InputNumber
         size="small"
-        :min="0.001"
-        :max="2"
+        :min="0.000001"
+        :max="10"
         :step="0.01"
         v-model="conf.dt"
         @input="onChange"
@@ -17,8 +17,9 @@
     <FormItem label="t_end, s *">
       <InputNumber
         size="small"
-        :min="1"
-        :max="600"
+        :min="0.01"
+        :max="1000"
+        :step="1"
         v-model="conf.tEnd"
         @input="onChange"
       />

@@ -3,7 +3,7 @@
   <div>
     <Card class="mt-12">
       <Row :gutter="24" type="flex">
-        <i-col span="8">
+        <i-col span="12">
           <h3 class="mb-12">Molecules</h3>
           <i-input
             v-model="query.moleculeStr"
@@ -14,7 +14,7 @@
           <h3 class="mt-24 mb-12">Versions</h3>
           <revision-select v-model="query.versions"/>
         </i-col>
-        <i-col span="8">
+        <i-col span="12">
           <h3 class="mb-12">Structures</h3>
           <i-input
             v-model="query.structureStr"
@@ -39,23 +39,16 @@
             </i-option>
           </i-select>
         </i-col>
+      </Row>
+      <Row
+        :gutter="24"
+        class="mt-24"
+      >
         <i-col span="8">
-          <h3 class="mb-6">Additional parameters</h3>
-
-          <span>
-            Max reac chain length:
-          </span>
-          <InputNumber
-            :max="10"
-            :min="0"
-            :step="1"
-            :presicion="0.1"
-          />
-
-          <h3 class="mb-6 mt-12">Actions</h3>
           <Dropdown
             class="query-dropdown"
             @on-click="onFilterActionClick"
+            transfer
           >
             <Button>
                 Filter
@@ -65,16 +58,11 @@
                 <DropdownItem name="load">Load</DropdownItem>
                 <DropdownItem name="save">Save</DropdownItem>
             </DropdownMenu>
-        </Dropdown>
+          </Dropdown>
         </i-col>
-      </Row>
-      <Row
-        :gutter="24"
-        class="mt-24"
-      >
         <i-col
           span="8"
-          push="16"
+          push="8"
         >
           <i-button
             type="primary"
