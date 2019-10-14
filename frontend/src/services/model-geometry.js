@@ -11,10 +11,10 @@ import writeArray from '@/tools/write-array';
  * @param {Array} array
  * @param {Function} TypedArrayCtor
  */
-function getTypedArray(array, TypedArrayCtor) {
-  return array instanceof ArrayType
+function getFlatTypedArray(array, TypedArrayCtor) {
+  return array instanceof TypedArrayCtor
       ? array
-      : ArrayType.from(array);
+      : TypedArrayCtor.from(array.flat());
 }
 
 /**
@@ -232,14 +232,14 @@ class ModelGeometry {
 
     modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw);
 
-    const srcNodes = get(mesh, 'volume.nodes', []).flat();
-    modelGeometry.mesh.volume.nodes = getTypedArray(srcNodes, Float64Array);
+    const srcNodes = get(mesh, 'volume.nodes', []);
+    modelGeometry.mesh.volume.nodes = getFlatTypedArray(srcNodes, Float64Array);
 
-    const srcFaces = get(mesh, 'volume.faces', []).flat();
-    modelGeometry.mesh.volume.faces = getTypedArray(srcFaces, Uint32Array);
+    const srcFaces = get(mesh, 'volume.faces', []);
+    modelGeometry.mesh.volume.faces = getFlatTypedArray(srcFaces, Uint32Array);
 
-    const srcElements = get(mesh, 'volume.elements', []).flat();
-    modelGeometry.mesh.volume.elements = getTypedArray(srcElements, Uint32Array);
+    const srcElements = get(mesh, 'volume.elements', []);
+    modelGeometry.mesh.volume.elements = getFlatTypedArray(srcElements, Uint32Array);
 
     modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {}))
       .reduce((acc, [structName, structMesh]) => ({...acc, ...{ [structName]: Object.freeze(structMesh) }}), {});
