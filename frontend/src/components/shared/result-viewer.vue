@@ -6,13 +6,11 @@
 
 <script>
   import noop from 'lodash/noop';
+  import throttle from 'lodash/throttle';
   import Plotly from 'plotly.js-basic-dist';
   import { saveAs } from 'file-saver';
 
   const layout = {
-    legend: {
-      orientation: 'h',
-    },
     xaxis: {
       ticks: 'outside',
       title: 'Time, s',
@@ -21,6 +19,7 @@
       ticks: 'outside',
       title: 'Amount of molecules, #',
     },
+    hovermode:'closest'
   };
 
   const downloadCsvBtn = {
@@ -66,10 +65,14 @@
       };
     },
     props: ['simId'],
+    created() {
+      this.redrawThrottled = throttle(this.redraw, 500);
+    },
     mounted() {
       this.init();
     },
     beforeDestroy() {
+      this.redrawThrottled.cancel();
       Plotly.purge(this.$refs.chart);
     },
     methods: {
@@ -103,7 +106,7 @@
             x: this.simulation.times.slice(startIndex),
             y: concValues,
             name: observable.name,
-            type: 'scatter',
+            type: 'scattergl',
           });
         }, []);
       },
@@ -116,7 +119,7 @@
             x: this.simulation.times.slice(startIndex),
             y: concValues,
             name: observable.name,
-            type: 'scatter',
+            type: 'scattergl',
           });
         }, []);
       },
@@ -146,7 +149,7 @@
     watch: {
       simulation() {
         if (this.initialized) {
-          this.redraw();
+          this.redrawThrottled();
         } else {
           this.init();
         }
