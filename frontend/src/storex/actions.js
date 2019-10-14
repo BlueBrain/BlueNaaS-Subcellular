@@ -25,7 +25,7 @@ export default {
       };
     }
     dispatch('setUser', user);
-    socket.clientId = user.id;
+    socket.userId = user.id;
     socket.init();
   },
 
@@ -72,7 +72,7 @@ export default {
       structure.size = structureSize[structure.name];
     });
     commit('setGeometry', geometry);
-    dispatch('setStructSizesFromGeometry');
+    dispatch('setStructParamsFromGeometry');
   },
 
   removeGeometry({ commit }) {
@@ -135,7 +135,7 @@ export default {
 
     if (model.geometry && model.geometry.nodes) {
       console.info(`Transforming model ${model.name} to new format`);
-      // this is an old format of geometry, needs to be restructures
+      // this is an old format of geometry, needs to be restructured
       // TODO: remove this after 20.10.2019
       model.geometry.parsed = true;
       model.geometry.initialized = false;
@@ -176,7 +176,7 @@ export default {
 
       model.geometry = restructuredGeometry;
 
-      const models = cloneDeep(state.dbModels);
+      const models = { ...state.dbModels };
       const tmpModel = {...model};
       const geometryId = tmpModel.geometry.id;
       await storage.setItem(`geometry:${geometryId}`, tmpModel.geometry);
@@ -262,33 +262,24 @@ export default {
     const model = {...state.model};
     delete model.simulations;
 
-    // TODO: rnf generation from stimuli on backend
-    const rnf = [
-      '-xml model.xml',
-      '-v',
-      '-utl 3',
-      '-o model.gdat',
-      '',
-      'begin',
-      `sim ${simulation.solverConf.tEnd} ${simulation.solverConf.nSteps}`,
-      'end',
-    ].join('\n');
+    if (model.geometry) {
+      model.geometry = { id: model.geometry.id };
+    }
 
     const simConfig = Object.assign({
       id: simulation.id,
-      clientId: state.user.id,
+      userId: state.user.id,
       model,
-      rnf,
     }, simulation);
 
     socket.send('run_simulation', simConfig);
   },
 
   cancelSimulation({ state }, simulation) {
-    // TODO: remove clientId from request
+    // TODO: remove userId from request
     const simConfig = {
       id: simulation.id,
-      clientId: state.user.id,
+      userId: state.user.id,
     };
 
     socket.send('cancel_simulation', simConfig);
@@ -298,7 +289,7 @@ export default {
     commit('setModel', cloneDeep(constants.defaultEmptyModel));
   },
 
-  async importRevisionFile({ dispatch }, { name, type, fileContent }) {
+  async importRevisionFile({ dispatch, state }, { name, type, fileContent, targetConcSource }) {
     // TODO: DRY
     let revision = null;
     let bnglStr = null;
@@ -322,6 +313,17 @@ export default {
       throw new Error('Error while parsing BNGL');
     }
 
+    /**
+     * Align generated model with revision structuren which has multiple concentrations,
+     * using targetConcSource
+     * TODO: make this a part of modelBuilder
+     */
+    revision.species.forEach(species => {
+      const concValue = species.concentration;
+      species.concentration = state.revision.config.concSources
+        .reduce((acc, s) => Object.assign(acc, { [s]: s === targetConcSource ? concValue : '0' }), {});
+    });
+
     dispatch('mergeRevision', {
       revisionData: revision,
       source: `file:${name}`,
@@ -335,6 +337,73 @@ export default {
     if (type === 'ebngl') {
       // TODO: add content type and schema validation
       const model = JSON.parse(fileContent);
+
+      /** ####################### START OF TEMPORARY BLOCK ###################### */
+      if (model.geometry) {
+        if (model.geometry.nodes) {
+          console.info(`Transforming model ${model.name} to new format`);
+          // this is an old format of geometry, needs to be restructured
+          // TODO: remove this after 20.10.2019
+          model.geometry.parsed = true;
+          model.geometry.initialized = false;
+          const {
+            name,
+            annotation,
+            id,
+            scale,
+            structures,
+            meshNameRoot,
+            freeDiffusionBoundaries,
+            nodes,
+            faces,
+            elements,
+          } = model.geometry;
+  
+          const restructuredGeometry = {
+            name,
+            id,
+            parsed: true,
+            initialized: false,
+            description: annotation,
+            meta: {
+              scale,
+              structures,
+              meshNameRoot,
+              freeDiffusionBoundaries,
+            },
+            mesh: {
+              volume: {
+                nodes,
+                faces,
+                elements,
+              },
+              surface: {},
+            },
+          };
+
+          model.geometry = restructuredGeometry;
+        }
+
+        if (!model.structures[0].geometryStructureName) {
+          const { structures } = model.geometry.meta;
+          structures.forEach((geomStruct) => {
+            const modelStruct = model.structures.find(s => s.name === geomStruct.name);
+            if (!modelStruct) return;
+
+            modelStruct.geometryStructureSize = geomStruct.size.toPrecision(5);
+            modelStruct.geometryStructureName = geomStruct.name;
+            modelStruct.type = geomStruct.type;
+          });
+        }
+
+        model.geometry = ModelGeometry.from(model.geometry);
+        await model.geometry.init();
+      }
+      /** ####################### END OF TEMPORARY BLOCK ###################### */
+
+
+
+
 
       const simFreeModel = Object.assign({}, model, { simulations: [], id: uuidv4() });
       commit('setModel', simFreeModel);
@@ -368,6 +437,7 @@ export default {
 
   async queryMolecularRepo({ commit }, query) {
     const { queryResult } = await socket.request('query_molecular_repo', query);
+    commit('updateRepoQueryConfig', queryResult);
     commit('setRepoQueryResult', queryResult);
   },
 
@@ -375,14 +445,16 @@ export default {
     return socket.request('save_revision', state.revision);
   },
 
-  async mergeRevisionWithModel({ commit }, { branch, revision }) {
+  async mergeRevisionWithModel({ commit }, { version, concSource }) {
+    const { branch, revision } = version;
+
     if (revision !== 'latest') {
-      commit('mergeRevisionWithModel', { branch, revision });
+      commit('mergeRevisionWithModel', { branch, revision, concSource });
       return;
     }
 
     const { rev: latestRev } = await socket.request('get_branch_latest_rev', branch);
-    commit('mergeRevisionWithModel', { branch, revision: latestRev });
+    commit('mergeRevisionWithModel', { branch, revision: latestRev, concSource });
   },
 
   async importRevision({ commit }, params) {

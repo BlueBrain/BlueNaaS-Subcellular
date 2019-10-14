@@ -1,23 +1,28 @@
 
 import Vue from 'vue';
-import findIndex from 'lodash/findIndex';
 import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
 
 import constants from '@/constants';
+import ModelValidator from '@/tools/model-validator';
 
 
-const entityTypeCollectionMap = {
-  parameter: 'parameters',
-  function: 'functions',
-  structure: 'structures',
-  molecule: 'molecules',
-  species: 'species',
-  reaction: 'reactions',
-  observable: 'observables',
-  simulation: 'simulations',
-  diffusion: 'diffusions',
-};
+const {
+  entityTypeCollectionMap,
+  defaultEmptyModel,
+  DEFAULT_VISIBLE_CONC_N_PER_REV,
+} = constants;
+
+const collectionNames = [
+  'structures',
+  'molecules',
+  'species',
+  'reactions',
+  'diffusions',
+  'functions',
+  'observables',
+  'parameters',
+];
 
 
 export default {
@@ -31,6 +36,16 @@ export default {
 
   setGeometry(state, geometry) {
     state.model.geometry = geometry;
+  },
+
+  removeGeometry(state) {
+    state.model.geometry = null;
+
+    // reset geometry related structures' properties
+    state.model.structures.forEach((structure) => {
+      structure.geometryStructureSize = '';
+      structure.geometryStructureName = '';
+    });
   },
 
   addStructure(state, structure) {
@@ -82,21 +97,8 @@ export default {
     // TODO: deprecate in favor of upper one
     const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simStatus.id);
 
-    // TODO: refactor
-    if (!simStatus.log) {
-      delete simStatus.log;
-    }
-
     const currentSim = state.model.simulations[simIndex];
     const simulation = Object.assign({}, currentSim, simStatus);
-
-    // add description as system log if there are no logs
-    // TODO: refactor
-    if (!simulation.log && simulation.description) {
-      simulation.log = {
-        system: simulation.description,
-      };
-    }
 
     Vue.set(state.model.simulations, simIndex, simulation);
 
@@ -128,11 +130,18 @@ export default {
     if (simIndex === -1) return;
 
     const currentSimulation = state.model.simulations[simIndex];
+    // currentSimulation.times.push(simStepTrace.t);
+    // currentSimulation.values.push(Uint32Array.from(simStepTrace.values));
+
+    // Vue.set(state.model.simulations, simIndex,)
+
+    // currentSimulation.currentStepIdx = simStepTrace.stepIdx;
+
     const simulation = Object.assign({}, currentSimulation);
     simulation.times.push(simStepTrace.t);
-    simulation.values.push(simStepTrace.values);
+    simulation.values.push(Uint32Array.from(simStepTrace.values));
     simulation.currentStepIdx = simStepTrace.stepIdx;
-    Vue.set(state.model.simulations, simIndex, simulation);
+    Vue.set(state.model.simulations, simIndex, Object.freeze(simulation));
   },
 
  setSimTrace(state, simTrace) {
@@ -147,11 +156,11 @@ export default {
   },
 
   setEntitySelection(state, { type, entity, index }) {
-    Vue.set(state, 'selectedEntity', {
+    state.selectedEntity = {
       type,
       index,
       entity,
-    });
+    };
   },
 
   setEntitySelectionProp(state, { propName, value }) {
@@ -165,8 +174,7 @@ export default {
   modifySelectedEntity(state, modifiedEntityReactiveObj) {
     const modifiedEntity = Object.assign({}, modifiedEntityReactiveObj);
     const entityCollection = entityTypeCollectionMap[state.selectedEntity.type];
-    const entityIndex = findIndex(state.model[entityCollection], e => e.name === state.selectedEntity.entity.name);
-    Vue.set(state.model[entityCollection], entityIndex, modifiedEntity);
+    Vue.set(state.model[entityCollection], state.selectedEntity.index, modifiedEntity);
     Vue.set(state.selectedEntity, 'entity', modifiedEntity);
   },
 
@@ -195,7 +203,7 @@ export default {
   },
 
   loadDbModel(state, model) {
-    state.model = Object.assign({}, constants.defaultEmptyModel, model);
+    state.model = Object.assign({}, defaultEmptyModel, model);
   },
 
   setModel(state, model) {
@@ -209,8 +217,142 @@ export default {
     });
   },
 
+  resetMolecularRepo(state) {
+    state.repoQueryResult = null;
+  },
+
+  setRepoQueryResult(state, queryResult) {
+    state.repoQueryResult = queryResult;
+  },
+
+  updateRepoQueryConfig(state, queryResult) {
+    const concSourceSet = new Set();
+    queryResult.species.forEach((species) => {
+      Object.keys(species.concentration).forEach(concSource => concSourceSet.add(concSource));
+    });
+    const concSources = Array.from(concSourceSet);
+    state.repoQueryConfig.concSources = concSources;
+    state.repoQueryConfig.visibleConcSources = concSources
+      .slice(0, DEFAULT_VISIBLE_CONC_N_PER_REV);
+  },
+
+  removeRevisionEntities(state, { type, entities }) {
+    const collection = state.revision[entityTypeCollectionMap[type]];
+    entities.forEach((entity) => {
+      const index = collection.findIndex(e => e.entityId === entity.entityId);
+      if (index === -1) return;
+
+      collection.splice(index, 1);
+    });
+  },
+
+  removeQueryResultEntities(state, { type, entities }) {
+    const collection = state.repoQueryResult[entityTypeCollectionMap[type]];
+    entities.forEach((entity) => {
+      const index = collection.findIndex(e => e.entityId === entity.entityId);
+      if (index === -1) return;
+
+      collection.splice(index, 1);
+    });
+  },
+
+  updateRevisionEntity(state, { type, entity }) {
+    const collectionName = entityTypeCollectionMap[type];
+    const collection = state.revision[collectionName];
+    const index = collection.findIndex(e => e.entityId === entity.entityId);
+    if (index === -1) {
+      collection.push(entity);
+    } else {
+      Vue.set(collection, index, entity);
+    }
+  },
+
+  mergeRevision(state, { source, revisionData }) {
+    collectionNames.forEach((collName) => {
+      revisionData[collName].forEach((entity) => {
+        const revisionEntity = Object.assign({}, entity, { source });
+        state.revision[collName].push(revisionEntity);
+      });
+    });
+
+    /**
+     * Update revision config with concentration sources
+     * and initialise missing concentration values with empty string
+     */
+    const concSourceSet = new Set();
+    state.revision.species.forEach(species => {
+      Object.keys(species.concentration).forEach(s => concSourceSet.add(s));
+    });
+    const concSources = Array.from(concSourceSet);
+    state.revision.species.forEach(species => {
+      concSources.forEach((s) => {
+        if (species.concentration[s] === undefined) species.concentration[s] = '';
+      });
+    });
+
+    state.revision.config = {
+      concSources,
+      visibleConcSources: concSources.slice(0, DEFAULT_VISIBLE_CONC_N_PER_REV),
+    };
+  },
+
   clearRevisionEditor(state) {
     state.revision = cloneDeep(constants.defaultEmptyRevision);
+  },
+
+  updateRevVisibleConcSources(state) {
+    const conf = state.revision.config;
+    conf.visibleConcSources = conf.concSources
+      .slice(0, DEFAULT_VISIBLE_CONC_N_PER_REV);
+  },
+
+  mergeRevisionWithModel(state, { branch, revision, concSource }) {
+    collectionNames.forEach((collName) => {
+      state.repoQueryResult[collName].forEach((entity) => {
+        if (entity.branch !== branch || entity.rev !== revision) return;
+
+        const modelCollection = state.model[collName];
+
+        // skip already added entities
+        if (modelCollection.some(modelEntity => modelEntity._id === entity._id)) return;
+
+        // restructure species' concentrations to a signle value by given concSource
+        // TODO: move this logic outside of mutations, eg to modelBuilder class or so.
+        const clonedEntity = cloneDeep(entity);
+        if (collName === 'species') {
+          clonedEntity.concentration = clonedEntity.concentration[concSource];
+        }
+
+        state.model[collName].push(clonedEntity);
+      });
+    });
+  },
+
+  setRevisionBranch(state, branch) {
+    Vue.set(state.revision, 'branch', branch);
+  },
+
+  setRepoQueryHighlightVersionKey(state, versionKey) {
+    state.repoQueryHighlightVersionKey = versionKey;
+  },
+
+  updateRepoQueryEntityStyles(state) {
+    collectionNames.forEach((collName) => {
+      state.repoQueryResult[collName].forEach((entity) => {
+        const style = state.repoQueryHighlightVersionKey === `${entity.branch}:${entity.rev}` ? 'info' : null;
+        Vue.set(entity, 'style', style);
+      });
+    });
+  },
+
+  setQueryLoading(state, loading) {
+    state.revision.loading = loading;
+  },
+
+  validateRevision(state) {
+    const validator = new ModelValidator(state.revision);
+    validator.validate();
+    state.revision = validator.model;
   },
 
   renameRevConcSource(state, { sourceIndex, newSource }) {

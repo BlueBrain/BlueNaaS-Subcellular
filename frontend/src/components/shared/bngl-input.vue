@@ -137,11 +137,6 @@
     }
   }
 
-  .CodeMirror-cursor {
-    height: 14px !important;
-    top: 5px !important;
-  }
-
   .CodeMirror pre {
     padding: 0 7px;
   }
