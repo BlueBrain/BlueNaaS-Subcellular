@@ -11,7 +11,6 @@ DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 
 SENTRY_DSN?=https://957bc91f672d4e8a83f09af8ad015a6e@sentry.io/1374434
 
-CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
 CIRCUIT_NAME?=o1
 
 define HELPTEXT

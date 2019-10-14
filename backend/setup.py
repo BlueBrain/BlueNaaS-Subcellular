@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-from subcellular_experiment.version import VERSION
+from .subcellular_experiment.version import VERSION
 
 
 setup(

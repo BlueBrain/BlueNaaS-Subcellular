@@ -1,8 +1,6 @@
-.PHONY: docker_build_version docker_build_latest docker_push_version docker_push_latest help copy_circuit_data generate_morphology_list install_bluepy
+.PHONY: docker_build_version docker_build_latest docker_push_version docker_push_latest help
 
 VERSION?=$(shell cat ../VERSION)
-
-TOOLS_VENV_DIR:=tools_venv
 
 APP_NAME_PREFIX?=sc
 APP_DNS_BASE?=ocp.bbp.epfl.ch
@@ -12,7 +10,6 @@ DB_HOST?=mongo
 
 BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioNetGen-2.5.0/BioNetGen-2.5.0-Linux.tgz
 
-CIRCUIT_PATH?=/gpfs/bbp.cscs.ch/project/proj66/circuits/O1/20180305/CircuitConfig
 CIRCUIT_NAME?=o1
 
 define HELPTEXT
@@ -32,13 +29,6 @@ export HELPTEXT
 help:
 	@echo "$$HELPTEXT"
 
-$(TOOLS_VENV_DIR):
-	virtualenv --no-site-packages -p python3 $@
-
-install_bluepy: | $(TOOLS_VENV_DIR)
-	source $(TOOLS_VENV_DIR)/bin/activate && \
-	pip install -i 'https://bbpteam.epfl.ch/repository/devpi/bbprelman/dev/+simple/' bluepy
-
 python_build: | $(TOOLS_VENV_DIR)
 	$(TOOLS_VENV_DIR)/bin/python setup.py sdist
 
@@ -47,7 +37,6 @@ run_dev:
 
 docker_build_version: python_build
 	docker build -t sc-svc-$(CIRCUIT_NAME):$(VERSION) \
-		--build-arg=circuit_path=$(CIRCUIT_PATH) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
@@ -56,7 +45,6 @@ docker_build_version: python_build
 
 docker_build_latest: python_build
 	docker build -t sc-svc-$(CIRCUIT_NAME):latest \
-		--build-arg=circuit_path=$(CIRCUIT_PATH) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
@@ -72,7 +60,7 @@ docker_push_version: docker_build_version
 
 	@echo 'backend version($(VERSION)) pushed to OpenShift registy'
 
-docker_push_latest: docker_build_latest
+docker_push_latest:
 	docker tag \
 		$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest \
 		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
@@ -81,15 +69,3 @@ docker_push_latest: docker_build_latest
 
 	@echo 'backend latest version pushed to OpenShift registry.'
 	@echo 'backend release done'
-
-copy_circuit_data: generate_morphology_list
-	./copy-circuit-data.sh \
-		$(CIRCUIT_PATH) \
-		$(shell oc get pods -o custom-columns=:.metadata.name | grep sc-svc-$(CIRCUIT_NAME))
-
-generate_morphology_list: install_bluepy
-	mkdir -p tmp && \
-	cd tmp && \
-	CIRCUIT_PATH=$(CIRCUIT_PATH) \
-		../$(TOOLS_VENV_DIR)/bin/python \
-		../tools/generate-morphology-list.py
