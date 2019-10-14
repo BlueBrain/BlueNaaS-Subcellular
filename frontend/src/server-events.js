@@ -1,5 +1,5 @@
 
-import store from './storex';
+import store from './store';
 import bus from './services/event-bus';
 
 

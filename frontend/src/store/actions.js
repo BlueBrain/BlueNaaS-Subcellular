@@ -1,255 +1,500 @@
 
-import * as DistinctColors from 'distinct-colors';
-import pickBy from 'lodash/pickBy';
+import cloneDeep from 'lodash/cloneDeep';
+import pick from 'lodash/pick';
+import saveAs from 'file-saver';
+import uuidv4 from 'uuid/v4';
 
-import socket from '@/services/websocket';
+import * as Sentry from '@sentry/browser';
+
+import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
+import socket from '@/services/websocket';
+import constants from '@/constants';
+import modelTools from '@/tools/model-tools';
 
-import store from '@/store';
 
-const actions = {
-  async loadCircuit() {
-    const { circuit } = store.state;
-    const neuronDataSet = await storage.getItem('neuronData');
+export default {
+  async init({ dispatch }) {
+    let user = await storage.getItem('user');
+    if (!user) {
+      user = {
+        id: uuidv4(),
+        fullName: '',
+        email: '',
+      };
+    }
+    dispatch('setUser', user);
+    socket.userId = user.id;
+    socket.init();
+  },
 
-    if (neuronDataSet) {
-      circuit.neuronProps = neuronDataSet.properties;
-      circuit.neurons = neuronDataSet.data;
-      store.$dispatch('initCircuit');
+  setUser({ commit }, user) {
+    storage.setItem('user', user);
+    commit('setUser', user);
+  },
+
+  removeSelectedEntity({ state, commit }) {
+    if (state.selectedEntity.type === 'simulation') {
+      socket.send('delete_simulation', state.selectedEntity.entity);
+    }
+
+    commit('removeSelectedEntity');
+  },
+
+  modifySelectedEntity({ state, commit }, entity) {
+    if (state.selectedEntity.type === 'simulation') {
+      const simUpdateObj = pick(entity, ['id', 'userId', 'modelId', 'name', 'solver', 'solverConf', 'tStop', 'nSteps', 'annotation']);
+      socket.send('update_simulation', simUpdateObj);
+    }
+
+    commit('modifySelectedEntity', entity);
+  },
+
+  async saveModel({ state, commit }) {
+    const models = cloneDeep(state.dbModels);
+    const currentModel = {...state.model};
+    if (currentModel.geometry) {
+      const geometryId = currentModel.geometry.id;
+      await storage.setItem(`geometry:${geometryId}`, currentModel.geometry);
+      currentModel.geometry = { id: geometryId };
+    }
+
+    models[currentModel.name] = currentModel;
+    await storage.setItem('models', models);
+    commit('updateDbModels', cloneDeep(models));
+  },
+
+  async createGeometry({ state, commit, dispatch }, geometry) {
+    const { id, structureSize } = await socket.request('create_geometry', geometry.getClean());
+    geometry.id = id;
+    geometry.meta.structures.forEach((structure) => {
+      structure.size = structureSize[structure.name];
+    });
+    commit('setGeometry', geometry);
+    dispatch('setStructParamsFromGeometry');
+  },
+
+  removeGeometry({ commit }) {
+    commit('removeGeometry');
+  },
+
+  setStructParamsFromGeometry({ state, commit }) {
+    const { structures } = state.model.geometry.meta;
+    structures.forEach((geomStruct) => {
+      const modelStructIdx = state.model.structures.findIndex(s => s.name === geomStruct.name);
+      if (modelStructIdx === -1) return;
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'geometryStructureSize',
+        value: geomStruct.size.toPrecision(5),
+      });
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'geometryStructureName',
+        value: geomStruct.name,
+      });
+
+      commit('modifyEntity', {
+        type: 'structure',
+        entityIndex: modelStructIdx,
+        keyName: 'type',
+        value: geomStruct.type,
+      });
+    });
+  },
+
+  async loadDbModels({ commit }) {
+    const storageModels = await storage.getItem('models');
+    const models = storageModels || {};
+    commit('updateDbModels', models);
+  },
+
+  async deleteDbModel({ state, commit }, model) {
+    const models = state.dbModels;
+    delete models[model.name];
+    await storage.setItem('models', models);
+    commit('updateDbModels', cloneDeep(models));
+    commit('resetEntitySelection');
+  },
+
+  async loadDbModel({ commit, dispatch, state }, dbModel) {
+    const model = {...dbModel};
+    if (model.geometry && !model.geometry.name) {
+      model.geometry = await storage.getItem(`geometry:${model.geometry.id}`);
+    }
+
+    if (model.geometry && model.geometry.nodes) {
+      console.info(`Transforming model ${model.name} to new format`);
+      // this is an old format of geometry, needs to be restructured
+      // TODO: remove this after 20.10.2019
+      model.geometry.parsed = true;
+      model.geometry.initialized = false;
+      const {
+        name,
+        annotation,
+        id,
+        scale,
+        structures,
+        meshNameRoot,
+        freeDiffusionBoundaries,
+        nodes,
+        faces,
+        elements,
+      } = model.geometry;
+
+      const restructuredGeometry = {
+        name,
+        id,
+        parsed: true,
+        initialized: false,
+        description: annotation,
+        meta: {
+          scale,
+          structures,
+          meshNameRoot,
+          freeDiffusionBoundaries,
+        },
+        mesh: {
+          volume: {
+            nodes,
+            faces,
+            elements,
+          },
+          surface: {},
+        },
+      };
+
+      model.geometry = restructuredGeometry;
+
+      const models = { ...state.dbModels };
+      const tmpModel = {...model};
+      const geometryId = tmpModel.geometry.id;
+      await storage.setItem(`geometry:${geometryId}`, tmpModel.geometry);
+      tmpModel.geometry = { id: geometryId };
+
+      models[tmpModel.name] = tmpModel;
+      await storage.setItem('models', models);
+      commit('updateDbModels', { ...models });
+    }
+
+    if (model.simulations) {
+      model.simulations.forEach(modelTools.upgradeSimStimulation);
+    }
+
+    model.geometry = ModelGeometry.from(model.geometry);
+    await model.geometry.init();
+
+    commit('loadDbModel', model);
+    dispatch('setStructParamsFromGeometry');
+
+    if (model.public) {
+      dispatch('cloneSimulations', model.simulations);
+    } else {
+      dispatch('getSimulations');
+    }
+  },
+
+  async exportModel({ state }, exportFormat) {
+    const cleanSimulations = state.model.simulations
+      .map(sim => modelTools.createSimulationTemplate(sim));
+
+    const model = Object.assign({}, state.model, { simulations: cleanSimulations });
+
+    const { fileContent: modelData } = await socket.request('get_exported_model', {
+      model,
+      format: exportFormat,
+    });
+
+    const fileExtension = constants.ModelFormatExtensions[exportFormat];
+    saveAs(new Blob([modelData]), `${state.model.name}.${fileExtension}`);
+  },
+
+  addSimulation({ commit }, simulation) {
+    commit('addSimulation', simulation);
+    commit('setEntitySelection', {
+      type: 'simulation',
+      entity: simulation,
+    });
+    socket.send('create_simulation', simulation);
+  },
+
+  async getSimulations({ state, commit }) {
+    const { simulations } = await socket.request('get_simulations', { modelId: state.model.id });
+    simulations.forEach(modelTools.upgradeSimStimulation);
+    commit('setSimulations', simulations);
+  },
+
+  async cloneSimulations({ state, commit }, sampleSimulations) {
+    const { simulations: userSimulations } = await socket.request('get_simulations', { modelId: state.model.id });
+    if (userSimulations.length) {
+      userSimulations.forEach(modelTools.upgradeSimStimulation);
+
+      commit('setSimulations', userSimulations);
       return;
     }
 
-    store.$emit('showCircuitLoadingModal');
+    const uid = state.user.id;
+    const simulations = sampleSimulations
+      .map(sim => Object.assign({}, sim, { userId: uid, id: uuidv4() }))
+      .map(modelTools.upgradeSimStimulation);
 
-    const circuitInfo = await socket.request('get_circuit_info');
-    circuit.neuronCount = circuitInfo.count;
-    circuit.neuronProps = circuitInfo.properties;
-
-    store.$on('ws:circuit_cells', (cellData) => {
-      circuit.neurons.push(...cellData);
-      const progress = Math.ceil((circuit.neurons.length / circuit.neuronCount) * 100);
-      store.$emit('setCircuitLoadingProgress', progress);
-      if (circuit.neurons.length === circuit.neuronCount) {
-        storage.setItem('neuronData', {
-          properties: circuit.neuronProps,
-          data: circuit.neurons,
-        });
-        store.$dispatch('initCircuit');
-      }
-    });
-
-    socket.send('get_circuit_cells');
+    simulations.forEach(sim => socket.send('create_simulation', sim));
+    commit('setSimulations', simulations);
   },
 
-  initCircuitColorPalette() {
-    const { neurons, neuronProps } = store.state.circuit;
-    const neuronSample = neurons[0];
-
-    const uniqueValuesByProp = neuronProps.reduce((valueObj, propName, propIndex) => {
-      const propsToSkip = ['x', 'y', 'z'];
-      if (propsToSkip.includes(propName)) return valueObj;
-
-      const propType = typeof neuronSample[propIndex];
-      if (propType !== 'string' && propType !== 'number') return valueObj;
-
-      const propUniqueValues = Array.from(new Set(neurons.map(n => n[propIndex])));
-      if (propUniqueValues.length > 20) return valueObj;
-
-      return Object.assign(valueObj, { [propName]: propUniqueValues.sort() });
-    }, {});
-
-    const neuronColorProps = Object.keys(uniqueValuesByProp);
-    const neuronColorProp = neuronColorProps.includes('layer') ? 'layer' : this.props[0];
-
-    Object.assign(store.state.circuit.color, {
-      uniqueValuesByProp,
-      neuronProps: neuronColorProps,
-      neuronProp: neuronColorProp,
+  runSimulation({ state, commit }, simulation) {
+    commit('setSimulationStatusById', {
+      id: simulation.id,
+      status: constants.SimStatus.READY_TO_RUN,
     });
+    commit('setEntitySelectionProp', { propName: 'status', value: constants.SimStatus.READY_TO_RUN });
 
-    store.$dispatch('generateCircuitColorPalette');
+    const model = {...state.model};
+    delete model.simulations;
+
+    if (model.geometry) {
+      model.geometry = { id: model.geometry.id };
+    }
+
+    const simConfig = Object.assign({
+      id: simulation.id,
+      userId: state.user.id,
+      model,
+    }, simulation);
+
+    socket.send('run_simulation', simConfig);
   },
 
-  generateCircuitColorPalette() {
-    const { uniqueValuesByProp, neuronProp } = store.state.circuit.color;
-
-    const currentPropValues = uniqueValuesByProp[neuronProp];
-
-    const colorConfig = {
-      count: currentPropValues.length,
-      hueMin: 0,
-      hueMax: 360,
-      chromaMin: 60,
-      chromaMax: 100,
-      lightMin: 20,
-      lightMax: 90,
+  cancelSimulation({ state }, simulation) {
+    // TODO: remove userId from request
+    const simConfig = {
+      id: simulation.id,
+      userId: state.user.id,
     };
 
-    const colors = new DistinctColors(colorConfig);
-
-    const colorPalette = currentPropValues.reduce((palette, propVal, i) => Object.assign(palette, { [propVal.toString()]: colors[i].gl() }), {});
-
-    store.state.circuit.color.palette = colorPalette;
-    store.$emit('updateColorPalette');
+    socket.send('cancel_simulation', simConfig);
   },
 
-  updateColorProp(colorProp) {
-    store.state.circuit.color.neuronProp = colorProp;
-    store.$dispatch('generateCircuitColorPalette');
-    store.$emit('redrawCircuit');
+  clearModel({ commit }) {
+    commit('setModel', cloneDeep(constants.defaultEmptyModel));
   },
 
-  initCircuit() {
-    store.state.circuit.neuronPropIndex = store.state.circuit.neuronProps
-      .reduce((propIndexObj, propName, propIndex) => Object.assign(propIndexObj, {
-        [propName]: propIndex,
-      }), {});
+  async importRevisionFile({ dispatch, state }, { name, type, fileContent, targetConcSource }) {
+    // TODO: DRY
+    let revision = null;
+    let bnglStr = null;
 
-    const neuronsCount = store.state.circuit.neurons.length;
-    store.state.circuit.globalFilterIndex = new Array(neuronsCount).fill(true);
-    store.state.circuit.connectionFilterIndex = new Array(neuronsCount).fill(true);
+    if (type === 'bngl') {
+      bnglStr = fileContent;
+    } else if (type === 'sbml') {
+      const translationResult = await socket.request('convert_from_sbml', { sbml: fileContent });
+      bnglStr = translationResult.bngl;
+      if (!bnglStr) throw new Error('Error in SBML translation');
+    }
 
-    store.$dispatch('initCircuitColorPalette');
-    store.$emit('initNeuronColorCtrl');
+    try {
+      revision = modelBuilder.buildFromBngl(bnglStr);
+    } catch (e) {
+      Sentry.configureScope((scope) => {
+        scope.setExtra('bnglModel', bnglStr);
+        scope.setExtra('importSource', type);
+      });
+      Sentry.captureEvent('bnglImportError');
+      throw new Error('Error while parsing BNGL');
+    }
 
-    store.$emit('initNeuronPropFilter');
-    store.$emit('circuitLoaded');
-    store.$emit('hideCircuitLoadingModal');
-  },
+    /**
+     * Align generated model with revision structuren which has multiple concentrations,
+     * using targetConcSource
+     * TODO: make this a part of modelBuilder
+     */
+    revision.species.forEach(species => {
+      const concValue = species.concentration;
+      species.concentration = state.revision.config.concSources
+        .reduce((acc, s) => Object.assign(acc, { [s]: s === targetConcSource ? concValue : '0' }), {});
+    });
 
-  colorUpdated() {
-    store.$emit('redrawCircuit');
-  },
-
-  propFilterUpdated() {
-    store.$emit('redrawCircuit');
-  },
-
-  setSomaSize(size) {
-    store.state.circuit.somaSize = size;
-    store.$emit('setSomaSize', size);
-  },
-
-  setSynapseSize(size) {
-    store.state.circuit.synapseSize = size;
-    store.$emit('setSynapseSize', size);
-  },
-
-  neuronHovered(neuron) {
-    // we don't need all properties of neuron to be shown,
-    // for example x, y, z can be skipped.
-    // TODO: move visible property selection to app config page
-    const propsToSkip = ['x', 'y', 'z', 'me_combo', 'morphology'];
-
-    store.$emit('showHoverObjectInfo', {
-      header: 'Neuron',
-      items: [{
-        type: 'table',
-        data: pickBy(neuron, (val, prop) => !propsToSkip.includes(prop)),
-      }],
+    dispatch('mergeRevision', {
+      revisionData: revision,
+      source: `file:${name}`,
     });
   },
 
-  neuronHoverEnded() {
-    store.$emit('hideHoverObjectInfo');
+  async importModel({ commit, dispatch }, { modelName, type, fileContent }) {
+    let model = null;
+    let bnglStr = null;
+
+    if (type === 'ebngl') {
+      // TODO: add content type and schema validation
+      const model = JSON.parse(fileContent);
+
+      /** ####################### START OF TEMPORARY BLOCK ###################### */
+      if (model.geometry) {
+        if (model.geometry.nodes) {
+          console.info(`Transforming model ${model.name} to new format`);
+          // this is an old format of geometry, needs to be restructured
+          // TODO: remove this after 20.10.2019
+          model.geometry.parsed = true;
+          model.geometry.initialized = false;
+          const {
+            name,
+            annotation,
+            id,
+            scale,
+            structures,
+            meshNameRoot,
+            freeDiffusionBoundaries,
+            nodes,
+            faces,
+            elements,
+          } = model.geometry;
+  
+          const restructuredGeometry = {
+            name,
+            id,
+            parsed: true,
+            initialized: false,
+            description: annotation,
+            meta: {
+              scale,
+              structures,
+              meshNameRoot,
+              freeDiffusionBoundaries,
+            },
+            mesh: {
+              volume: {
+                nodes,
+                faces,
+                elements,
+              },
+              surface: {},
+            },
+          };
+
+          model.geometry = restructuredGeometry;
+        }
+
+        if (!model.structures[0].geometryStructureName) {
+          const { structures } = model.geometry.meta;
+          structures.forEach((geomStruct) => {
+            const modelStruct = model.structures.find(s => s.name === geomStruct.name);
+            if (!modelStruct) return;
+
+            modelStruct.geometryStructureSize = geomStruct.size.toPrecision(5);
+            modelStruct.geometryStructureName = geomStruct.name;
+            modelStruct.type = geomStruct.type;
+          });
+        }
+
+        model.geometry = ModelGeometry.from(model.geometry);
+        await model.geometry.init();
+      }
+      /** ####################### END OF TEMPORARY BLOCK ###################### */
+
+
+
+
+
+      const simFreeModel = Object.assign({}, model, { simulations: [], id: uuidv4() });
+      commit('setModel', simFreeModel);
+
+      dispatch('cloneSimulations', model.simulations);
+      return;
+    }
+
+    if (type === 'bngl') {
+      bnglStr = fileContent;
+    } else if (type === 'sbml') {
+      const translationResult = await socket.request('convert_from_sbml', { sbml: fileContent });
+      bnglStr = translationResult.bngl;
+      if (!bnglStr) throw new Error('Error in SBML translation');
+    }
+
+    try {
+      model = modelBuilder.buildFromBngl(bnglStr);
+    } catch (e) {
+      Sentry.configureScope((scope) => {
+        scope.setExtra('bnglModel', bnglStr);
+        scope.setExtra('importSource', type);
+      });
+      Sentry.captureEvent('bnglImportError');
+      throw new Error('Error while parsing BNGL');
+    }
+
+    model.name = modelName;
+    commit('setModel', model);
   },
 
-  neuronClicked(neuron) {
-    store.$emit('setNeuron', neuron);
+  async queryMolecularRepo({ commit }, query) {
+    const { queryResult } = await socket.request('query_molecular_repo', query);
+    commit('updateRepoQueryConfig', queryResult);
+    commit('setRepoQueryResult', queryResult);
   },
 
-  async neuronSelected(neuron) {
-    store.$emit('setSynapseSelectionState');
-    store.$emit('showGlobalSpinner', 'Loading morphology');
-
-    store.state.neuron = neuron;
-
-    const morph = await socket.request('get_cell_morphology', [neuron.gid]);
-    Object.assign(store.state.morphology, morph.cells);
-
-    store.$emit('showCellMorphology');
-    store.$emit('hideCircuit');
-
-    store.$emit('hideGlobalSpinner');
-
-    store.$dispatch('initSynapses');
+  saveRevision({ state }) {
+    return socket.request('save_revision', state.revision);
   },
 
-  async initSynapses() {
-    const { gid } = store.state.neuron;
+  async mergeRevisionWithModel({ commit }, { version, concSource }) {
+    const { branch, revision } = version;
 
-    const res = await socket.request('get_syn_connections', gid);
-    const synapseProps = res.synapse_properties;
-    const synapsesRaw = res.synapses;
+    if (revision !== 'latest') {
+      commit('mergeRevisionWithModel', { branch, revision, concSource });
+      return;
+    }
 
-    const synapsePropIndex = synapseProps
-      .reduce((propIndexObj, propName, propIndex) => Object.assign(propIndexObj, {
-        [propName]: propIndex,
-    }), {});
+    const { rev: latestRev } = await socket.request('get_branch_latest_rev', branch);
+    commit('mergeRevisionWithModel', { branch, revision: latestRev, concSource });
+  },
 
-    const synapses = synapsesRaw.map((synVals, synIndex) => {
-      const synObject = synapseProps.reduce((synObj, synProp) => Object.assign(synObj, {
-        [synProp]: synVals[synapsePropIndex[synProp]],
-      }), {});
-      const extendedSynObject = Object.assign(synObject, { gid, index: synIndex, visible: true });
-      return extendedSynObject;
+  async importRevision({ commit }, params) {
+    const { revision } = await socket.request('get_revision', params);
+    commit('mergeRevision', {
+      source: `rev:${params.branch}:${params.revision}`,
+      revisionData: revision,
     });
-
-    store.state.synapses = synapses;
-    store.state.synapseProps = synapseProps;
-
-    store.$emit('initSynapseCloud');
-    store.$emit('initSynapsePropFilter');
+    commit('validateRevision');
   },
 
-  synapseHovered(synapseIndex) {
-    const synapse = store.$get('synapse', synapseIndex);
-    const neuron = store.$get('neuron', synapse.preGid - 1);
-    store.$emit('showHoverObjectInfo', {
-      header: 'Synapse',
-      items: [{
-        type: 'table',
-        data: {
-          id: `(${synapse.gid}, ${synapse.index})`,
-          pre_gid: synapse.preGid,
-          post_gid: synapse.gid,
-          type: `${synapse.type} (${synapse.type >= 100 ? 'EXC' : 'INH'})`,
-        },
-      }, {
-        subHeader: 'Pre-synaptic cell:',
-        type: 'table',
-        data: pickBy(neuron, (val, prop) => ['etype', 'mtype'].includes(prop)),
-      }],
-    });
+  mergeRevision({ commit }, { source, revisionData }) {
+    commit('mergeRevision', { source, revisionData });
+    commit('validateRevision');
   },
 
-  synapseHoverEnded() {
-    store.$emit('hideHoverObjectInfo');
+  updateRevisionEntity({ commit }, { type, entity }) {
+    commit('updateRevisionEntity', { type, entity });
+    commit('validateRevision');
   },
 
-  synapseClicked(synapseIndex) {
-    const synapse = store.$get('synapse', synapseIndex);
-    store.$emit('setSynapse', synapse);
+  removeRevisionEntities({ commit }, { type, entities }) {
+    commit('removeRevisionEntities', { type, entities });
+    commit('validateRevision');
   },
 
-  synapseSelected(synapse) {
-    store.state.synapse = synapse;
-    store.$emit('hideHoverObjectInfo');
-    store.$emit('hideViewer');
-    store.$emit('setProteinSelectionState');
+  setRepoQueryHighlightVersionKey({ commit }, versionKey) {
+    commit('setRepoQueryHighlightVersionKey', versionKey);
+    commit('updateRepoQueryEntityStyles');
   },
 
-  proteinsSelected(proteins) {
-    store.state.proteins = proteins;
-    store.$emit('setProteinConcentrationState');
+  renameRevConcSource({ commit }, { sourceIndex, newSource }) {
+    commit('renameRevConcSource', { sourceIndex, newSource });
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
   },
 
-  morphRenderFinished() {},
-
-  synapsePropFilterUpdated() {
-    store.$emit('updateSynapses');
+  removeRevConcSource({ commit }, sourceIndex) {
+    commit('removeRevConcSource', sourceIndex);
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
   },
 
+  addRevConcSource({ commit }, concSource) {
+    commit('addRevConcSource', concSource);
+    commit('updateRevVisibleConcSources');
+    commit('validateRevision');
+  },
 };
-
-export default actions;

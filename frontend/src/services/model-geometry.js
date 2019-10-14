@@ -305,6 +305,7 @@ class ModelGeometry {
 
   /**
    * Parse TetGen mesh files and reindex nodes
+   * @see http://wias-berlin.de/software/tetgen/fformats.html
    */
   async parseTetGen() {
     const nodeIdxMap = new Map();

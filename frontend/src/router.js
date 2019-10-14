@@ -4,61 +4,80 @@ import VueRouter from 'vue-router';
 
 import constants from './constants';
 
-import ModelPage from './components/model-page.vue';
-
-import ModelMeta from './components/model-page/primary-view/model-meta.vue';
-
-import StructuresComponent from './components/model-page/primary-view/structures.vue';
-import ParametersComponent from './components/model-page/primary-view/parameters.vue';
-import FunctionsComponent from './components/model-page/primary-view/functions.vue';
-import MoleculesComponent from './components/model-page/primary-view/molecules.vue';
-import SpeciesComponent from './components/model-page/primary-view/species.vue';
-import ObservablesComponent from './components/model-page/primary-view/observables.vue';
-import ReactionsComponent from './components/model-page/primary-view/reactions.vue';
-import DiffusionsComponent from './components/model-page/primary-view/diffusions.vue';
-
-import SimulationsComponent from './components/model-page/primary-view/simulations.vue';
-
 
 const { EntityType } = constants;
 
 Vue.use(VueRouter);
 
+
 export default new VueRouter({
   mode: 'history',
   routes: [{
     path: '/model/',
-    component: ModelPage,
+    component: () => import(
+      /* webpackChunkName: "model" */
+      './components/model-page.vue'
+    ),
     children: [{
       path: 'meta',
-      component: ModelMeta,
+      component: () => import(
+        /* webpackChunkName: "model-meta" */
+        './components/model-page/primary-view/model-meta.vue'
+      ),
     }, {
       path: 'simulations',
-      component: SimulationsComponent,
+      component: () => import(
+        /* webpackChunkName: "model-simulations" */
+        './components/model-page/primary-view/simulations.vue'
+      ),
     }, {
       path: `${EntityType.STRUCTURE}s`,
-      component: StructuresComponent,
+      component: () => import(
+        /* webpackChunkName: "model-structures" */
+        './components/model-page/primary-view/structures.vue'
+      ),
     }, {
       path: `${EntityType.PARAMETER}s`,
-      component: ParametersComponent,
+      component: () => import(
+        /* webpackChunkName: "model-parameters" */
+        './components/model-page/primary-view/parameters.vue'
+      ),
     }, {
       path: `${EntityType.FUNCTION}s`,
-      component: FunctionsComponent,
+      component: () => import(
+        /* webpackChunkName: "model-functions" */
+        './components/model-page/primary-view/functions.vue'
+      ),
     }, {
       path: `${EntityType.MOLECULE}s`,
-      component: MoleculesComponent,
+      component: () => import(
+        /* webpackChunkName: "model-molecules" */
+        './components/model-page/primary-view/molecules.vue'
+      ),
     }, {
       path: EntityType.SPECIES,
-      component: SpeciesComponent,
+      component: () => import(
+        /* webpackChunkName: "model-species" */
+        './components/model-page/primary-view/species.vue'
+      ),
     }, {
       path: `${EntityType.OBSERVABLE}s`,
-      component: ObservablesComponent,
+      component: () => import(
+        /* webpackChunkName: "model-observables" */
+        './components/model-page/primary-view/observables.vue'
+      ),
     }, {
       path: `${EntityType.REACTION}s`,
-      component: ReactionsComponent,
+      component: () => import(
+        /* webpackChunkName: "model-reactions" */
+        './components/model-page/primary-view/reactions.vue'
+      ),
     }, {
       path: `${EntityType.DIFFUSION}s`,
-      component: DiffusionsComponent,
+      component: () => import(
+        /* webpackChunkName: "model-diffusions" */
+        './components/model-page/primary-view/diffusions.vue'
+      ),
     }, {
       path: EntityType.GEOMETRY,
       component: () => import(
@@ -67,15 +86,9 @@ export default new VueRouter({
       ),
     }],
   }, {
-    path: '/model-builder',
-    component: () => import(
-      /* webpackChunkName: "model-builder" */
-      './components/model-builder.vue'
-    ),
-  }, {
     path: '/molecular-repo',
     component: () => import(
-      /* webpackChunkName: "molecules-db" */
+      /* webpackChunkName: "molecule-db" */
       './components/molecular-repo-page.vue'
     ),
   }, {

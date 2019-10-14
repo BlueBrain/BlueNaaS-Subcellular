@@ -128,7 +128,6 @@
   import geometryMetaSchema from '@/schemas/geometry-meta.json';
 
   import constants from '@/constants';
-  import TetGenMesh from '@/services/tetgen';
   import ModelGeometry from '@/services/model-geometry';
   import GeometryViewer from './geometry-viewer.vue';
 

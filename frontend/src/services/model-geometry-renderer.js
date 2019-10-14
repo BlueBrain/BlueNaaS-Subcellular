@@ -24,7 +24,6 @@ import {
 import * as DistinctColors from 'distinct-colors';
 
 import TrackballControls from './trackball-controls';
-import utils from '@/tools/neuron-renderer-utils';
 import constants from '@/constants';
 
 const { GeometryDisplayMode } = constants;
@@ -37,6 +36,11 @@ const AMBIENT_LIGHT_COLOR = 0x555555;
 const CAMERA_LIGHT_COLOR = 0xcacaca;
 const BACKGROUND_COLOR = 0xf8f8f9;
 
+
+function disposeMesh(obj) {
+  obj.geometry.dispose();
+  obj.material.dispose();
+}
 
 function getNormScalar(nodes) {
   const xVec = [];
@@ -180,7 +184,7 @@ class ModelGeometryRenderer {
     while (this.modelMeshObject.children.length) {
       const mesh = this.modelMeshObject.children[0];
       this.modelMeshObject.remove(mesh);
-      utils.disposeMesh(mesh);
+      disposeMesh(mesh);
     }
   }
 
@@ -218,7 +222,7 @@ class ModelGeometryRenderer {
   destroy() {
     this.stopAnimation();
     this.controls.dispose();
-    this.modelMeshObject.children.forEach(mesh => utils.disposeMesh(mesh));
+    this.modelMeshObject.children.forEach(mesh => disposeMesh(mesh));
   }
 
   stopAnimation() {

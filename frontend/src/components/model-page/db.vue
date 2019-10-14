@@ -63,9 +63,6 @@
         };
         this.$store.commit('setEntitySelection', selection);
       },
-      openModelBuilderPage() {
-        this.$router.push('/model-builder');
-      },
     },
     computed: {
       modelNames() {

@@ -1,30 +1,26 @@
 
-// TODO: write documentation
+import cloneDeep from 'lodash/cloneDeep';
+import uuidv5 from 'uuid/v5';
 
-const state = {
-  circuit: {
-    neurons: [],
-    neuronPropIndex: {},
-    neuronProps: [],
-    somaSize: 10,
-    synapseSize: 1,
-    globalFilterIndex: [],
-    color: {
-      neuronProp: '',
-      neuronProps: [],
-      uniqueValuesByProp: {},
-      palette: {},
-    },
+import constants from '@/constants';
+
+const model = cloneDeep(constants.defaultEmptyModel, { id: uuidv5 });
+const revision = cloneDeep(constants.defaultEmptyRevision);
+
+export default {
+  model,
+  revision,
+  selectedEntity: null,
+  user: {
+    id: null,
+    fullName: null,
+    email: null,
   },
-  synapses: [],
-  synapseProps: [],
-  neuron: null,
-  synapse: null,
-  proteins: [],
-  morphology: {},
-  view: {
-    axonVisible: false,
+  dbModels: {},
+  repoQueryResult: null,
+  repoQueryConfig: {
+    concSources: ['default'],
+    visibleConcSources: ['default'],
   },
+  repoQueryHighlightVersionKey: null,
 };
-
-export default state;
