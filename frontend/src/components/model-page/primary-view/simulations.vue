@@ -126,6 +126,15 @@
         v-if="simTraceViewerVisible"
         :sim-id="selectedSimulation.id"
       />
+      <div slot="footer">
+        <i-button
+          class="wide-button"
+          type="primary"
+          @click="hideSimGraph"
+        >
+          OK
+        </i-button>
+      </div>
     </Modal>
 
     <Modal
@@ -248,17 +257,20 @@
     },
     methods: {
       addSimulation() {
+        this.resetNewSimulation();
+        this.showNewSimulationModal();
+
+        this.$nextTick(() => {
+          this.$refs.simulationForm.focus();
+        });
+      },
+      resetNewSimulation() {
         this.newSimulation = Object.assign({}, cloneDeep(defaultSimulation), {
           valid: false,
           id: uuidv1(),
           userId: this.$store.state.user.id,
           modelId: this.$store.state.model.id,
           name: findUniqName(this.simulations, 'sim'),
-        });
-        this.showNewSimulationModal();
-
-        this.$nextTick(() => {
-          this.$refs.simulationForm.focus();
         });
       },
       showNewSimulationModal() {
@@ -271,8 +283,17 @@
         this.$store.dispatch('removeSelectedEntity');
       },
       copySimulation() {
+        this.resetNewSimulation();
+
+        const nameWOSuffixR = /^(.*?)(\-\d*)?$/;
+        const prefixedName = this.selectedSimulation.name.includes('Copy of')
+          ? this.selectedSimulation.name
+          : `Copy of ${this.selectedSimulation.name}`;
+
+        const name = findUniqName(this.simulations, `${prefixedName.match(nameWOSuffixR)[1]}-`)
+
         Object.assign(this.newSimulation, {
-          name: `Copy of ${this.selectedSimulation.name}`,
+          name,
           id: uuidv1(),
           status: SimStatus.CREATED,
           values: [],
@@ -300,6 +321,9 @@
       },
       showSimGraph() {
         this.simTraceViewerVisible = true;
+      },
+      hideSimGraph() {
+        this.simTraceViewerVisible = false;
       },
       showSimLogs() {
         this.simLogViewerVisible = true;
