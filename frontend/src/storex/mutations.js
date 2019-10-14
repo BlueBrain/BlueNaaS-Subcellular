@@ -209,6 +209,10 @@ export default {
     });
   },
 
+  clearRevisionEditor(state) {
+    state.revision = cloneDeep(constants.defaultEmptyRevision);
+  },
+
   renameRevConcSource(state, { sourceIndex, newSource }) {
     const currentConcentrationSources = state.revision.config.concSources;
     const sourceToRename = currentConcentrationSources[sourceIndex];

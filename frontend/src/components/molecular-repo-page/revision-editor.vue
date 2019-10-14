@@ -14,7 +14,19 @@
           :gutter="12"
           type="flex"
         >
-          <i-col span="8" offset="16">
+          <i-col
+            span="8"
+            offset="8"
+            class="text-right"
+          >
+            <i-button
+              type="warning"
+              @click="clearRevisionEditor"
+            >
+              Clear revision
+            </i-button>
+          </i-col>
+          <i-col span="8">
             <file-import-button/>
           </i-col>
         </Row>
@@ -97,6 +109,9 @@
         this.$Notice.success({
           title: `Revision ${meta.branch}:${meta.rev} has been saved`,
         });
+      },
+      clearRevisionEditor() {
+        this.$store.commit('clearRevisionEditor');
       },
       async onSaveClick() {
         if (!this.userBranches.includes(this.branch)) {
