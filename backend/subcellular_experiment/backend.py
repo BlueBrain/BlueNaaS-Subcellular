@@ -46,7 +46,6 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    @tornado.web.asynchronous
     def on_message(self, msg):
         msg = json.loads(msg)
         cmd = msg['cmd']
@@ -192,7 +191,6 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         self.sim_worker = SimWorker(self)
         sim_manager.add_worker(self.sim_worker)
 
-    @tornado.web.asynchronous
     def on_message(self, rawMessage):
         parsedMessage = json.loads(rawMessage)
         msg = parsedMessage['message']

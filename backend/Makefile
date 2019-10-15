@@ -2,6 +2,8 @@
 
 VERSION?=$(shell cat ../VERSION)
 
+TOOLS_VENV_DIR:=tools_venv
+
 APP_NAME_PREFIX?=sc
 APP_DNS_BASE?=ocp.bbp.epfl.ch
 OO_PROJECT?=bbp-ou-nse
@@ -25,6 +27,9 @@ Makefile usage
                                     This will result in the updated backend running in OpenShift.
 endef
 export HELPTEXT
+
+$(TOOLS_VENV_DIR):
+	virtualenv --no-site-packages -p python3 $@
 
 help:
 	@echo "$$HELPTEXT"
