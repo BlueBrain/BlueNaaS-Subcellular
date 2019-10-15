@@ -12,7 +12,6 @@ import signal
 from multiprocessing import Process, Queue
 
 import websocket
-import pandas as pd
 import numpy as np
 
 from .enums import SimWorkerStatus
@@ -32,7 +31,8 @@ class SimWorker():
     def __init__(self):
         self.sim_proc = None
         self.sim_thread = None
-        self.sim_queue = Queue()
+        self.sim_queue = Queue(10)
+        self.terminating = False
         self.status = SimWorkerStatus.READY
 
     def init(self):
@@ -41,17 +41,26 @@ class SimWorker():
                                              on_open=self.on_open,
                                              on_message=self.on_message,
                                              on_error=self.on_error,
-                                             on_close=self.on_close
-                                             )
+                                             on_close=self.on_close)
+
         def on_terminate(signal, frame):
-            L.debug('received main process shutdown signal for pid: {}'.format(os.getpid()))
-            L.debug('doing nothing so far')
-            # TODO: investigate if the socket should be closed here
+            L.debug('received main process shutdown signal')
+            self.socket.keep_running = False
+            if not self.sim_proc and not self.sim_thread:
+                L.debug('Closing socket and exiting')
+                self.teardown()
+            else:
+                L.debug('Waiting for simulation to finish')
+                self.terminating = True
 
         # TODO: SIGINT handler?
         signal.signal(signal.SIGTERM, on_terminate)
 
         self.socket.run_forever()
+
+    def teardown(self):
+        self.socket.close()
+        sys.exit(0)
 
     def on_open(self):
         L.debug('ws connection open')
@@ -98,6 +107,10 @@ class SimWorker():
             L.debug('joining simulator process')
             self.sim_proc.join()
             self.sim_proc = None
+
+            if self.terminating:
+                self.teardown()
+
             # TODO: consider recreaction of proc_queue
             # might it be damaged after process terminates?
             self.send_message('status', SimWorkerStatus.READY)
@@ -107,7 +120,8 @@ class SimWorker():
         self.sim_thread.start()
 
     def on_error(self, error):
-        L.debug('ws: error {}'.format(error))
+        if error is not 0:
+            L.debug('ws: error {}'.format(error))
 
     def on_close(self):
         L.debug('ws connection closed, trying to connect in 2 s')
