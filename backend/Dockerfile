@@ -5,7 +5,7 @@ WORKDIR /build
 RUN apt-get update && \
   apt-get install -y g++ gcc cmake libopenblas-dev libmpich-dev git libxslt1-dev zlib1g-dev
 
-RUN pip install numpy cython scipy
+RUN pip install numpy cython scipy wsaccel
 
 RUN git clone https://github.com/CNS-OIST/STEPS.git && \
   cd STEPS && \
@@ -28,11 +28,9 @@ FROM python:3.7-slim-stretch
 
 LABEL maintainer="BlueBrain NSE(Neuroscientific Software Engineering)"
 
-ARG circuit_path
 ARG bionetgen_src_url
 ARG db_host
 
-ENV CIRCUIT_PATH=$circuit_path
 ENV DB_HOST=$db_host
 ENV BNGPATH=/opt/subcellular-experiment/BioNetGen
 
@@ -50,8 +48,9 @@ RUN apt-get update && \
 RUN wget -O bionetgen.tgz $bionetgen_src_url && \
   mkdir BioNetGen && \
   tar xfv bionetgen.tgz -C BioNetGen --strip-components=1 && \
-  rm bionetgen.tgz
-
+  rm bionetgen.tgz && \
+  rm -r BioNetGen/Models2 && \
+  rm -r BioNetGen/Validate
 
 RUN pip install \
     --no-cache-dir \
