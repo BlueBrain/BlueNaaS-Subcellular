@@ -15,6 +15,7 @@ setup(
     install_requires=[
         'tornado',
         'websocket-client',
+        'wsaccel',
         'bluepy',
         'pandas',
         'numpy',
