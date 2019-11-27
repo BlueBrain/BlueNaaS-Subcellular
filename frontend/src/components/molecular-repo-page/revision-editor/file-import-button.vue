@@ -129,7 +129,7 @@
           name,
           fileContent: content,
           type: this.type,
-          targetConcSource: this.concSource
+          targetConcSource: this.concSource,
         };
 
         this.$store.dispatch('importRevisionFile', importRevFileParams)
@@ -146,7 +146,7 @@
     watch: {
       concSources() {
         this.init();
-      }
+      },
     },
   };
 </script>

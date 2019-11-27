@@ -290,7 +290,7 @@
           ? this.selectedSimulation.name
           : `Copy of ${this.selectedSimulation.name}`;
 
-        const name = findUniqName(this.simulations, `${prefixedName.match(nameWOSuffixR)[1]}-`)
+        const name = findUniqName(this.simulations, `${prefixedName.match(nameWOSuffixR)[1]}-`);
 
         Object.assign(this.newSimulation, {
           name,
@@ -330,14 +330,14 @@
       },
       hideSimLogs() {
         this.simLogViewerVisible = false;
-      }
+      },
     },
     computed: mapState({
       simulations(state) {
         return state.model.simulations.map((sim) => {
           const solverConf = pick(sim.solverConf, ['tEnd']);
           const strippedSim = pick(sim, ['name', 'solver', 'nSteps', 'status', 'annotation']);
-          return { ...strippedSim, ...{ solverConf }};
+          return { ...strippedSim, ...{ solverConf } };
         });
       },
       filteredSimulations() {

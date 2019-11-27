@@ -15,7 +15,7 @@ function writeArray(sourceArray, destinationArray, destinationIdx = 0, length) {
   }
 
   if (elementsToWrite > (destinationArray.length - destinationIdx)) {
-    throw new Error(`Destination array is too small to fit all copied elements`);
+    throw new Error('Destination array is too small to fit all copied elements');
   }
 
   for (let i = 0; i < elementsToWrite; i += 1) {

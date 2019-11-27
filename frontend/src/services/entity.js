@@ -46,7 +46,7 @@ class RevisionSpecies extends RevisionEntity {
     this.definition = '';
 
     this.concentration = config.concSources
-      .reduce((acc, source) => Object.assign(acc, {[source]: ''}), {});
+      .reduce((acc, source) => Object.assign(acc, { [source]: '' }), {});
 
     this.units = null;
   }

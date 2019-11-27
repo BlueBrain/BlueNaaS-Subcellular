@@ -280,11 +280,11 @@ export default {
      * and initialise missing concentration values with empty string
      */
     const concSourceSet = new Set();
-    state.revision.species.forEach(species => {
+    state.revision.species.forEach((species) => {
       Object.keys(species.concentration).forEach(s => concSourceSet.add(s));
     });
     const concSources = Array.from(concSourceSet);
-    state.revision.species.forEach(species => {
+    state.revision.species.forEach((species) => {
       concSources.forEach((s) => {
         if (species.concentration[s] === undefined) species.concentration[s] = '';
       });

@@ -3,7 +3,7 @@ import uniqBy from 'lodash/uniqBy';
 import uniq from 'lodash/uniq';
 import difference from 'lodash/difference';
 
-import constants from './../constants';
+import constants from '../constants';
 
 
 const {

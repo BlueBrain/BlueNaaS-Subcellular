@@ -95,7 +95,7 @@
           const logContainer = this.$refs.log;
           logContainer.scrollTop = logContainer.scrollHeight;
         });
-      }
+      },
     },
   };
 </script>

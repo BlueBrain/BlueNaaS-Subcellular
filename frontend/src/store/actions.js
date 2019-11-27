@@ -52,7 +52,7 @@ export default {
 
   async saveModel({ state, commit }) {
     const models = cloneDeep(state.dbModels);
-    const currentModel = {...state.model};
+    const currentModel = { ...state.model };
     if (currentModel.geometry) {
       const geometryId = currentModel.geometry.id;
       await storage.setItem(`geometry:${geometryId}`, currentModel.geometry);
@@ -122,7 +122,7 @@ export default {
   },
 
   async loadDbModel({ commit, dispatch, state }, dbModel) {
-    const model = {...dbModel};
+    const model = { ...dbModel };
     if (model.geometry && !model.geometry.name) {
       model.geometry = await storage.getItem(`geometry:${model.geometry.id}`);
     }
@@ -171,7 +171,7 @@ export default {
       model.geometry = restructuredGeometry;
 
       const models = { ...state.dbModels };
-      const tmpModel = {...model};
+      const tmpModel = { ...model };
       const geometryId = tmpModel.geometry.id;
       await storage.setItem(`geometry:${geometryId}`, tmpModel.geometry);
       tmpModel.geometry = { id: geometryId };
@@ -253,7 +253,7 @@ export default {
     });
     commit('setEntitySelectionProp', { propName: 'status', value: constants.SimStatus.READY_TO_RUN });
 
-    const model = {...state.model};
+    const model = { ...state.model };
     delete model.simulations;
 
     if (model.geometry) {
@@ -312,7 +312,7 @@ export default {
      * using targetConcSource
      * TODO: make this a part of modelBuilder
      */
-    revision.species.forEach(species => {
+    revision.species.forEach((species) => {
       const concValue = species.concentration;
       species.concentration = state.revision.config.concSources
         .reduce((acc, s) => Object.assign(acc, { [s]: s === targetConcSource ? concValue : '0' }), {});
@@ -352,7 +352,7 @@ export default {
             faces,
             elements,
           } = model.geometry;
-  
+
           const restructuredGeometry = {
             name,
             id,
@@ -394,9 +394,6 @@ export default {
         await model.geometry.init();
       }
       /** ####################### END OF TEMPORARY BLOCK ###################### */
-
-
-
 
 
       const simFreeModel = Object.assign({}, model, { simulations: [], id: uuidv4() });

@@ -19,7 +19,7 @@
       ticks: 'outside',
       title: 'Amount of molecules, #',
     },
-    hovermode:'closest'
+    hovermode: 'closest',
   };
 
   const downloadCsvBtn = {

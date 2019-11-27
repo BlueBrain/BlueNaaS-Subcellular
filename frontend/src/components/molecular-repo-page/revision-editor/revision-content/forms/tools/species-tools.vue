@@ -165,7 +165,7 @@
         this.$store.dispatch('removeRevConcSource', sourceIndex);
       },
       addSource() {
-        const sourceNameCollection = this.globalConcSources.map(s => ({ name: s}));
+        const sourceNameCollection = this.globalConcSources.map(s => ({ name: s }));
         const newSource = findUniqName(sourceNameCollection, 'newSource');
 
         this.sources.push(newSource);
@@ -201,7 +201,7 @@
         this.init();
       },
     },
-  }
+  };
 </script>
 
 

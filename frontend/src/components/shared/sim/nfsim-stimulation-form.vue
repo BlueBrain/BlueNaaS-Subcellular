@@ -243,7 +243,7 @@
         Object.assign(this.stimulus, { target: null, value: null });
       },
       onStimuliChange() {
-        this.$emit('input', {...this.stimulation});
+        this.$emit('input', { ...this.stimulation });
       },
       onImportClick() {
         this.importModalVisible = true;
@@ -263,7 +263,7 @@
       },
       updateStimulation() {
         this.stimulation = tools.compressStimuli(this.stimuli);
-      }
+      },
     },
     computed: {
       parameters() {
@@ -282,7 +282,7 @@
     },
     watch: {
       value(stimulation) {
-        this.stimulation = {...stimulation};
+        this.stimulation = { ...stimulation };
         this.stimuli = this.getStimuli();
       },
     },

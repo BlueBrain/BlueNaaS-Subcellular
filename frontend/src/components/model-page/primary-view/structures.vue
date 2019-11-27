@@ -190,7 +190,7 @@
           key: 'parentName',
         }, {
           title: this.geometry ? 'Size, m³ (computed from geometry)' : 'Size',
-          render: (h, params) => this.geometry && !params.row.geometryStructureSize
+          render: (h, params) => (this.geometry && !params.row.geometryStructureSize
             ? h('span', 'NA')
             : h(BnglText, {
               props: {
@@ -199,7 +199,7 @@
                   ? params.row.geometryStructureSize || 'NA'
                   : params.row.size,
               },
-            }),
+            })),
         }, {
           title: 'Annotation',
           render: (h, params) => h('span', params.row.annotation.split('\n')[0]),

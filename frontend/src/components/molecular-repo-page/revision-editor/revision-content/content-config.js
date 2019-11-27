@@ -22,7 +22,7 @@ const Type = {
  * @param {Object} config additional configuration for column config
  * @param {String[]} config.concSources
  */
-function getConcentrationColumnConfig(config={}) {
+function getConcentrationColumnConfig(config = {}) {
   const concSources = config.visibleConcSources || config.concSources;
 
   if (!concSources || concSources.length === 1) {
@@ -35,14 +35,13 @@ function getConcentrationColumnConfig(config={}) {
           value: params.row.concentration[source],
         },
       }),
-    }
+    };
   }
 
   return {
     title: 'Concentrations',
     align: 'center',
-    children: concSources.map((concSource) => {
-      return {
+    children: concSources.map(concSource => ({
         title: concSource,
         render: (h, params) => h(BnglText, {
           props: {
@@ -50,12 +49,11 @@ function getConcentrationColumnConfig(config={}) {
             value: params.row.concentration[concSource],
           },
         }),
-      };
-    }),
+      })),
   };
 }
 
-function build(configType, structureType, config={}) {
+function build(configType, structureType, config = {}) {
   const revisionSearchColumnConfig = {
     [EntityType.STRUCTURE]: [{
       type: 'selection',

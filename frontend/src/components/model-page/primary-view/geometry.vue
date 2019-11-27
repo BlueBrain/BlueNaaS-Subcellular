@@ -147,7 +147,7 @@
         this.reset();
       },
       async onOk() {
-        this.saving = true
+        this.saving = true;
         await this.$store.dispatch('createGeometry', this.newModelGeometry);
         this.hideNewGeometryModal();
       },

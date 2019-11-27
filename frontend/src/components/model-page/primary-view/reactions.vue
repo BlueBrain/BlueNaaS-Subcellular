@@ -137,15 +137,13 @@
           maxWidth: 180,
         }, {
           title: 'BioNetGen definition',
-          render: (h, params) => {
-            return h(BnglText, {
-              props: {
-                entityType: 'reaction',
-                readOnly: true,
-                value: params.row.definition,
-              },
-            });
-          },
+          render: (h, params) => h(BnglText, {
+            props: {
+              entityType: 'reaction',
+              readOnly: true,
+              value: params.row.definition,
+            },
+          }),
         }],
       };
     },

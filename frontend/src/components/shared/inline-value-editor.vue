@@ -70,9 +70,9 @@
         this.exitEditMode();
       },
       emitChange() {
-        const typedValue = this.type === 'number' ?
-          parseFloat(this.currentValue) :
-          this.currentValue;
+        const typedValue = this.type === 'number'
+          ? parseFloat(this.currentValue)
+          : this.currentValue;
 
         this.$emit('input', typedValue);
       },

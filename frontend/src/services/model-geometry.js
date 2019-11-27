@@ -28,7 +28,7 @@ function parseTetGenFileSync(fileContent) {
   const parseLine = line => line.match(NUMBER_R).map(parseFloat);
 
   const parsed = [];
-  let currentIdx = 0
+  let currentIdx = 0;
   let nextNewLineIdx = fileContent.indexOf('\n', currentIdx);
 
   while (nextNewLineIdx !== -1) {
@@ -146,7 +146,7 @@ function generateCompartmentSurfaceMesh(volMesh, compartment) {
 
 function generateMembraneSurfaceMeshSync(volMesh, compartment) {
   function getFaceByIdx(idx) {
-    return [ volMesh.faces[idx * 3], volMesh.faces[idx * 3 + 1], volMesh.faces[idx * 3 + 2]];
+    return [volMesh.faces[idx * 3], volMesh.faces[idx * 3 + 1], volMesh.faces[idx * 3 + 2]];
   }
 
   function getNodeByIdx(idx) {
@@ -201,12 +201,19 @@ class GeometryMembrane {
 
 class ModelGeometry {
   name = null;
+
   description = null;
+
   id = null;
+
   valid = false;
+
   parsed = false;
+
   initialized = false;
+
   meta = null;
+
   mesh = {
     volume: {
       nodes: [],
@@ -216,7 +223,7 @@ class ModelGeometry {
         nodes: null,
         faces: null,
         elements: null,
-      }
+      },
     },
     surface: {},
   };
@@ -242,13 +249,13 @@ class ModelGeometry {
     modelGeometry.mesh.volume.elements = getFlatTypedArray(srcElements, Uint32Array);
 
     modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {}))
-      .reduce((acc, [structName, structMesh]) => ({...acc, ...{ [structName]: Object.freeze(structMesh) }}), {});
+      .reduce((acc, [structName, structMesh]) => ({ ...acc, ...{ [structName]: Object.freeze(structMesh) } }), {});
 
     return modelGeometry;
   }
 
   get complete() {
-    const rawMesh = this.mesh.volume.raw
+    const rawMesh = this.mesh.volume.raw;
     const { meta } = this;
 
     return rawMesh.nodes && rawMesh.nodes.length
@@ -365,7 +372,7 @@ class ModelGeometry {
           raw: rawMesh,
         },
       },
-    }
+    };
   }
 }
 

@@ -288,7 +288,7 @@
     slot: 'current-conc',
   }, {
     title: 'Imported conc',
-    slot: 'new-conc'
+    slot: 'new-conc',
   }];
 
   const importFileFormats = [
@@ -309,7 +309,7 @@
     name: 'Name',
     uniProtId: 'UniProt ID',
     goId: 'GO Cellular Component ID',
-  }
+  };
 
   // TODO: more consistent naming
   const defaultConfig = {
@@ -357,7 +357,7 @@
         this.tableColumns = [];
         this.concImportCollection = [];
 
-        if (this.concSources.length === 1 ) {
+        if (this.concSources.length === 1) {
           this.config.concSource = this.concSources[0];
         }
       },
@@ -451,7 +451,7 @@
         this.init();
       },
     },
-  }
+  };
 </script>
 
 

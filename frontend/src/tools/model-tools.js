@@ -23,7 +23,7 @@ function createSimulationTemplate(simulation) {
     id: null,
     _id: null,
   };
-  return Object.assign({...simulation}, simCleanupDefaults);
+  return Object.assign({ ...simulation }, simCleanupDefaults);
 }
 
 function getEntityStructName(def) {
@@ -153,7 +153,7 @@ function parseStimuliRnfSync(fileContent) {
       match = regex.exec(string);
     }
     return matches;
-  }
+  };
 
   const actionR = /(?:^|\r?\n)(?:\s*)((?:set|sim)(.*))(?:\r?\n|$)/gm;
   const actionStrings = getMatches(fileContent, actionR);
@@ -228,7 +228,7 @@ async function parseStimulation(type, fileContent) {
   // * to use streaming reader to reduce memory footprint
   // * to produce compressed stimulation format
   const stimuli = await webWorker.run(parserFn, [fileContent]);
-  const stimulation = compressStimuli(stimuli)
+  const stimulation = compressStimuli(stimuli);
 
   return stimulation;
 }
@@ -241,7 +241,7 @@ function getDefName(bnglDefinition) {
 
   const match = bnglDefinition.match(bnglDefNameR);
   return match && match[1];
-};
+}
 
 function getDefStructure(bnglDefinition) {
   if (!bnglDefinition) return;
@@ -335,7 +335,7 @@ function upgradeSimStimulation(sim) {
     delete conf.stimuli;
   }
 
-  return sim
+  return sim;
 }
 
 export default {

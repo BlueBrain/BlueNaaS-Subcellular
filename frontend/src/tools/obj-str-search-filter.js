@@ -25,7 +25,7 @@ function objStrSearchFilter(searchStr, obj, props = []) {
     return typeof(propVal) === 'string'
       ? lowerCase(propVal).includes(searchStrNorm)
       : objStrSearchFilter(searchStrNorm, propVal);
-  }
+  };
 
   return filterProps.some(fFunc);
 }

@@ -57,7 +57,7 @@
         this.init();
       },
     },
-  }
+  };
 </script>
 
 
