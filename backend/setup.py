@@ -20,7 +20,7 @@ setup(
         'pandas',
         'numpy',
         'pymongo',
-        'pysb',
+        'pysb==1.9.1',
         'cython',
         'sympy'
     ],
