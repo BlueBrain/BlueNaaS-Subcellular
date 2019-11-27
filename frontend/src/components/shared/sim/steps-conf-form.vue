@@ -41,18 +41,37 @@
         </Panel>
       </Collapse>
     </FormItem>
+    <FormItem label="Spatial sampling">
+      <Collapse class="small-collapse">
+        <Panel>
+          <span
+            :class="{'grey-text': !conf.spatialSampling || !conf.spatialSampling.enabled}"
+          >
+            {{ conf.spatialSampling && conf.spatialSampling.enabled ? 'On': 'Off' }}
+          </span>
+          <div slot="content">
+            <spatial-sampling-conf
+              v-model="conf.spatialSampling"
+              @input="onChange"
+            />
+          </div>
+        </Panel>
+      </Collapse>
+    </FormItem>
   </i-form>
 </template>
 
 
 <script>
   import StepsStimulationForm from './steps-stimulation-form.vue';
+  import SpatialSamplingConf from './steps-conf-form/spatial-sampling-conf-form.vue';
 
   export default {
     name: 'sim-steps-conf-form',
     props: ['value'],
     components: {
       'steps-stimulation-form': StepsStimulationForm,
+      'spatial-sampling-conf': SpatialSamplingConf,
     },
     data() {
       return {

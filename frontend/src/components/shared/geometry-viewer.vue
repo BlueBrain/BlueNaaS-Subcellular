@@ -35,9 +35,7 @@
       <i-switch
         class="mr-6 switch--extra-small"
         size="small"
-        v-model="displayMode"
-        :false-value="GeometryDisplayMode.DEFAULT"
-        :true-value="GeometryDisplayMode.WIREFRAME"
+        v-model="displayWireframeMode"
         @on-change="onDisplayModeChange"
       />
       <span>Wireframe</span>
@@ -65,7 +63,18 @@
   import constants from '@/constants';
   import bus from '@/services/event-bus';
 
-  const { StructureType, GeometryDisplayMode } = constants;
+  const { StructureType } = constants;
+
+  const displayConf = {
+    default: {
+      meshSurfaceOpacity: 1,
+      meshWireframeOpacity: 0,
+    },
+    wireframe: {
+      meshSurfaceOpacity: 0.1,
+      meshWireframeOpacity: 0.5,
+    },
+  };
 
 
   export default {
@@ -77,7 +86,6 @@
     },
     data() {
       return {
-        GeometryDisplayMode,
         structure: {
           compartments: [],
           membranes: [],
@@ -86,7 +94,7 @@
           compartments: 'Compartments',
           membranes: 'Membranes',
         },
-        displayMode: GeometryDisplayMode.DEFAULT,
+        displayWireframeMode: false,
       };
     },
     mounted() {
@@ -103,7 +111,7 @@
     },
     methods: {
       initGeometry() {
-        this.renderer.initGeometry(this.geometryData, this.displayMode);
+        this.renderer.initGeometry(this.geometryData, displayConf.default);
         const structure = (this.geometryData.meta.structures || [])
           .map((st, idx) => ({
             name: st.name,
@@ -121,8 +129,8 @@
       onVisibilityChange(comp) {
         this.renderer.setVisible(comp.name, comp.visible);
       },
-      onDisplayModeChange(mode) {
-        this.renderer.setDisplayMode(mode);
+      onDisplayModeChange(wireframe) {
+        this.renderer.setDisplayConf(displayConf[wireframe ? 'wireframe' : 'default']);
       },
       async toggleFullscreen() {
         await toggleFullscreen(this.$refs.container);

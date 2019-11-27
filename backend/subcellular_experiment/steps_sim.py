@@ -19,8 +19,8 @@ import steps.rng as srng
 import steps.solver as ssolver
 import steps.utilities.meshio as meshio
 
-from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX
-from .sim import SimTraceMeta, SimStepTrace, SimTrace, SimStatus, SimLog, TraceTarget, StimulusType, decompress_stimulation
+from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
+from .sim import SimTraceMeta, SimStepTrace, SimTrace, SimSpatialStepTrace, SimStatus, SimLog, TraceTarget, StimulusType, decompress_stimulation
 from .logger import get_logger
 
 
@@ -97,6 +97,19 @@ class StepsSim():
             return st2
 
 
+        def get_geom_struct_by_model_struct_name(model_struct_name):
+            geom_struct_name = next(
+                st['geometryStructureName']
+                for st in model_dict['structures']
+                if st['name'] == model_struct_name
+            )
+
+            return next(
+                st
+                for st in geometry['meta']['structures']
+                if st['name'] == geom_struct_name
+            )
+
         def get_comp_name_by_tet_idx(tet_idx):
             geom_comp_name = next(
                 st['name']
@@ -118,6 +131,7 @@ class StepsSim():
 
 
         model_dict = self.sim_config['model']
+        solver_config = self.sim_config['solverConf']
 
         self.log('extend model observables with molecule definitions from stimulation')
         stimuli = decompress_stimulation(self.sim_config['solverConf']['stimulation'])
@@ -129,6 +143,20 @@ class StepsSim():
             if stim['type'] in ['setConc', 'clampConc']
         }
         model_dict['observables'].extend(model_stim_observable_dict.values())
+
+        spatial_sampling_enabled = 'spatialSampling' in solver_config and solver_config['spatialSampling']['enabled']
+        if spatial_sampling_enabled:
+            self.log('extend model observables with molecule definitions for spatial sampling')
+            spatial_sample_observables = [
+                {
+                    'name': f'{SPAT_PREFIX}{observable["name"]}',
+                    'definition': observable['definition']
+                }
+                for observable
+                in solver_config['spatialSampling']['observables']
+            ]
+            model_dict['observables'].extend(spatial_sample_observables)
+
 
         self.log('generate BNGL model file with artificial structures')
         bngl_ext_model = BnglExtModel(self.sim_config['model'])
@@ -534,7 +562,6 @@ class StepsSim():
         sim.reset()
 
         # Sim params and targets for trace recording
-        solver_config = self.sim_config['solverConf']
         dt = solver_config['dt']
         tend = solver_config['tEnd']
 
@@ -578,11 +605,16 @@ class StepsSim():
         trace_observables = [
             observable
             for observable in pysb_model.observables
-            if re.match(f'({DIFF_PREFIX}|{STIM_PREFIX})\w+', observable.name) is None
+            if re.match(f'({DIFF_PREFIX}|{STIM_PREFIX}|{SPAT_PREFIX})\w+', observable.name) is None
         ]
         trace_observable_names = [observable.name for observable in trace_observables]
         trace_values = np.zeros((len(tpnts), len(pysb_model.species)))
 
+        spatial_observables = [
+            observable
+            for observable in pysb_model.observables
+            if re.match(f'({SPAT_PREFIX})\w+', observable.name)
+        ]
 
         # Send simulation meta
         structures = [{'name': structure['name']} for structure in model_dict['structures']]
@@ -685,6 +717,7 @@ class StepsSim():
                     apply_stimulus(stim)
 
             if tpnt in sample_tpnt_set:
+                # sample compartemental molecule amounts
                 for pysb_spec_idx, pysb_spec in enumerate(pysb_model.species):
                     comp_name = pysb_spec.comp_name
                     comp_type = comp_type_by_name(comp_name)
@@ -694,6 +727,54 @@ class StepsSim():
                         trace_values[tidx, pysb_spec_idx] = sim.getPatchCount(comp_name, pysb_spec.name)
                 sim_step_trace = SimStepTrace(tpnt, tidx, trace_values[tidx])
                 self.send_progress(sim_step_trace)
+
+                # sample spatial molecule amounts if requested by user
+                if 'spatialSampling' in solver_config and solver_config['spatialSampling']['enabled']:
+                    spatial_trace_dict = {
+                        'tidx': tidx,
+                        't': tpnt,
+                        'data': {}
+                    }
+                    for structure in solver_config['spatialSampling']['structures']:
+                        structure_name = structure['name']
+                        spatial_trace_dict['data'][structure_name] = {}
+                        struct_empty = True
+                        geom_struct = get_geom_struct_by_model_struct_name(structure_name)
+                        geom_idxs_key = 'tetIdxs' if geom_struct['type'] == StructureType.COMPARTMENT else 'triIdxs'
+                        geom_idxs_np = np.array(geom_struct[geom_idxs_key], dtype=np.uintc)
+                        for spatial_observable in spatial_observables:
+                            mol_name = spatial_observable.name.replace(SPAT_PREFIX, '')
+                            mol_counts = np.zeros(len(geom_idxs_np))
+
+                            for pysb_spec_idx in spatial_observable.species:
+                                pysb_spec = pysb_model.species[pysb_spec_idx]
+
+                                if pysb_spec.comp_name != structure_name:
+                                    continue
+
+                                spec_name = pysb_spec.name
+                                spec_counts = np.zeros(len(geom_idxs_np))
+
+
+                                if geom_struct['type'] == StructureType.COMPARTMENT:
+                                    sim.getBatchTetCountsNP(geom_idxs_np, spec_name, spec_counts)
+                                else:
+                                    sim.getBatchTriCountsNP(geom_idxs_np, spec_name, spec_counts)
+                                mol_counts = mol_counts + spec_counts
+
+                            non_zero_counts = mol_counts > 0
+
+                            if np.any(non_zero_counts):
+                                struct_empty = False
+                                spatial_trace_dict['data'][structure_name][mol_name] = {
+                                    geom_idxs_key: geom_idxs_np[non_zero_counts],
+                                    'molCounts': mol_counts[non_zero_counts]
+                                }
+
+                        if struct_empty:
+                            del spatial_trace_dict['data'][structure_name]
+
+                    self.send_progress(SimSpatialStepTrace(spatial_trace_dict))
 
         self.send_progress(SimTrace(TraceTarget.SPECIES,
                                     tpnts,

@@ -1,6 +1,9 @@
 
 <template>
-  <div ref="chart" style="width: 100%; height: 100%;"></div>
+  <div
+    ref="chart"
+    class="temporal-graph-container"
+  />
 </template>
 
 
@@ -57,14 +60,14 @@
   };
 
   export default {
-    name: 'result-viewer',
+    name: 'temporal-result-viewer',
+    props: ['simId'],
     data() {
       return {
         initialized: false,
         chartPointN: 0,
       };
     },
-    props: ['simId'],
     created() {
       this.redrawThrottled = throttle(this.redraw, 500);
     },
@@ -157,3 +160,11 @@
     },
   };
 </script>
+
+
+<style lang="scss" scoped>
+  .temporal-graph-container {
+    width: 100%;
+    height: 100%;
+  }
+</style>

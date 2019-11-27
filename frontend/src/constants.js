@@ -27,11 +27,6 @@ const StructureType = {
   MEMBRANE: 'membrane',
 };
 
-const GeometryDisplayMode = {
-  DEFAULT: 'default',
-  WIREFRAME: 'wireframe',
-};
-
 const ModelExportFormats = {
   BNGL: 'bngl',
   PYSB_FLAT: 'pysb_flat',
@@ -148,6 +143,11 @@ const defaultSolverConfig = {
       targetValues: [],
       data: [],
     },
+    spatialSampling: {
+      enabled: false,
+      structures: [],
+      observables: [],
+    },
   },
   [SimSolver.NFSIM]: {
     dt: 0.01,
@@ -207,7 +207,6 @@ export default {
   defaultSolverConfig,
   StimulusTypeEnum,
   ServerMessageType,
-  GeometryDisplayMode,
   entityTypeCollectionMap,
   formMode,
   agentType,

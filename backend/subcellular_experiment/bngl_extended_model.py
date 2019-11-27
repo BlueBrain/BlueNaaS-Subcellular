@@ -8,6 +8,7 @@ NA = 6.02214086e23
 
 DIFF_PREFIX = '___int_sys_diff___'
 STIM_PREFIX = '___int_sys_stim___'
+SPAT_PREFIX = '___int_sys_spat___'
 
 class StructureType:
     COMPARTMENT = 'compartment'

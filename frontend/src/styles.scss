@@ -48,6 +48,7 @@ header, footer {
 main {
   height: $main-height;
   width: 100%;
+  overflow-y: scroll;
 }
 
 .monospace {
@@ -65,6 +66,11 @@ main {
 .side-panel-container>div>.ivu-tabs-bar {
   display: none;
 }
+
+.mt-0 { margin-top: 0px; }
+.mb-0 { margin-bottom: 0px; }
+.ml-0 { margin-left: 0px; }
+.mr-0 { margin-right: 0px; }
 
 .mt-6 { margin-top: 6px; }
 .mb-6 { margin-bottom: 6px; }
@@ -86,10 +92,16 @@ main {
 .ml-24 { margin-left: 24px; }
 .mr-24 { margin-right: 24px; }
 
+.m-0 { margin: 0px; }
 .m-6 { margin: 6px; }
 .m-12 { margin: 12px; }
 .m-18 { margin: 18px; }
 .m-24 { margin: 24px; }
+
+.pt-0 { padding-top: 0px; }
+.pb-0 { padding-bottom: 0px; }
+.pl-0 { padding-left: 0px; }
+.pr-0 { padding-right: 0px; }
 
 .pt-6 { padding-top: 6px; }
 .pb-6 { padding-bottom: 6px; }
@@ -111,6 +123,7 @@ main {
 .pl-18 { padding-left: 18px; }
 .pr-18 { padding-right: 18px; }
 
+.p-0 { padding: 0px; }
 .p-6 { padding: 6px; }
 .p-12 { padding: 12px; }
 .p-18 { padding: 18px; }

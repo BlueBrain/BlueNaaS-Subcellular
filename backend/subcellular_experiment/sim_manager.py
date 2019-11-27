@@ -6,7 +6,7 @@ import signal
 import tornado
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, SimLog
+from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, SimLog, SimSpatialStepTrace
 from .logger import get_logger
 
 
@@ -85,6 +85,8 @@ class SimManager():
             self.process_sim_status(data, data['status'], data)
         elif msg == SimLog.TYPE:
             self.process_sim_log(worker.sim_conf, data)
+        elif msg == SimSpatialStepTrace.TYPE:
+            self.process_sim_spatial_step_trace(worker.sim_conf, data)
 
     def schedule_sim(self, sim_conf):
         L.debug('scheduling a simulation')
@@ -126,6 +128,12 @@ class SimManager():
     def process_sim_log(self, sim_conf, log):
         self.send_message(sim_conf['userId'], SimLog.TYPE, {
             **log,
+            'id': sim_conf['id']
+        })
+
+    def process_sim_spatial_step_trace(self, sim_conf, spatial_step_trace):
+        self.send_message(sim_conf['userId'], SimSpatialStepTrace.TYPE, {
+            **spatial_step_trace,
             'id': sim_conf['id']
         })
 

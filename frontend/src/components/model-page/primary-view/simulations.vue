@@ -121,11 +121,13 @@
       title="Simulation result"
       v-model="simTraceViewerVisible"
       fullscreen
+      class="modal--no-padding"
     >
       <result-viewer
         v-if="simTraceViewerVisible"
         :sim-id="selectedSimulation.id"
       />
+
       <div slot="footer">
         <i-button
           class="wide-button"
@@ -171,7 +173,7 @@
   import bus from '@/services/event-bus';
 
   import SimulationForm from '@/components/shared/entities/simulation-form.vue';
-  import ResultViewer from '@/components/shared/result-viewer.vue';
+  import ResultViewer from '@/components/shared/sim/result-viewer.vue';
   import SimLogViewer from '@/components/shared/sim-log-viewer.vue';
 
   import findUniqName from '@/tools/find-uniq-name';
@@ -196,15 +198,39 @@
     log: null,
   };
 
-  const simulationStatusText = {
-    [SimStatus.CREATED]: 'Created',
-    [SimStatus.READY_TO_RUN]: 'Ready to run',
-    [SimStatus.QUEUED]: 'Queued',
-    [SimStatus.INIT]: 'Simulator init',
-    [SimStatus.STARTED]: 'Started',
-    [SimStatus.CANCELLED]: 'Cancelled',
-    [SimStatus.ERROR]: 'Error',
-    [SimStatus.FINISHED]: 'Finished',
+  const simulationStatus = {
+    [SimStatus.CREATED]: {
+      text: 'Created',
+      badgeStatus: 'default',
+    },
+    [SimStatus.READY_TO_RUN]: {
+      text: 'Ready to run',
+      badgeStatus: 'processing',
+    },
+    [SimStatus.QUEUED]: {
+      text: 'Queued',
+      badgeStatus: 'processing',
+    },
+    [SimStatus.INIT]: {
+      text: 'Sim init',
+      badgeStatus: 'processing',
+    },
+    [SimStatus.STARTED]: {
+      text: 'Started',
+      badgeStatus: 'processing',
+    },
+    [SimStatus.CANCELLED]: {
+      text: 'Cancelled',
+      badgeStatus: 'warning',
+    },
+    [SimStatus.ERROR]: {
+      text: 'Error',
+      badgeStatus: 'error',
+    },
+    [SimStatus.FINISHED]: {
+      text: 'Finished',
+      badgeStatus: 'success',
+    },
   };
 
   export default {
@@ -240,8 +266,17 @@
           maxWidth: 160,
         }, {
           title: 'Status',
-          maxWidth: 120,
-          render: (h, params) => h('span', simulationStatusText[params.row.status]),
+          maxWidth: 128,
+          render: (h, params) => {
+            const statusObj = simulationStatus[params.row.status];
+            const tagParams = {
+              props: {
+                status: statusObj.badgeStatus,
+                text: statusObj.text,
+              },
+            };
+            return h('Badge', tagParams);
+          },
         }, {
           title: 'Annotation',
           render: (h, params) => h('span', params.row.annotation.split('\n')[0]),
@@ -365,6 +400,7 @@
           && [
             SimStatus.STARTED,
             SimStatus.FINISHED,
+            SimStatus.CANCELLED,
           ].includes(this.selectedSimulation.status)
         ) return true;
 
@@ -385,6 +421,12 @@
     .ivu-modal-body {
       height: 400px;
       overflow-y: scroll;
+    }
+  }
+
+  .modal--no-padding {
+    .ivu-modal-body {
+      padding: 0;
     }
   }
 </style>

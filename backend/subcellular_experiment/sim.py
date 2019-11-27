@@ -33,6 +33,17 @@ class TraceTarget:
     TET = 'tet'
 
 
+class SimSpatialStepTrace:
+    TYPE = 'simSpatialStepTrace'
+
+    def __init__(self, trace):
+        self.type = self.TYPE
+        self.trace = trace
+
+    def to_dict(self):
+        return self.trace
+
+
 class SimLog:
     TYPE = 'simLog'
 
