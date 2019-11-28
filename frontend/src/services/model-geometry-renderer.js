@@ -1,5 +1,6 @@
 
 import range from 'lodash/range';
+import chroma from 'chroma-js';
 import {
   WebGLRenderer,
   Scene,
@@ -20,21 +21,68 @@ import {
   WireframeGeometry,
   LineSegments,
   MeshBasicMaterial,
+  BufferGeometry,
+  BufferAttribute,
+  Points,
+  PointsMaterial,
+  VertexColors,
+  TextureLoader,
 } from 'three';
 import * as DistinctColors from 'distinct-colors';
 
 import TrackballControls from './trackball-controls';
-import constants from '@/constants';
-
-const { GeometryDisplayMode } = constants;
 
 
-const FOG_COLOR = 0xffffff;
-const NEAR = 1;
-const FAR = 100;
+const DEFAULT_STRUCTURE_COLOR = 0x47cb89;
+const MAX_MOLECULES = 30000;
+
+const FOG_COLOR = 0xf8f8f9;
+const NEAR = 20;
+const FAR = 200;
 const AMBIENT_LIGHT_COLOR = 0x555555;
 const CAMERA_LIGHT_COLOR = 0xcacaca;
 const BACKGROUND_COLOR = 0xf8f8f9;
+
+
+// TODO: move to tools/utils
+class RendererCtrl {
+  countinuousRenderCounter = 0;
+
+  once = true;
+
+  stopTime = null;
+
+  get render() {
+    if (this.countinuousRenderCounter) return true;
+
+    if (this.stopTime) {
+      const now = Date.now();
+      if (this.stopTime > now) return true;
+
+      this.stopTime = null;
+      return false;
+    }
+
+    const { once } = this;
+    this.once = false;
+    return once;
+  }
+
+  renderOnce() {
+    this.once = true;
+  }
+
+  renderFor(time) {
+    const now = Date.now();
+    if (this.stopTime && this.stopTime > now + time) return;
+    this.stopTime = now + time;
+  }
+
+  renderUntilStopped() {
+    this.countinuousRenderCounter += 1;
+    return () => { this.countinuousRenderCounter -= 1; };
+  }
+}
 
 
 function disposeMesh(obj) {
@@ -59,11 +107,16 @@ function getNormScalar(nodes) {
 
   const maxDimensionSize = Math.max(deltaX, deltaY, deltaZ);
 
-  const normScalar = 1 / maxDimensionSize;
+  const normScalar = 10 / maxDimensionSize;
 
   return normScalar;
 }
 
+const DEFAULT_DISPLAY_CONF = {
+  meshSurfaceOpacity: 0.5,
+  meshWireframeOpacity: 0.1,
+  moleculeSize: 0.15,
+};
 
 class ModelGeometryRenderer {
   constructor(canvas) {
@@ -75,6 +128,8 @@ class ModelGeometryRenderer {
 
     const { clientWidth, clientHeight } = canvas.parentElement;
 
+    this.ctrl = new RendererCtrl();
+
     this.renderer.setSize(clientWidth, clientHeight, false);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
@@ -83,16 +138,21 @@ class ModelGeometryRenderer {
     this.scene.fog = new Fog(FOG_COLOR, NEAR, FAR);
     this.scene.add(new AmbientLight(AMBIENT_LIGHT_COLOR));
 
-    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 0.1, 10);
+    this.camera = new PerspectiveCamera(45, clientWidth / clientHeight, 1, 300);
     this.scene.add(this.camera);
     this.camera.add(new PointLight(CAMERA_LIGHT_COLOR, 0.9));
 
     this.modelMeshObject = new Object3D();
+    this.modelMeshObject.matrixAutoUpdate = false;
     this.scene.add(this.modelMeshObject);
 
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.zoomSpeed = 0.8;
+
+    this.controls.addEventListener('change', () => this.ctrl.renderOnce());
+    this.renderer.domElement.addEventListener('wheel', () => this.ctrl.renderFor(2000), false);
+    this.renderer.domElement.addEventListener('mousemove', () => this.ctrl.renderFor(2000, 100), false);
 
     this.animate();
   }
@@ -108,18 +168,17 @@ class ModelGeometryRenderer {
    *                                          and value is an array of tetrahedron indexes
    *                                          from geometry.elements
    */
-  initGeometry(modelGeometry, displayMode = GeometryDisplayMode.DEFAULT) {
-    // TODO: move mesh skinning to TetGen class
-
+  initGeometry(modelGeometry, displayConf = DEFAULT_DISPLAY_CONF) {
     if (this.meshes) throw new Error('Model geometry has been already initialized');
 
-    const getDefaultStructure = () => {
-      return {
+    this.modelGeometry = modelGeometry;
+
+    const getDefaultStructure = () => ({
         name: 'main',
         type: 'compartment',
         tetIdxs: range(modelGeometry.mesh.volume.elements.length),
-      };
-    }
+        color: chroma(DEFAULT_STRUCTURE_COLOR),
+      });
 
     const structures = modelGeometry.meta.structures || [getDefaultStructure()];
 
@@ -129,27 +188,40 @@ class ModelGeometryRenderer {
       chromaMax: 100,
     });
 
+    this.structureConfig = structures
+      .reduce((acc, structure, idx) => ({
+        ...acc,
+        [structure.name]: {
+          ...structure,
+          color: this.colors[idx],
+          visible: true,
+        },
+      }), {});
+
     this.normScalar = getNormScalar(modelGeometry.mesh.volume.nodes);
 
     const createGeometry = (structureName) => {
-      // TODO: switch to BufferGeometry
       const geometry = new Geometry();
+      const bufferGeometry = new BufferGeometry();
+
       modelGeometry.mesh.surface[structureName].vertices.forEach((coords) => {
         const vertexVec = new Vector3(...coords.map(coord => coord * this.normScalar));
         geometry.vertices.push(vertexVec);
       });
 
       modelGeometry.mesh.surface[structureName].faces
-        .forEach((triIdxs) => geometry.faces.push(new Face3(...triIdxs)));
+        .forEach(triIdxs => geometry.faces.push(new Face3(...triIdxs)));
 
-      return geometry;
+      geometry.mergeVertices();
+      geometry.computeFaceNormals();
+
+      bufferGeometry.fromGeometry(geometry);
+
+      return bufferGeometry;
     };
 
     structures.forEach((structure, idx) => {
       const geometry = createGeometry(structure.name);
-
-      geometry.mergeVertices();
-      geometry.computeFaceNormals();
 
       const color = this.colors[idx].num();
 
@@ -176,8 +248,9 @@ class ModelGeometryRenderer {
       this.modelMeshObject.add(wireframe);
     });
 
-    this.setDisplayMode(displayMode);
+    this.setDisplayConf(displayConf);
     this.alignCamera();
+    this.ctrl.renderOnce();
   }
 
   clearGeometry() {
@@ -188,25 +261,208 @@ class ModelGeometryRenderer {
     }
   }
 
+  setMoleculeConfig(moleculeName, config) {
+    Object.assign(this.moleculeConfig[moleculeName], config);
+  }
+
+  setStructureConfig(structureName, config) {
+    Object.assign(this.structureConfig[structureName], config);
+  }
+
+  initMolecules(moleculeNames) {
+    const molColors = new DistinctColors({
+      count: moleculeNames.length,
+      // chromaMin: 40,
+      // chromaMax: 80,
+    });
+
+    this.moleculeConfig = moleculeNames
+      .reduce((acc, molName, idx) => ({ ...acc, [molName]: { color: molColors[idx], visible: true } }), {});
+
+    const positionBuffer = new Float32Array(MAX_MOLECULES * 3);
+    const colorBuffer = new Float32Array(MAX_MOLECULES * 3);
+
+    const positionBufferAttr = new BufferAttribute(positionBuffer, 3);
+    const colorBufferAttr = new BufferAttribute(colorBuffer, 3);
+
+    const geometry = new BufferGeometry();
+    geometry.addAttribute('position', positionBufferAttr);
+    geometry.addAttribute('color', colorBufferAttr);
+
+    const texture = new TextureLoader().load('/disc.png');
+
+    const material = new PointsMaterial({
+      vertexColors: VertexColors,
+      size: 0.1,
+      transparent: true,
+      alphaTest: 0.5,
+      depthTest: false,
+      sizeAttenuation: true,
+      map: texture,
+    });
+
+    const points = new Points(geometry, material);
+    points.name = 'moleculeCloud';
+    points.frustumCulled = false;
+
+    this.scene.add(points);
+
+    this.moleculeCloud = {
+      positionBufferAttr,
+      colorBufferAttr,
+      points,
+    };
+  }
+
+  renderMolecules(spatialSample) {
+    if (!this.moleculeCloud) return;
+
+    let pntIdx = 0;
+
+    const { positionBufferAttr, colorBufferAttr, points } = this.moleculeCloud;
+
+    const processCount = (moleculeName, structureType, simplexIdx, count) => {
+      const color = this.moleculeConfig[moleculeName].color.gl();
+
+      const genRandPointFunc = structureType === 'compartment'
+        ? this.genRandTetPoint.bind(this)
+        : this.genRandTriPoint.bind(this);
+
+      for (let i = 0; i < count; i += 1) {
+        if (pntIdx === MAX_MOLECULES) {
+          return console.warn('Molecule renderer reached MAX_MOLECULES');
+        }
+
+        const position = genRandPointFunc(simplexIdx);
+
+        colorBufferAttr.set(color, pntIdx * 3);
+        positionBufferAttr.set(position, pntIdx * 3);
+
+        pntIdx += 1;
+      }
+    };
+
+    Object.keys(spatialSample).forEach((structureName) => {
+      // if (!this.structureConfig[structureName].visible) return;
+
+      const structureType = this.modelGeometry.meta.structures.find(st => st.name === structureName).type;
+      const simplexIdxProp = structureType === 'compartment' ? 'tetIdxs' : 'triIdxs';
+      const structCount = spatialSample[structureName];
+      Object.keys(structCount).forEach((moleculeName) => {
+        if (!this.moleculeConfig[moleculeName].visible) return;
+
+        const molCountObj = structCount[moleculeName];
+        molCountObj[simplexIdxProp]
+          .forEach((simplexIdx, idx) => processCount(moleculeName, structureType, simplexIdx, molCountObj.molCounts[idx]));
+      });
+    });
+
+    colorBufferAttr.needsUpdate = true;
+    positionBufferAttr.needsUpdate = true;
+
+
+    points.geometry.setDrawRange(0, pntIdx);
+    this.ctrl.renderOnce();
+  }
+
+  genRandTetPoint(tetIdx) {
+    const tetPnts = Array.from(this.modelGeometry.mesh.volume.elements.slice(tetIdx * 4, tetIdx * 4 + 4))
+      .map(vertexIdx => this.modelGeometry.mesh.volume.nodes.slice(vertexIdx * 3, vertexIdx * 3 + 3).map(coord => coord * this.normScalar));
+
+    let s = Math.random();
+    let t = Math.random();
+    let u = Math.random();
+
+    if (s + t > 1) {
+      // cut'n fold the cube into a prism
+      s = 1 - s;
+      t = 1 - t;
+    }
+
+    if (t + u > 1) {
+        // cut'n fold the prism into a tetrahedron
+        const tmp = u;
+        u = 1 - s - t;
+        t = 1 - tmp;
+    } else if (s + t + u > 1) {
+        const tmp = u;
+        u = s + t + u - 1;
+        s = 1 - t - tmp;
+    }
+
+    // a,s,t,u are the barycentric coordinates of the random point.
+    const a = 1 - s - t - u;
+
+    const p0 = tetPnts[0].map(coord => coord * a);
+    const p1 = tetPnts[1].map(coord => coord * s);
+    const p2 = tetPnts[2].map(coord => coord * t);
+    const p3 = tetPnts[3].map(coord => coord * u);
+
+    return [
+      p0[0] + p1[0] + p2[0] + p3[0],
+      p0[1] + p1[1] + p2[1] + p3[1],
+      p0[2] + p1[2] + p2[2] + p3[2],
+    ];
+  }
+
+  genRandTriPoint(triIdx) {
+    const volumeMesh = this.modelGeometry.mesh.volume;
+
+    const normalize = coord => coord * this.normScalar;
+
+    const triPnts = Array.from(volumeMesh.faces.slice(triIdx * 3, triIdx * 3 + 3))
+      .map(vertexIdx => volumeMesh.nodes.slice(vertexIdx * 3, vertexIdx * 3 + 3).map(normalize));
+
+    // from http://www.cs.princeton.edu/~funk/tog02.pdf
+    const s = Math.random();
+    const t = Math.random();
+
+    const u = Math.sqrt(s);
+    const v = u * t;
+
+    const p0 = triPnts[0].map(coord => coord * (1 - u));
+    const p1 = triPnts[1].map(coord => coord * (u - v));
+    const p2 = triPnts[2].map(coord => coord * v);
+
+    return [
+      p0[0] + p1[0] + p2[0],
+      p0[1] + p1[1] + p2[1],
+      p0[2] + p1[2] + p2[2],
+    ];
+  }
+
   setVisible(compName, visible) {
+    this.structureConfig[compName].visible = visible;
+
     this.modelMeshObject.traverse((obj) => {
       if (obj.name === compName) obj.visible = visible;
     });
+
+    this.ctrl.renderOnce();
   }
 
-  setDisplayMode(mode) {
-    this.modelMeshObject.traverse((obj) => {
-      if (mode === 'wireframe' && obj instanceof Mesh) obj.material.opacity = 0.1;
-      if (mode === 'wireframe' && obj instanceof LineSegments) obj.material.opacity = 0.5;
+  setDisplayConf(displayConf) {
+    const conf = { ...DEFAULT_DISPLAY_CONF, ...displayConf };
 
-      if (mode === 'default' && obj instanceof Mesh) obj.material.opacity = 1;
-      if (mode === 'default' && obj instanceof LineSegments) obj.material.opacity = 0;
+    this.modelMeshObject.traverse((obj) => {
+      if (!['Mesh', 'LineSegments'].includes(obj.type)) return;
+
+      obj.material.opacity = obj.type === 'Mesh'
+        ? conf.meshSurfaceOpacity
+        : conf.meshWireframeOpacity;
     });
+
+    if (this.moleculeCloud) {
+      this.moleculeCloud.points.material.size = conf.moleculeSize;
+      this.moleculeCloud.points.material.needsUpdate = true;
+    }
+
+    this.ctrl.renderOnce();
   }
 
   alignCamera() {
     const boundingSphere = new Sphere();
-    const box = new Box3().setFromObject(this.modelMeshObject);
+    const box = new Box3().setFromObject(this.scene);
     box.getBoundingSphere(boundingSphere);
     const { center, radius } = boundingSphere;
 
@@ -230,9 +486,11 @@ class ModelGeometryRenderer {
   }
 
   animate() {
-    this.controls.update();
+    if (this.ctrl.render) {
+      this.controls.update();
+      this.render();
+    }
     this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
-    this.render();
   }
 
   render() {
@@ -244,6 +502,7 @@ class ModelGeometryRenderer {
     this.camera.aspect = clientWidth / clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(clientWidth, clientHeight);
+    this.ctrl.renderOnce();
   }
 }
 

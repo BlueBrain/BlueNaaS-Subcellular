@@ -103,7 +103,7 @@ function generateCompartmentSurfaceMeshSync(volMesh, compartment) {
       [vert1, vert2, vert4],
       [vert1, vert4, vert3],
     ].forEach((tri) => {
-      const key = tri.sort().join('_');
+      const key = tri.slice().sort().join('_');
 
       if (vertexMap.has(key)) {
         vertexMap.delete(key);
