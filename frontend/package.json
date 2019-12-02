@@ -2,17 +2,7 @@
   "name": "subcellular-experiment",
   "version": "0.0.3",
   "description": "Subcellular experiment application",
-  "license": "BSD-3-Clause",
   "author": "NSE(Neuroscientific Software Engineering) <bbp-ou-nse@groupes.epfl.ch> (http://bluebrain.epfl.ch)",
-  "contributors": [
-    "pavlo.getta@epfl.ch"
-  ],
-  "homepage": "https://bluebrain.epfl.ch",
-  "repository": {
-    "type": "git",
-    "url": "https://bbpcode.epfl.ch/browse/code/nse/subcellular-experiment-app/",
-    "issuesurl": "NA"
-  },
   "scripts": {
     "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
@@ -24,6 +14,7 @@
     "ajv": "^6.10.2",
     "chroma-js": "^2.1.0",
     "codemirror": "^5.49.2",
+    "core-js": "^3.4.3",
     "distinct-colors": "^1.0.4",
     "file-saver": "^2.0.2",
     "gsap": "^2.1.3",
@@ -45,9 +36,9 @@
     "vuex": "^3.1.2"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.12.1",
-    "@vue/cli-plugin-eslint": "^3.12.1",
-    "@vue/cli-service": "^3.12.1",
+    "@vue/cli-plugin-babel": "^4.1.1",
+    "@vue/cli-plugin-eslint": "^4.1.1",
+    "@vue/cli-service": "^4.1.1",
     "@vue/eslint-config-airbnb": "^4.0.1",
     "babel-eslint": "^10.0.3",
     "eslint": "^6.7.2",
@@ -112,5 +103,15 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
-  ]
+  ],
+  "contributors": [
+    "pavlo.getta@epfl.ch"
+  ],
+  "homepage": "https://bluebrain.epfl.ch",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://bbpcode.epfl.ch/browse/code/nse/subcellular-experiment-app/",
+    "issuesurl": "NA"
+  }
 }
