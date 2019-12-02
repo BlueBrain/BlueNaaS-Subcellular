@@ -330,7 +330,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -379,7 +379,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -411,7 +411,7 @@ function build(configType, structureType, config = {}) {
       key: 'units',
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -452,7 +452,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -492,7 +492,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -525,7 +525,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -560,7 +560,7 @@ function build(configType, structureType, config = {}) {
       tooltip: true,
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],
@@ -585,7 +585,7 @@ function build(configType, structureType, config = {}) {
       }),
     }, {
       title: 'Actions',
-      maxWidth: 80,
+      maxWidth: 90,
       slot: 'actions',
       align: 'center',
     }],

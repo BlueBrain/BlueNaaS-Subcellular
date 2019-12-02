@@ -112,6 +112,8 @@ export default {
     const sim = state.model.simulations
       .find(sim => sim.id === simLog.id);
 
+    if (!sim) return;
+
     if (!sim.log || !sim.log.system) sim.log = { system: '' };
 
     sim.log.system += `${simLog.message}\n`;
@@ -130,12 +132,6 @@ export default {
     if (simIndex === -1) return;
 
     const currentSimulation = state.model.simulations[simIndex];
-    // currentSimulation.times.push(simStepTrace.t);
-    // currentSimulation.values.push(Uint32Array.from(simStepTrace.values));
-
-    // Vue.set(state.model.simulations, simIndex,)
-
-    // currentSimulation.currentStepIdx = simStepTrace.stepIdx;
 
     const simulation = Object.assign({}, currentSimulation);
     simulation.times.push(simStepTrace.t);
@@ -259,7 +255,9 @@ export default {
   updateRevisionEntity(state, { type, entity }) {
     const collectionName = entityTypeCollectionMap[type];
     const collection = state.revision[collectionName];
-    const index = collection.findIndex(e => e.entityId === entity.entityId);
+    const index = entity.entityId
+      ? collection.findIndex(e => e.entityId === entity.entityId)
+      : collection.findIndex(e => e.name === entity.name);
     if (index === -1) {
       collection.push(entity);
     } else {

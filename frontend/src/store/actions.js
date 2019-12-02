@@ -6,6 +6,7 @@ import uuidv4 from 'uuid/v4';
 
 import * as Sentry from '@sentry/browser';
 
+import modelBuilder from '@/services/model-builder';
 import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
 import socket from '@/services/websocket';
@@ -239,7 +240,7 @@ export default {
 
     const uid = state.user.id;
     const simulations = sampleSimulations
-      .map(sim => Object.assign({}, sim, { userId: uid, id: uuidv4() }))
+      .map(sim => Object.assign({}, sim, { userId: uid, id: uuidv4(), _id: undefined }))
       .map(modelTools.upgradeSimStimulation);
 
     simulations.forEach(sim => socket.send('create_simulation', sim));
@@ -330,7 +331,7 @@ export default {
 
     if (type === 'ebngl') {
       // TODO: add content type and schema validation
-      const model = JSON.parse(fileContent);
+      model = JSON.parse(fileContent);
 
       /** ####################### START OF TEMPORARY BLOCK ###################### */
       if (model.geometry) {

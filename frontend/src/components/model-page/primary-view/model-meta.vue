@@ -9,7 +9,7 @@
       @submit.native.prevent="saveModel"
     >
       <FormItem
-        label="Name"
+        label="Name *"
       >
         <i-input
           ref="nameInput"
@@ -38,6 +38,7 @@
           type="primary"
           class="ml-12 width-82"
           :loading="saveInProgress"
+          :disabled="!saveBtnAvailable"
           @click="saveModel"
         >
           {{ saveBtnLabel }}
@@ -132,6 +133,9 @@
       annotation: {
         get() { return this.$store.state.model.annotation; },
         set(annotation) { this.$store.commit('updateModelAnnotation', annotation); },
+      },
+      saveBtnAvailable() {
+        return !!this.name;
       },
     },
   };
