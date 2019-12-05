@@ -1,9 +1,9 @@
 
-import 'iview/dist/styles/iview.css';
+import 'view-design/dist/styles/iview.css';
 
 import Vue from 'vue';
-import iView from 'iview';
-import locale from 'iview/dist/locale/en-US';
+import ViewUI from 'view-design';
+import locale from 'view-design/dist/locale/en-US';
 
 import './services/sentry';
 
@@ -12,7 +12,7 @@ import initFilters from './filters';
 import store from './store';
 import router from './router';
 
-Vue.use(iView, { locale, size: 'small' });
+Vue.use(ViewUI, { locale, size: 'small' });
 initFilters();
 
 Vue.config.productionTip = true;
