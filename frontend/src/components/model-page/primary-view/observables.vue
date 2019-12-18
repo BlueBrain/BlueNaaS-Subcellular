@@ -97,6 +97,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'definition'];
+
 
   export default {
     name: 'observables-component',
@@ -169,7 +171,8 @@
         return state.model.observables;
       },
       filteredEntities() {
-        return this.observables.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.observables
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching observables' : 'Create a observable by using buttons below';

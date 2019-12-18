@@ -97,6 +97,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'definition'];
+
 
   export default {
     name: 'molecules-component',
@@ -170,7 +172,8 @@
         return state.model.molecules;
       },
       filteredMolecules() {
-        return this.molecules.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.molecules
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching molecules' : 'Create a molecule by using buttons below';

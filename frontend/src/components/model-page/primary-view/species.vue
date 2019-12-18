@@ -98,6 +98,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'definition'];
+
 
   export default {
     name: 'species-component',
@@ -180,7 +182,8 @@
         return state.model.species;
       },
       filteredSpecies() {
-        return this.species.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.species
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching species' : 'Create a species by using buttons below';

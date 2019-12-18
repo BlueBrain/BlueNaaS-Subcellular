@@ -183,6 +183,8 @@
 
   const { SimSolver, SimStatus } = constants;
 
+  const searchProps = ['name'];
+
   const defaultSimulation = {
     valid: false,
     id: null,
@@ -376,7 +378,8 @@
         });
       },
       filteredSimulations() {
-        return this.simulations.filter(e => objStrSearchFilter(this.searchStr, e, ['name']));
+        return this.simulations
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching simulations' : 'Create a simulation by using buttons below';

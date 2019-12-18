@@ -106,6 +106,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'type'];
+
 
   export default {
     name: 'structures-component',
@@ -166,7 +168,8 @@
         return this.$store.state.model.structures;
       },
       filteredStructures() {
-        return this.structures.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'type']));
+        return this.structures
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching structures' : 'Create a structure by using buttons below';

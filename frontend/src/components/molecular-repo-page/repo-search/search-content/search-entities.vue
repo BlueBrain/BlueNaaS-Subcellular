@@ -65,6 +65,8 @@
     [EntityType.SPECIES]: SpeciesTools,
   };
 
+  const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];
+
   export default {
     name: 'search-entities',
     props: ['entityType'],
@@ -102,7 +104,7 @@
       },
       entities() {
         return this.$store.state.repoQueryResult[entityTypeCollectionMap[this.entityType]]
-          .filter(e => objStrSearchFilter(this.filterStr, e));
+          .filter(e => objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps }));
       },
       queryConfig() {
         return this.$store.state.repoQueryConfig;

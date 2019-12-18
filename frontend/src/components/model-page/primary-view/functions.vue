@@ -98,6 +98,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'definition'];
+
 
   export default {
     name: 'function-component',
@@ -176,7 +178,8 @@
         return state.model.functions;
       },
       filteredFunctions() {
-        return this.functions.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.functions
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below';

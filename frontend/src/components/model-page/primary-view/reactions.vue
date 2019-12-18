@@ -99,6 +99,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'definition'];
+
 
   export default {
     name: 'reactions-component',
@@ -199,7 +201,8 @@
         return state.model.reactions;
       },
       filteredReactions() {
-        return this.reactions.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'definition']));
+        return this.reactions
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching reactions' : 'Create a reaction by using buttons below';

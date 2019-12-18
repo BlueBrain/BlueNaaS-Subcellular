@@ -134,6 +134,8 @@
     [EntityType.SPECIES]: SpeciesTools,
   };
 
+  const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];
+
   export default {
     name: 'revision-entities',
     props: ['entityType'],
@@ -200,7 +202,7 @@
       },
       entities() {
         return this.$store.state.revision[entityTypeCollectionMap[this.entityType]]
-          .filter(e => objStrSearchFilter(this.filterStr, e));
+          .filter(e => objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps }));
       },
       modalTitle() {
         return this.currentFormMode === formMode.CREATE_NEW ? 'Create new' : 'Edit';

@@ -99,6 +99,8 @@
     annotation: '',
   };
 
+  const searchProps = ['name', 'speciesDefinition', 'compartment'];
+
 
   export default {
     name: 'diffusion-component',
@@ -184,7 +186,8 @@
         return state.model.diffusions;
       },
       filteredDiffusions() {
-        return this.diffusions.filter(e => objStrSearchFilter(this.searchStr, e, ['name', 'speciesDefinition', 'compartment']));
+        return this.diffusions
+          .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
         return this.searchStr ? 'No matching diffusions' : 'Create a diffusion by using buttons below';
