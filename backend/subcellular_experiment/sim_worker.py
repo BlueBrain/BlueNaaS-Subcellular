@@ -70,6 +70,7 @@ class SimWorker():
         message = json.loads(raw_message)
         sim_config = message['data']
         msg = message['cmd']
+        cmdid = message['cmdid']
         L.debug('got {} from the backend'.format(msg))
 
         if msg == 'run_sim':
@@ -128,10 +129,11 @@ class SimWorker():
         time.sleep(2)
         self.init()
 
-    def send_message(self, message, data):
+    def send_message(self, message, data, cmdid=None):
         payload = json.dumps({
             'message': message,
-            'data': data
+            'data': data,
+            'cmdid': cmdid
         }, cls=ExtendedJSONEncoder)
 
         self.socket.send(payload)

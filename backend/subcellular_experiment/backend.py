@@ -73,9 +73,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             model_id = msg['data']['modelId']
             simulations = db.get_simulations(self.user_id, model_id)
             self.send_message('simulations', {
-                'cmdid': cmdid,
                 'simulations': simulations
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'create_geometry':
             geometry_config = msg['data']
@@ -83,10 +82,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             structure_size_dict = {st['name']:st['size'] for st in geometry.structures}
             L.debug(f'new geometry {str(geometry.id)} has been created')
             self.send_message('geometry', {
-                'cmdid': cmdid,
                 'id': geometry.id,
                 'structureSize': structure_size_dict
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'get_exported_model':
             model_format = msg['data']['format']
@@ -98,73 +96,60 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             except Exception as error:
                 error_msg = error.message
             self.send_message('exported_model', {
-                'cmdid': cmdid,
                 'fileContent': model_str,
                 'error': error_msg
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'convert_from_sbml':
             sbml_str = msg['data']['sbml']
-            self.send_message('from_sbml', {
-                **from_sbml(sbml_str),
-                'cmdid': cmdid,
-            })
+            self.send_message('from_sbml', from_sbml(sbml_str), cmdid=cmdid)
 
         if cmd == 'query_molecular_repo':
             query = msg['data']
             result = db.query_molecular_repo(query)
             self.send_message('query_result', {
-                'cmdid': cmdid,
                 'queryResult': result
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'query_branch_names':
             search_str = msg['data'] if 'data' in msg else ''
             branch_names = db.query_branch_names(search_str)
             self.send_message('branch_names', {
-                'cmdid': cmdid,
                 'branches': branch_names
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'get_user_branches':
             branches = db.get_user_branches(self.user_id)
             self.send_message('user_branches', {
-                'cmdid': cmdid,
                 'userBranches': branches
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'query_revisions':
             branch_name = msg['data']
             revisions = db.query_revisions(branch_name)
             self.send_message('revisions', {
-                'cmdid': cmdid,
                 'revisions': revisions
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'save_revision':
             revision_data = msg['data'];
             revision_meta = db.save_revision(revision_data, self.user_id)
-            self.send_message('save_revision', {
-                **revision_meta,
-                'cmdid': cmdid,
-            })
+            self.send_message('save_revision', revision_meta, cmdid=cmdid)
 
         if cmd == 'get_revision':
             branch = msg['data']['branch']
             revision = msg['data']['revision']
             revision_data = db.get_revision(branch, revision)
             self.send_message('revision_data', {
-                'cmdid': cmdid,
                 'revision': revision_data
-            })
+            }, cmdid=cmdid)
 
         if cmd == 'get_branch_latest_rev':
             branch = msg['data']
             branch_latest_rev = db.get_branch_latest_rev(branch)
             self.send_message('branch_latest_rev', {
-                'cmdid': cmdid,
                 'rev': branch_latest_rev
-            })
+            }, cmdid=cmdid)
 
     def on_close(self):
         self.closed = True
@@ -172,9 +157,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             sim_manager.remove_client(self.user_id, self)
         L.debug('client disconnected')
 
-    def send_message(self, cmd, data=None):
+    def send_message(self, cmd, data=None, cmdid=None):
         if not self.closed:
-            payload = json.dumps({'cmd': cmd, 'data': data},
+            payload = json.dumps({'cmd': cmd, 'cmdid': cmdid, 'data': data},
                                  cls=ExtendedJSONEncoder)
             self.write_message(payload)
 
@@ -195,16 +180,17 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         parsedMessage = json.loads(rawMessage)
         msg = parsedMessage['message']
         data = parsedMessage['data']
+        cmdid = parsedMessage['cmdid']
 
-        sim_manager.process_worker_message(self.sim_worker, msg, data)
+        sim_manager.process_worker_message(self.sim_worker, msg, data, cmdid=cmdid)
 
     def on_close(self):
         self.closed = True
         sim_manager.remove_worker(self.sim_worker)
 
-    def send_message(self, cmd, data=None):
+    def send_message(self, cmd, data=None, cmdid=None):
         if not self.closed:
-            payload = json.dumps({'cmd': cmd, 'data': data},
+            payload = json.dumps({'cmd': cmd, 'cmdid': cmdid, 'data': data},
                                  cls=ExtendedJSONEncoder)
             self.write_message(payload)
 

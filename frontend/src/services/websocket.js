@@ -110,7 +110,7 @@ class Ws {
     this.socket.addEventListener('message', (e) => {
       const message = JSON.parse(e.data);
 
-      const cmdId = get(message, 'data.cmdid');
+      const cmdId = message.cmdid;
       if (cmdId) {
         const requestResolver = this.requestResolvers.get(cmdId);
         requestResolver(message.data);
