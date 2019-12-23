@@ -157,9 +157,11 @@ function build(configType, structureType, config = {}) {
     }, {
       title: 'Name',
       key: 'name',
+      maxWidth: 200,
     }, {
       title: 'Rev',
       render: (h, params) => h('span', `${params.row.branch}:${params.row.rev}`),
+      maxWidth: 120,
     }, {
       title: 'BNGL expression',
       key: 'definition',
@@ -177,14 +179,17 @@ function build(configType, structureType, config = {}) {
           value: params.row.kf,
         },
       }),
+      maxWidth: 400,
     }, {
       title: 'Description',
       key: 'description',
       tooltip: true,
+      maxWidth: 200,
     }, {
       title: 'Comments',
       key: 'comments',
       tooltip: true,
+      maxWidth: 200,
     }],
     [EntityType.DIFFUSION]: [{
       type: 'selection',

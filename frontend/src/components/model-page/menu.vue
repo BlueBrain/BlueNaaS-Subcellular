@@ -17,50 +17,60 @@
         <template slot="title">
           Physiology
         </template>
+
         <MenuItem name="structures">
           Structures
           <strong v-if="model.structures.length">({{ model.structures.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="parameters">
           Parameters
           <strong v-if="model.parameters.length">({{ model.parameters.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="functions">
           Functions
           <strong v-if="model.functions.length">({{ model.functions.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="molecules">
           Molecules
           <strong v-if="model.molecules.length">({{ model.molecules.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="species">
           Species
           <strong v-if="model.species.length">({{ model.species.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="observables">
           Observables
           <strong v-if="model.observables.length">({{ model.observables.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="reactions">
           Reactions
           <strong v-if="model.reactions.length">({{ model.reactions.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
         <MenuItem name="diffusions">
           Diffusions
           <strong v-if="model.diffusions.length">({{ model.diffusions.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
+
       </Submenu>
       <MenuItem name="geometry">
         Geometry
       </MenuItem>
+
       <MenuItem name="simulations">
         Simulations
         <strong v-if="model.simulations.length">({{ model.simulations.length }})</strong>
@@ -74,23 +84,21 @@
 <script>
   export default {
     name: 'model-menu',
-    data() {
-      return {
-        currentEntityType: this.$route.path.split('/')[2],
-      };
-    },
     methods: {
       onEntityTypeSelect(entityType) {
         this.$store.commit('resetEntitySelection');
-        this.$router.push({ path: `/model/${entityType}` });
+        const path = `/model/${entityType}`;
+        if (path !== this.$router.currentRoute.path) {
+          this.$router.push({ path });
+        }
       },
     },
     computed: {
       model() {
         return this.$store.state.model;
       },
-      routePath() {
-        return this.$route.path;
+      currentEntityType() {
+        return this.$route.path.split('/')[2];
       },
     },
   };

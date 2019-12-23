@@ -186,7 +186,9 @@
           .filter(e => objStrSearchFilter(this.searchStr, e, { include: searchProps }));
       },
       emptyTableText() {
-        return this.searchStr ? 'No matching species' : 'Create a species by using buttons below';
+        return this.searchStr
+          ? 'No matching species'
+          : 'Create a species by using buttons below';
       },
       removeBtnDisabled: state => get(state, 'selectedEntity.type') !== 'species',
     }),

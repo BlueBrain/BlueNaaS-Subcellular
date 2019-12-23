@@ -81,7 +81,10 @@
       class="mt-24"
       v-if="repoQueryResult"
     >
-      <search-content/>
+      <h3 v-if="queryResultEmpty">
+        Search returned no results
+      </h3>
+      <search-content v-else/>
 
       <Row
         class="mt-24"
@@ -91,7 +94,10 @@
           span="8"
           offset="16"
         >
-          <revision-merge :versions="queryResultVersions"/>
+          <revision-merge
+            :disabled="queryResultEmpty"
+            :versions="queryResultVersions"
+          />
         </i-col>
       </Row>
     </Card>
@@ -102,7 +108,7 @@
       class-name="vertical-center-modal"
     >
       <file-import
-        :file-formats="[{extension: 'json', type: 'JSON'}]"
+        :file-formats="[{ extension: 'json', type: 'JSON' }]"
         :error-msg="filterImportError"
         @on-file-read="onFilterFileRead"
       />
@@ -235,6 +241,10 @@
       },
       queryResultVersions() {
         return this.$store.getters.queryResultVersions;
+      },
+      queryResultEmpty() {
+        const result = this.$store.state.repoQueryResult;
+        return !result || Object.values(result).every(entities => !entities.length);
       },
     },
   };

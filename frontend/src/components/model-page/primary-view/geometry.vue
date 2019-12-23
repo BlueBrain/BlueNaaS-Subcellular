@@ -42,7 +42,7 @@
           <Row>
             <i-col span="12">
               <i-form
-                :label-width="120"
+                :label-width="128"
                 @submit.native.prevent
               >
                 <FormItem label="Outer comp. V, m³">

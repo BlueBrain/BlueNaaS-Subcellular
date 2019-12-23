@@ -69,6 +69,7 @@
           <i-button
             type="primary"
             long
+            :disabled="disabled"
           >
             Merge with current model
           </i-button>
@@ -104,7 +105,7 @@
 <script>
   export default {
     name: 'revision-merge',
-    props: ['versions'],
+    props: ['versions', 'disabled'],
     data() {
       return {
         versionKey: null,

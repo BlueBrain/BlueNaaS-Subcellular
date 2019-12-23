@@ -70,7 +70,7 @@
               Graph
             </i-button>
             <i-button
-              :disabled="!selectedSimulation || !selectedSimulation.log"
+              :disabled="!logBtnAvailable"
               @click="showSimLogs"
             >
               Log
@@ -265,7 +265,7 @@
           maxWidth: 160,
         }, {
           title: 'Status',
-          maxWidth: 128,
+          maxWidth: 132,
           render: (h, params) => {
             const statusObj = simulationStatus[params.row.status];
             const tagParams = {
@@ -314,7 +314,7 @@
         this.newSimulationModalVisible = false;
       },
       removeSimulation() {
-        this.$store.dispatch('removeSelectedEntity');
+        this.$store.dispatch('removeSelectedSimulation');
       },
       copySimulation() {
         this.resetNewSimulation();
@@ -407,6 +407,16 @@
         ) return true;
 
         return false;
+      },
+      logBtnAvailable() {
+        return this.selectedSimulation
+          && [
+            SimStatus.INIT,
+            SimStatus.STARTED,
+            SimStatus.CANCELLED,
+            SimStatus.ERROR,
+            SimStatus.FINISHED,
+          ].includes(this.selectedSimulation.status);
       },
     }),
   };

@@ -302,3 +302,30 @@ main {
   padding-left: 32px;
   padding-right: 32px;
 }
+
+.video-progress-slider.ivu-slider {
+  .ivu-slider-button-wrap {
+    height: 22px;
+    top: -10px;
+  }
+  .ivu-slider-button {
+    width: 3px;
+    height: 22px;
+    border-radius: 0;
+    background-color: #515a6e;
+    border: none;
+  }
+
+  .ivu-slider-button:hover, .ivu-slider-button:focus {
+    transform: scale(1.2);
+  }
+}
+
+.v-align-middle {
+  vertical-align: middle;
+}
+
+.form-input-msg {
+  display: block;
+  margin-top: -4px;
+}

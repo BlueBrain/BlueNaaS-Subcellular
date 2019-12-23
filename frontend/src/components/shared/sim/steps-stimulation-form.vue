@@ -40,9 +40,10 @@
     >
       <i-col span="3">
         <InputNumber
-          placeholder="Time, s"
           v-model="stimulus.t"
+          placeholder="Time, s"
           :min="0"
+          :active-change="false"
         />
       </i-col>
 
@@ -94,6 +95,7 @@
           v-model="stimulus.value"
           placeholder="value"
           :min="0"
+          :active-change="false"
         />
         <i-select
           v-else
