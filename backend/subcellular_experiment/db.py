@@ -289,7 +289,6 @@ class Db():
                 })
 
         structures = list(self.db.repo.find(structure_q))
-        found_entities += structures
 
         # Query molecules
         mol_q = {
@@ -360,6 +359,22 @@ class Db():
         species = [spec for spec in tmp_entities if spec['entityType'] == EntityType.SPECIES]
         reactions = [reac for reac in tmp_entities if reac['entityType'] == EntityType.REACTION]
         diffusions = [diff for diff in tmp_entities if diff['entityType'] == EntityType.DIFFUSION]
+
+        # Filter out structures without species
+        spec_structure_ids = [
+            entity_id for spec in species
+            for entity_id
+            in get_def_structure_ids(spec['definition'], structures)
+        ]
+
+        structures_with_species = [
+            structure
+            for structure
+            in structures
+            if structure['_id'] in spec_structure_ids
+        ]
+
+        found_entities += structures_with_species
 
         parameter_ids = []
         function_ids = []
