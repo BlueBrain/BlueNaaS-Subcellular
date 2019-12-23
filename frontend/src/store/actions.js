@@ -305,6 +305,30 @@ export default {
     commit('setModel', cloneDeep(constants.defaultEmptyModel));
   },
 
+  async importExcelRevisionFile({ dispatch, state }, { name, fileContent, targetConcSource }) {
+    // TODO: refactor
+
+    const encodedTableData = arrayBufferToBase64(fileContent);
+
+    const revision = await socket.request('revision_from_excel', encodedTableData);
+
+    /**
+     * Align generated model with revision structuren which has multiple concentrations,
+     * using targetConcSource
+     * TODO: make this a part of modelBuilder
+     */
+    revision.species.forEach((species) => {
+      const concValue = species.concentration;
+      species.concentration = state.revision.config.concSources
+        .reduce((acc, s) => Object.assign(acc, { [s]: s === targetConcSource ? concValue : '0' }), {});
+    });
+
+    dispatch('mergeRevision', {
+      revisionData: revision,
+      source: `file:${name}`,
+    });
+  },
+
   async importRevisionFile({ dispatch, state }, { name, type, fileContent, targetConcSource }) {
     // TODO: DRY
     let revision = null;
@@ -316,6 +340,9 @@ export default {
       const translationResult = await socket.request('convert_from_sbml', { sbml: fileContent });
       bnglStr = translationResult.bngl;
       if (!bnglStr) throw new Error('Error in SBML translation');
+    } else if (type === 'xlsx') {
+      await dispatch('importExcelRevisionFile', { name, fileContent, targetConcSource });
+      return;
     }
 
     try {
