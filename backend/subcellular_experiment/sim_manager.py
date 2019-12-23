@@ -66,7 +66,7 @@ class SimManager():
         self.clients[user_id].remove(ws)
         L.debug('connection for client {} has been removed'.format(user_id))
 
-    def process_worker_message(self, worker, msg, data):
+    def process_worker_message(self, worker, msg, data, cmdid=None):
         if msg == 'status':
             status = data
             worker.status = status
@@ -109,6 +109,14 @@ class SimManager():
         self.process_sim_status(sim_conf, SimStatus.QUEUED)
         self.run_available()
 
+    def get_running_sim_ids(self):
+        return [
+            worker.sim_conf['id']
+            for worker
+            in self.workers
+            if worker.status == SimWorkerStatus.BUSY
+        ]
+
     def request_tmp_sim_log(self, sim_id, cmdid):
         worker = next((
             worker
@@ -133,7 +141,12 @@ class SimManager():
 
     def cancel_sim(self, sim_conf):
         sim_id = sim_conf['id']
-        queue_idx = next((index for (index, sim_conf) in enumerate(self.sim_conf_queue) if sim_conf['id'] == sim_id), None)
+        queue_idx = next((
+            index
+            for (index, sim_conf)
+            in enumerate(self.sim_conf_queue)
+            if sim_conf['id'] == sim_id
+        ), None)
 
         self.process_sim_status(sim_conf, SimStatus.CANCELLED)
 
@@ -142,9 +155,15 @@ class SimManager():
             self.sim_conf_queue.pop(queue_idx)
             return
 
-        worker = next((worker for (index, worker) in enumerate(self.workers) if worker.sim_conf['id'] == sim_id), None)
-        if worker is None:
-            L.debug('sim to cancel is not in queue')
+        worker = next((
+            worker
+            for worker
+            in self.workers
+            if worker.sim_conf and worker.sim_conf['id'] == sim_id
+        ), None)
+
+        if not worker:
+            L.debug('sim to cancel is not in the queue')
             return
 
         L.debug('sending message to worker to cancel the sim')
@@ -230,13 +249,13 @@ class SimManager():
             'status': status
         })
 
-    def send_message(self, user_id, name, message):
+    def send_message(self, user_id, name, message, cmdid=None):
         if user_id not in self.clients:
             return
 
         connections = self.clients[user_id]
         for connection in connections:
-            connection.send_message(name, message)
+            connection.send_message(name, message, cmdid=cmdid)
 
     def run_available(self):
         if len(self.sim_conf_queue) is 0:
