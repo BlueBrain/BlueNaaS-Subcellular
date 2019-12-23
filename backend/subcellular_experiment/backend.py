@@ -12,7 +12,7 @@ from .sim_manager import SimManager, SimWorker
 from .db import Db
 from .geometry import Geometry
 from .model_export import get_exported_model
-from .model_import import from_sbml
+from .model_import import from_sbml, revision_from_excel
 from .logger import get_logger
 
 
@@ -123,6 +123,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if cmd == 'convert_from_sbml':
             sbml_str = msg['data']['sbml']
             self.send_message('from_sbml', from_sbml(sbml_str), cmdid=cmdid)
+
+        if cmd == 'revision_from_excel':
+            self.send_message(
+                'revision_from_excel',
+                revision_from_excel(msg['data']),
+                cmdid=cmdid
+            )
 
         if cmd == 'query_molecular_repo':
             query = msg['data']
