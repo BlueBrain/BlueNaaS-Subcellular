@@ -15,7 +15,7 @@
           :key="logType"
           :value="logType"
         >
-          {{ LogTypeEnum[logType] }}
+          {{ logTypeLabel[logType] }}
         </i-option>
       </i-select>
 
@@ -36,59 +36,65 @@
 
 
 <script>
-  const LogTypeEnum = {
+  import throttle from 'lodash/throttle';
+
+  import simDataStorage from '@/services/sim-data-storage';
+
+
+  const logTypeLabel = {
     bng_stdout: 'BioNetGen stdout',
     bng_stderr: 'BioNetGen stderr',
     nfsim_stdout: 'NFsim stdout',
     nfsim_stderr: 'NFsim stderr',
+    model_bngl: 'BioNetGen model',
+    model_rnf: 'NFSim run script',
     system: 'System',
     rnf: '.rnf',
   };
 
-  const logPriority = [
-    'system',
-    'bng_stderr',
-    'nfsim_stderr',
-    'nfsim_stdout',
-    'bng_stdout',
-    'rnf',
-  ];
-
   export default {
     name: 'sim-log-viewer',
     props: ['simId'],
+    mounted() {
+      this.init();
+      const updateLogThrottled = throttle(this.updateLog.bind(this), 250);
+      simDataStorage.log.subscribe(this.simId, updateLogThrottled);
+    },
+    beforeDestroy() {
+      simDataStorage.log.unsubscribe(this.simId);
+    },
     data() {
-      const sim = this.$store.state.model.simulations.find(s => s.id === this.simId);
-
-      const logTypes = Object.keys(LogTypeEnum)
-        .reduce((a, logType) => a.concat(sim.log[logType] ? logType : []), []);
-
-      const initialLogType = logPriority.find(logType => sim.log[logType])
-        || Object.keys(sim.log)[0];
-
       return {
-        LogTypeEnum,
-        logTypes,
-        simName: sim.name,
-        log: sim.log,
-        logType: initialLogType,
+        logTypeLabel,
+        logTypes: [],
+        logType: '',
+        logContent: '',
         follow: true,
       };
     },
     methods: {
-      onLogTypeChange(logType) {
-        this.logContent = this.log[logType];
-      },
-    },
-    computed: {
-      logContent() {
-        if (!this.log || !this.logType) return '';
+      async init(log = null) {
+        if (log) {
+          this.log = log;
+        } else {
+          this.log = await simDataStorage.log.get(this.simId);
+        }
 
-        return this.log[this.logType];
+        this.logTypes = Object.keys(this.log);
+        this.logType = this.logTypes[0] || '';
+        this.logContent = this.logType ? this.log[this.logType].join('\n') : '';
       },
-    },
-    watch: {
-      logContent() {
+      onLogTypeChange(logType) {
+        this.logContent = this.log[logType].join('\n');
+      },
+      updateLog(log) {
+        if (!this.logType) {
+          this.init(log);
+        } else {
+          this.log = log;
+          this.logContent = log[this.logType].join('\n');
+        }
+
         if (!this.follow) return;
 
         this.$nextTick(() => {
