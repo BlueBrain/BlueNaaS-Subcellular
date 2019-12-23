@@ -6,7 +6,7 @@ import signal
 import tornado
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, SimLog, SimSpatialStepTrace
+from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage, SimSpatialStepTrace, SimLog
 from .logger import get_logger
 
 
@@ -75,18 +75,33 @@ class SimManager():
             L.debug('sim worker reported as {}'.format(data))
             self.on_worker_change()
             self.run_available()
-        elif msg == SimTraceMeta.TYPE:
-            self.process_sim_trace_meta(worker.sim_conf, data)
         elif msg == SimStepTrace.TYPE:
             self.process_sim_step_trace(worker.sim_conf, data)
         elif msg == SimTrace.TYPE:
             self.process_sim_trace(worker.sim_conf, data)
         elif msg == SimStatus.TYPE:
-            self.process_sim_status(data, data['status'], data)
+            self.process_sim_status(worker.sim_conf, data['status'], data)
+        elif msg == SimLogMessage.TYPE:
+            self.process_sim_log_msg(worker.sim_conf, data)
         elif msg == SimLog.TYPE:
             self.process_sim_log(worker.sim_conf, data)
         elif msg == SimSpatialStepTrace.TYPE:
             self.process_sim_spatial_step_trace(worker.sim_conf, data)
+        elif msg == 'tmp_sim_log':
+            # TODO: refactor
+            tmp_sim_log = {
+                'log': data,
+                'userId': worker.sim_conf['userId'],
+                'simId': worker.sim_conf['id']
+            }
+            self.send_message(worker.sim_conf['userId'], 'tmp_sim_log', tmp_sim_log, cmdid=cmdid)
+        elif msg == 'tmp_sim_trace':
+            tmp_sim_trace = {
+                **data,
+                'userId': worker.sim_conf['userId'],
+                'simId': worker.sim_conf['id']
+            }
+            self.send_message(worker.sim_conf['userId'], 'tmp_sim_trace', tmp_sim_trace, cmdid=cmdid)
 
     def schedule_sim(self, sim_conf):
         L.debug('scheduling a simulation')
@@ -125,11 +140,25 @@ class SimManager():
 
         self.send_sim_status(sim_conf, status, context=context)
 
-    def process_sim_log(self, sim_conf, log):
-        self.send_message(sim_conf['userId'], SimLog.TYPE, {
-            **log,
-            'id': sim_conf['id']
+    def process_sim_log_msg(self, sim_conf, log_msg):
+        self.send_message(sim_conf['userId'], SimLogMessage.TYPE, {
+            **log_msg,
+            'simId': sim_conf['id']
         })
+
+    def process_sim_log(self, sim_conf, sim_log):
+        user_id = sim_conf['userId']
+        sim_id = sim_conf['id']
+
+        log = {
+            'log': sim_log,
+            'userId': user_id,
+            'simId': sim_id
+        }
+
+        self.db.create_sim_log(log)
+        # TODO: do we need to send whole log at the end of a simulation?
+        self.send_message(sim_conf['userId'], SimLog.TYPE, log)
 
     def process_sim_spatial_step_trace(self, sim_conf, spatial_step_trace):
         self.send_message(sim_conf['userId'], SimSpatialStepTrace.TYPE, {

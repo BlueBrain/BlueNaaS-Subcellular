@@ -56,8 +56,8 @@ class StepsSim():
         minutes, seconds = divmod(remainder, 60)
         timestamp = '{:02}:{:02}:{:02}'.format(int(hours), int(minutes), int(seconds))
 
-        sim_log = SimLog(f'{timestamp} {message}')
-        self.send_progress(sim_log)
+        sim_log_msg = SimLogMessage(f'{timestamp} {message}')
+        self.send_progress(sim_log_msg)
 
     def run(self):
         self.send_progress(SimStatus(SimStatus.INIT))

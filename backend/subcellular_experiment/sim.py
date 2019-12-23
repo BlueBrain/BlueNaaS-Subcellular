@@ -27,28 +27,30 @@ def decompress_stimulation(stimulation):
     return stimuli
 
 
-class TraceTarget:
-    OBSERVABLE = 'observable'
-    SPECIES = 'species'
-    TET = 'tet'
-
-
 class SimSpatialStepTrace:
     TYPE = 'simSpatialStepTrace'
 
-    def __init__(self, trace):
+    def __init__(self, step_idx, t, trace_data):
         self.type = self.TYPE
-        self.trace = trace
+
+        self.step_idx = step_idx
+        self.t = t
+        self.trace_data = trace_data
 
     def to_dict(self):
-        return self.trace
+        return {
+            'stepIdx': self.step_idx,
+            't': self.t,
+            'data': self.trace_data
+        }
 
 
-class SimLog:
-    TYPE = 'simLog'
+class SimLogMessage:
+    TYPE = 'simLogMessage'
 
     def __init__(self, message, source='system'):
         self.type = self.TYPE
+
         self.message = message
         self.source = source
 
@@ -59,40 +61,32 @@ class SimLog:
         }
 
 
-class SimTraceMeta:
-    TYPE = 'simTraceMeta'
+class SimLog:
+    TYPE = 'simLog'
 
-    def __init__(self, trace_target, n_steps, observables=[], species=[], structures=[]):
-        self.type = self.TYPE
-        self.trace_target = trace_target
-        self.n_steps = n_steps
-        self.observables = observables
-        self.species = species
-        self.structures = structures
+    def __init__(self, log_dict):
+        self.log = log_dict
 
     def to_dict(self):
-        return {
-            'traceTarget': self.trace_target,
-            'nSteps': self.n_steps,
-            'observables': self.observables,
-            'species': self.species,
-            'structures': self.structures
-        }
+        return self.log
 
 
 class SimStepTrace:
     TYPE = 'simStepTrace'
 
-    def __init__(self, t, step_idx, values):
+    def __init__(self, t, step_idx, values, observables):
         self.type = self.TYPE
+
         self.t = t
         self.step_idx = step_idx
         self.values = values
+        self.observables = observables
 
     def to_dict(self):
         return {
             't': self.t,
             'stepIdx': self.step_idx,
+            'observables': self.observables,
             'values': self.values
         }
 
@@ -100,24 +94,20 @@ class SimStepTrace:
 class SimTrace:
     TYPE = 'simTrace'
 
-    def __init__(self, trace_target, times, values, observables=[], species=[], structures=[]):
+    def __init__(self, times, values, observables):
         self.type = self.TYPE
-        self.trace_target = trace_target
+
         self.n_steps = len(times)
         self.times = times
         self.values = values
         self.observables = observables
-        self.species = species
-        self.structures = structures
 
     def to_dict(self):
         return {
-            'traceTarget': self.trace_target,
             'nSteps': self.n_steps,
             'times': self.times,
             'values': self.values,
             'observables': self.observables,
-            'species': self.species,
         }
 
 
