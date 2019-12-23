@@ -10,6 +10,7 @@ import modelBuilder from '@/services/model-builder';
 import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
 import socket from '@/services/websocket';
+import simDataStorage from '@/services/sim-data-storage';
 import constants from '@/constants';
 import modelTools from '@/tools/model-tools';
 
@@ -34,11 +35,13 @@ export default {
     commit('setUser', user);
   },
 
-  removeSelectedEntity({ state, commit }) {
-    if (state.selectedEntity.type === 'simulation') {
-      socket.send('delete_simulation', state.selectedEntity.entity);
-    }
+  removeSelectedSimulation({ state, dispatch }) {
+    simDataStorage.removeSimulation(state.selectedEntity.entity.id);
+    socket.send('delete_simulation', state.selectedEntity.entity);
+    dispatch('removeSelectedEntity');
+  },
 
+  removeSelectedEntity({ state, commit }) {
     commit('removeSelectedEntity');
   },
 
@@ -186,11 +189,16 @@ export default {
       model.simulations.forEach(modelTools.upgradeSimStimulation);
     }
 
-    model.geometry = ModelGeometry.from(model.geometry);
-    await model.geometry.init();
+    // TODO: refactor all those switches
+    if (model.geometry) {
+      model.geometry = ModelGeometry.from(model.geometry);
+      await model.geometry.init();
+    }
 
     commit('loadDbModel', model);
-    dispatch('setStructParamsFromGeometry');
+    if (model.geometry) {
+      dispatch('setStructParamsFromGeometry');
+    }
 
     if (model.public) {
       dispatch('cloneSimulations', model.simulations);
@@ -262,7 +270,7 @@ export default {
     }
 
     const simConfig = Object.assign({
-      id: simulation.id,
+      simId: simulation.id,
       userId: state.user.id,
       model,
     }, simulation);

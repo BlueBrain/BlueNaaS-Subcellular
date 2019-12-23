@@ -13,6 +13,8 @@
   import Plotly from 'plotly.js-basic-dist';
   import { saveAs } from 'file-saver';
 
+  import simDataStorage from '@/services/sim-data-storage';
+
   const layout = {
     xaxis: {
       ticks: 'outside',
@@ -69,20 +71,24 @@
       };
     },
     created() {
-      this.redrawThrottled = throttle(this.redraw, 500);
+      this.redrawThrottled = throttle(this.redraw.bind(this), 250);
     },
     mounted() {
       this.init();
+      simDataStorage.trace.subscribe(this.simId, this.redrawThrottled);
     },
     beforeDestroy() {
       this.redrawThrottled.cancel();
+      simDataStorage.trace.unsubscribe(this.simId);
       Plotly.purge(this.$refs.chart);
     },
     methods: {
-      init() {
-        if (!this.simulation.traceTarget && !this.simulation.times.length) return;
+      async init() {
+        const trace = await simDataStorage.trace.get(this.simId);
 
-        this.chartPointN = this.simulation.values.length;
+        if (!trace || !trace.times.length) return;
+
+        this.chartPointN = trace.values.length;
         Plotly.newPlot(this.$refs.chart, this.getChartData(), layout, config);
         downloadCsvBtn.click = () => this.downloadCsv();
         this.initialized = true;
@@ -96,32 +102,17 @@
         this.chartPointN += xDiffList[0].length;
       },
       getChartData(startIndex = 0) {
-        return this.simulation.traceTarget === 'observable'
-          ? this.observableTargetChartData(startIndex)
-          : this.speciesTargetChartData(startIndex);
-      },
-      observableTargetChartData(startIndex) {
-        return this.simulation.observables.reduce((chartDataArray, observable, idx) => {
-          const concValues = this.simulation.values
+        const trace = simDataStorage.trace.getCached(this.simId);
+
+        return trace.observables.reduce((chartDataArray, observable, idx) => {
+          const molCounts = trace.values
             .slice(startIndex)
             .map(concentrations => concentrations[idx]);
+
           return chartDataArray.concat({
-            x: this.simulation.times.slice(startIndex),
-            y: concValues,
-            name: observable.name,
-            type: 'scattergl',
-          });
-        }, []);
-      },
-      speciesTargetChartData(startIndex) {
-        return this.simulation.observables.reduce((chartDataArray, observable) => {
-          const concValues = this.simulation.values
-            .slice(startIndex)
-            .map(concentrations => observable.specIdxs.reduce((sum, specIdx) => sum + concentrations[specIdx], 0));
-          return chartDataArray.concat({
-            x: this.simulation.times.slice(startIndex),
-            y: concValues,
-            name: observable.name,
+            x: trace.times.slice(startIndex),
+            y: molCounts,
+            name: observable,
             type: 'scattergl',
           });
         }, []);

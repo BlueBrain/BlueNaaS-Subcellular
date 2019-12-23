@@ -208,8 +208,6 @@ class ModelGeometry {
 
   valid = false;
 
-  parsed = false;
-
   initialized = false;
 
   meta = null;
@@ -234,8 +232,8 @@ class ModelGeometry {
 
   static from(modelGeometrySrc) {
     const modelGeometry = new ModelGeometry();
-    const { name, id, description, initialized, parsed, meta, mesh } = modelGeometrySrc;
-    Object.assign(modelGeometry, { name, id, description, initialized, parsed, meta });
+    const { name, id, description, initialized, meta, mesh } = modelGeometrySrc;
+    Object.assign(modelGeometry, { name, id, description, initialized, meta });
 
     modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw);
 
@@ -254,7 +252,7 @@ class ModelGeometry {
     return modelGeometry;
   }
 
-  get complete() {
+  get hasCompleteRawMesh() {
     const rawMesh = this.mesh.volume.raw;
     const { meta } = this;
 
@@ -267,20 +265,37 @@ class ModelGeometry {
       && meta.structures && meta.structures.length;
   }
 
+  get hasVolumeMesh() {
+    const { nodes, faces, elements } = this.mesh.volume;
+
+    return nodes.length
+      && faces.length
+      && elements.length;
+  }
+
+  get hasSurfaceMesh() {
+    Object.keys(this.mesh.surface).length;
+  }
+
   async init() {
-    if (!this.parsed) {
+    if (this.hasSurfaceMesh) return;
+
+    if (!this.hasVolumeMesh) {
       await this.parseTetGen();
     }
 
-    if (!this.initialized) {
-      await this.generateSurfaceMeshes();
-    }
+    this.removeRawMesh();
+
+    await this.generateSurfaceMeshes();
+  }
+
+  removeRawMesh() {
+    delete this.mesh.volume.raw;
   }
 
   async addTetGenMesh({ nodes, faces, elements }) {
     this.mesh.volume.raw = Object.freeze({ nodes, faces, elements });
     await this.parseTetGen();
-    this.parsed = true;
   }
 
   addMeta({ meshNameRoot, scale, structures, freeDiffusionBoundaries }) {
@@ -353,13 +368,11 @@ class ModelGeometry {
     });
 
     await Promise.all([parseFaces, parseElements]);
-
-    this.parsed = true;
   }
 
   getClean() {
     const { id, name, description, meta, structures } = this;
-    const rawMesh = this.mesh.volume.raw;
+    const { nodes, faces, elements } = this.mesh.volume;
 
     return {
       id,
@@ -369,7 +382,9 @@ class ModelGeometry {
       structures,
       mesh: {
         volume: {
-          raw: rawMesh,
+          nodes,
+          faces,
+          elements,
         },
       },
     };

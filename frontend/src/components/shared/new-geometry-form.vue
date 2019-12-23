@@ -237,7 +237,7 @@
 
         this.modelGeometry.addMeta(geometryMeta);
 
-        if (this.modelGeometry.complete) {
+        if (this.modelGeometry.hasCompleteRawMesh) {
           this.initModelGeometry();
         }
       },
@@ -262,7 +262,7 @@
 
         this.modelGeometry.mesh.volume.raw[meshTypeMap[fileExtension]] = content;
 
-        if (this.modelGeometry.complete) {
+        if (this.modelGeometry.hasCompleteRawMesh) {
           this.initModelGeometry();
         }
       },
@@ -302,7 +302,7 @@
     computed: {
       geometryValid() {
         return !!(
-          this.modelGeometry.complete
+          this.modelGeometry.hasCompleteRawMesh
           && this.modelGeometry.meta
           && this.modelGeometry.name
         );

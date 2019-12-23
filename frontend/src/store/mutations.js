@@ -88,64 +88,25 @@ export default {
     state.model[entityTypeCollectionMap[entityType]].push(entity);
   },
 
-  setSimulationStatusById(state, { id, status }) {
-    const simulationIndex = state.model.simulations.map(simulation => simulation.id).indexOf(id);
+  setSimulationStatusById(state, { id: simId, status }) {
+    const simulationIndex = state.model.simulations.map(simulation => simulation.id).indexOf(simId);
     Vue.set(state.model.simulations[simulationIndex], 'status', status);
   },
 
-  setSimStatus(state, simStatus) {
+  setSimStatus(state, status) {
     // TODO: deprecate in favor of upper one
-    const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simStatus.id);
+    const simIndex = state.model.simulations.map(sim => sim.id).indexOf(status.simId);
 
     const currentSim = state.model.simulations[simIndex];
-    const simulation = Object.assign({}, currentSim, simStatus);
+    const simulation = Object.assign({}, currentSim, status);
 
     Vue.set(state.model.simulations, simIndex, simulation);
 
     // TODO: consider refactoring .selectedEntity
-    if (get(state, 'selectedEntity.entity.id') === simStatus.id) {
+    if (get(state, 'selectedEntity.entity.id') === status.simId) {
       Vue.set(state.selectedEntity, 'entity', cloneDeep(simulation));
     }
   },
-
-  addSimLog(state, simLog) {
-    const sim = state.model.simulations
-      .find(sim => sim.id === simLog.id);
-
-    if (!sim) return;
-
-    if (!sim.log || !sim.log.system) sim.log = { system: '' };
-
-    sim.log.system += `${simLog.message}\n`;
-  },
-
-  setSimTraceMeta(state, simTraceMeta) {
-    const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simTraceMeta.id);
-    const currentSimulation = state.model.simulations[simIndex];
-    const simulation = Object.assign({}, currentSimulation, simTraceMeta);
-    Vue.set(state.model.simulations, simIndex, simulation);
-  },
-
-  addSimStepTrace(state, simStepTrace) {
-    const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simStepTrace.id);
-
-    if (simIndex === -1) return;
-
-    const currentSimulation = state.model.simulations[simIndex];
-
-    const simulation = Object.assign({}, currentSimulation);
-    simulation.times.push(simStepTrace.t);
-    simulation.values.push(Uint32Array.from(simStepTrace.values));
-    simulation.currentStepIdx = simStepTrace.stepIdx;
-    Vue.set(state.model.simulations, simIndex, Object.freeze(simulation));
-  },
-
- setSimTrace(state, simTrace) {
-  const simIndex = state.model.simulations.map(sim => sim.id).indexOf(simTrace.id);
-  const currentSimulation = state.model.simulations[simIndex];
-  const simulation = Object.assign({}, currentSimulation, simTrace);
-  Vue.set(state.model.simulations, simIndex, simulation);
- },
 
   setSimulations(state, simulations) {
     Vue.set(state.model, 'simulations', simulations);
