@@ -22,7 +22,9 @@ setup(
         'pymongo',
         'pysb==1.9.1',
         'cython',
-        'sympy'
+        'sympy',
+        'msgpack',
+        'xlrd'
     ],
     tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=[]),

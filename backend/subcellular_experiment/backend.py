@@ -2,7 +2,6 @@
 import os
 import time
 import json
-import uuid
 
 import tornado.ioloop
 import tornado.websocket

@@ -195,9 +195,6 @@
     solver: null,
     solverConf: null,
     annotation: '',
-    times: [],
-    values: [],
-    log: null,
   };
 
   const simulationStatus = {
@@ -333,9 +330,6 @@
           name,
           id: uuidv1(),
           status: SimStatus.CREATED,
-          values: [],
-          times: [],
-          log: null,
         }, pick(this.selectedSimulation, ['userId', 'modelId', 'solver', 'solverConf', 'annotation']));
         this.onOk();
       },

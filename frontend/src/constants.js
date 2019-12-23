@@ -3,7 +3,6 @@
 
 
 const ServerMessageType = {
-  SIM_TRACE_META: 'simTraceMeta',
   SIM_TRACE: 'simTrace',
   SIM_STEP_TRACE: 'simStepTrace',
   SIM_STATUS: 'simStatus',

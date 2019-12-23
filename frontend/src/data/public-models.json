@@ -5048,7 +5048,7 @@
     },
     "simulations": [
       {
-        "valid": "steps",
+        "valid": true,
         "id": "f29ea5b0-6059-11e9-bb91-4f0e460c8396",
         "userId": "347d139b-4ea6-4aa4-aba2-93a43e95338f",
         "modelId": "44133681-cadf-4161-99dc-56c8adf59dc9",
@@ -5134,10 +5134,7 @@
             }
           ]
         },
-        "annotation": "",
-        "times": [],
-        "values": [],
-        "log": null
+        "annotation": ""
       }
     ]
   }

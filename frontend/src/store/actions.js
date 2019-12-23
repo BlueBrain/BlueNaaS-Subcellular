@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import pick from 'lodash/pick';
 import saveAs from 'file-saver';
 import uuidv4 from 'uuid/v4';
+import { decode, encode } from '@msgpack/msgpack';
 
 import * as Sentry from '@sentry/browser';
 
@@ -13,6 +14,7 @@ import socket from '@/services/websocket';
 import simDataStorage from '@/services/sim-data-storage';
 import constants from '@/constants';
 import modelTools from '@/tools/model-tools';
+import arrayBufferToBase64 from '@/tools/array-buffer-to-base64';
 
 
 export default {
@@ -339,7 +341,12 @@ export default {
 
     if (type === 'ebngl') {
       // TODO: add content type and schema validation
-      model = JSON.parse(fileContent);
+      try {
+        model = decode(fileContent);
+      } catch (error) {
+        model = JSON.parse(fileContent);
+      }
+
 
       /** ####################### START OF TEMPORARY BLOCK ###################### */
       if (model.geometry) {
