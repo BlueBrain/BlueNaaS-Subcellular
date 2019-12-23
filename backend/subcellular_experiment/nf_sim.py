@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget, SimLog, Sim, StimulusType, decompress_stimulation
+from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage, Sim, StimulusType, decompress_stimulation
 from .bngl_extended_model import BnglExtModel
 from .logger import get_logger
 
@@ -25,8 +25,8 @@ class NfSim(Sim):
         self.prepare_tmp_dir()
 
     def log(self, message, source=None):
-        sim_log = SimLog(message, source)
-        self.send_progress(sim_log)
+        sim_log_message = SimLogMessage(message, source)
+        self.send_progress(sim_log_message)
 
     def generate_rnf(self):
         solver_conf = self.sim_config['solverConf']
@@ -76,15 +76,14 @@ class NfSim(Sim):
         return rnf
 
     def run(self):
-        log = {}
-
         bngl_ext_model = BnglExtModel(self.sim_config['model'])
         bngl_str = bngl_ext_model.to_bngl(write_xml_op=True)
 
-        rnf_str = self.generate_rnf()
-        log['rnf'] = rnf_str
+        self.log(bngl_str, source='model_bngl')
 
-        L.debug(rnf_str)
+        rnf_str = self.generate_rnf()
+        self.log(rnf_str, source='model_rnf')
+
         with open('model.bngl', 'w') as model_file:
             model_file.write(bngl_str)
         with open('model.rnf', 'w') as rnf_file:
@@ -130,14 +129,13 @@ class NfSim(Sim):
             return
 
         sim_traces = pd.read_csv('model.gdat')
-        observables = [{'name': col} for col in sim_traces.columns.tolist()[1:]]
+        observables = [col for col in sim_traces.columns.tolist()[1:]]
         times = np.array(sim_traces.values.tolist())[:,0]
         values = np.array(sim_traces.values.tolist())[:,1:]
 
-        self.send_progress(SimTrace(TraceTarget.OBSERVABLE,
-                                    times,
+        self.send_progress(SimTrace(times,
                                     values,
-                                    observables=observables))
+                                    observables))
 
         self.send_progress(SimStatus(SimStatus.FINISHED))
 
