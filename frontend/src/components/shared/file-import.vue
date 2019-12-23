@@ -42,6 +42,10 @@
 
 
 <script>
+  import get from 'lodash/get';
+
+  const defaultMode = 'text';
+
   export default {
     name: 'file-import',
     props: ['fileFormats', 'errorMsg', 'descriptionText', 'loading', 'disabled'],
@@ -49,7 +53,27 @@
       beforeUpload(file) {
         const reader = new FileReader();
         reader.onload = e => this.onFileRead(file.name, e.target.result);
-        reader.readAsText(file);
+
+        const ext = file.name
+          .split('.')
+          .pop()
+          .toLowerCase();
+
+        const fileFormat = this.fileFormats
+          .find(format => format.extension === ext);
+
+        const mode = get(fileFormat, 'mode', defaultMode);
+
+        switch (mode) {
+        case 'text':
+          reader.readAsText(file);
+          break;
+        case 'binary':
+          reader.readAsArrayBuffer(file);
+          break;
+        default:
+          throw new Error(`Unknown file read mode ${mode} for file ${file.name}`);
+        }
 
         // prevent default action to upload data to remote api
         return false;

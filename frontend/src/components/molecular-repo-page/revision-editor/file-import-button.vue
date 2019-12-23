@@ -63,12 +63,15 @@
     bngl: 'bngl',
     xml: 'sbml',
     json: 'ebngl',
+    ebngl: 'ebngl',
+    xlsx: 'xlsx',
   };
 
   const importFileFormats = [
     { type: 'BNGL', extension: 'bngl' },
-    { type: 'eBNGL', extension: 'json' },
+    { type: 'eBNGL', extension: 'ebngl', mode: 'binary' },
     { type: 'SBML*', extension: 'xml' },
+    { type: 'Excel', extension: 'xlsx', mode: 'binary' },
   ];
 
   export default {
@@ -120,7 +123,7 @@
         this.loading = true;
         const fileExtNorm = name
           .split('.')
-          .slice(-1)[0]
+          .pop()
           .toLowerCase();
 
         this.type = typeByExt[fileExtNorm];

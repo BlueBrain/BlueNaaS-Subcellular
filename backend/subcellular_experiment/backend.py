@@ -82,7 +82,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             db.update_simulation(msg['data'])
 
         if cmd == 'delete_simulation':
-            db.delete_simulation(msg['data'])
+            sim = msg['data']
+            sim_manager.cancel_sim(sim)
+            db.delete_simulation(sim)
+            db.delete_sim_spatial_traces(sim)
+            db.delete_sim_trace(sim)
+            db.delete_sim_log(sim)
 
         if cmd == 'get_simulations':
             model_id = msg['data']['modelId']

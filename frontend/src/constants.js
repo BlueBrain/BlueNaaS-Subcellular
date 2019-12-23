@@ -35,7 +35,7 @@ const ModelExportFormats = {
 
 const ModelFormatExtensions = {
   bngl: 'bngl',
-  ebngl: 'json',
+  ebngl: 'ebngl',
   pysb_flat: 'py',
   sbml: 'sbml',
   steps: 'py',

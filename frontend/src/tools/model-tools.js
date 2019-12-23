@@ -11,14 +11,6 @@ const { StructureType, StimulusTypeEnum } = constants;
 function createSimulationTemplate(simulation) {
   const simCleanupDefaults = {
     status: constants.SimStatus.CREATED,
-    currentStepIdx: null,
-    observables: null,
-    species: null,
-    nSteps: null,
-    traceTarget: null,
-    times: [],
-    values: [],
-    log: null,
     userId: null,
     id: null,
     _id: null,

@@ -31,6 +31,10 @@
       type: 'ebngl',
       label: 'eBNGL',
     },
+    ebngl: {
+      type: 'ebngl',
+      label: 'eBNGL',
+    },
     bngl: {
       type: 'bngl',
       label: 'BNGL',
@@ -65,7 +69,13 @@
         this.format = formatByExt[fileExtNorm];
         const reader = new FileReader();
         reader.onload = e => this.onFileRead(e.target.result);
-        reader.readAsText(file);
+
+        // TODO: refactor
+        if (fileExtNorm === 'ebngl') {
+          reader.readAsArrayBuffer(file);
+        } else {
+          reader.readAsText(file);
+        }
 
         // prevent default action to upload data to remote api
         return false;

@@ -128,7 +128,7 @@ export default {
   },
 
   async loadDbModel({ commit, dispatch, state }, dbModel) {
-    const model = { ...dbModel };
+    const model = cloneDeep(dbModel);
     if (model.geometry && !model.geometry.name) {
       model.geometry = await storage.getItem(`geometry:${model.geometry.id}`);
     }
@@ -214,6 +214,17 @@ export default {
       .map(sim => modelTools.createSimulationTemplate(sim));
 
     const model = Object.assign({}, state.model, { simulations: cleanSimulations });
+
+    if (model.geometry) {
+      model.geometry = model.geometry.getClean();
+    }
+
+    if (exportFormat === 'ebngl') {
+      const modelBinaryData = encode(model);
+      const fileExtension = constants.ModelFormatExtensions[exportFormat];
+      saveAs(new Blob([modelBinaryData]), `${state.model.name}.${fileExtension}`);
+      return;
+    }
 
     const { fileContent: modelData } = await socket.request('get_exported_model', {
       model,
