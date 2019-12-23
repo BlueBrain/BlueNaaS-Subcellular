@@ -56,6 +56,22 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             sim_conf = msg['data']
             sim_manager.schedule_sim(sim_conf)
 
+        if cmd == 'get_log':
+            sim_id = msg['data']
+            if sim_id in sim_manager.get_running_sim_ids():
+                sim_manager.request_tmp_sim_log(sim_id, cmdid)
+            else:
+                sim_log = db.get_sim_log(sim_id)
+                self.send_message('log', sim_log, cmdid=cmdid)
+
+        if cmd == 'get_trace':
+            sim_id = msg['data']
+            if sim_id in sim_manager.get_running_sim_ids():
+                sim_manager.request_tmp_sim_trace(sim_id, cmdid)
+            else:
+                sim_trace = db.get_sim_trace(sim_id)
+                self.send_message('trace', sim_trace, cmdid=cmdid)
+
         if cmd == 'cancel_simulation':
             sim_conf = msg['data']
             sim_manager.cancel_sim(sim_conf)
@@ -150,6 +166,17 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             self.send_message('branch_latest_rev', {
                 'rev': branch_latest_rev
             }, cmdid=cmdid)
+
+        if cmd == 'get_spatial_step_trace':
+            sim_id = msg['data']['simId']
+            step_idx = msg['data']['stepIdx']
+            spatial_step_trace = db.get_spatial_step_trace(sim_id, step_idx)
+            self.send_message('spatial_step_trace', spatial_step_trace, cmdid=cmdid)
+
+        if cmd == 'get_last_spatial_step_trace_idx':
+            sim_id = msg['data']['simId']
+            step_idx = db.get_last_spatial_step_trace_idx(sim_id)
+            self.send_message('last_spatial_step_trace_idx', step_idx, cmdid=cmdid)
 
     def on_close(self):
         self.closed = True

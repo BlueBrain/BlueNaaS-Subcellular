@@ -109,6 +109,28 @@ class SimManager():
         self.process_sim_status(sim_conf, SimStatus.QUEUED)
         self.run_available()
 
+    def request_tmp_sim_log(self, sim_id, cmdid):
+        worker = next((
+            worker
+            for worker
+            in self.workers
+            if worker.sim_conf and worker.sim_conf['id'] == sim_id
+        ), None)
+
+        if worker:
+            worker.ws.send_message('get_tmp_sim_log', cmdid=cmdid)
+
+    def request_tmp_sim_trace(self, sim_id, cmdid):
+        worker = next((
+            worker
+            for worker
+            in self.workers
+            if worker.sim_conf['id'] == sim_id
+        ), None)
+
+        if worker:
+            worker.ws.send_message('get_tmp_sim_trace', cmdid=cmdid)
+
     def cancel_sim(self, sim_conf):
         sim_id = sim_conf['id']
         queue_idx = next((index for (index, sim_conf) in enumerate(self.sim_conf_queue) if sim_conf['id'] == sim_id), None)
@@ -161,45 +183,50 @@ class SimManager():
         self.send_message(sim_conf['userId'], SimLog.TYPE, log)
 
     def process_sim_spatial_step_trace(self, sim_conf, spatial_step_trace):
-        self.send_message(sim_conf['userId'], SimSpatialStepTrace.TYPE, {
+        user_id = sim_conf['userId']
+
+        self.db.create_sim_spatial_step_trace({
             **spatial_step_trace,
-            'id': sim_conf['id']
+            'userId': user_id,
+            'simId': sim_conf['id']
         })
 
-    def process_sim_trace_meta(self, sim_conf, trace_meta):
-        msg = {
-            **trace_meta,
-            'id': sim_conf['id']
-        }
-        self.db.add_sim_trace_meta(msg)
-        self.send_message(sim_conf['userId'], SimTraceMeta.TYPE, msg)
+        self.send_message(sim_conf['userId'], SimSpatialStepTrace.TYPE, {
+            **spatial_step_trace,
+            'simId': sim_conf['id']
+        })
 
     def process_sim_step_trace(self, sim_conf, step_trace):
         msg = {
             **step_trace,
-            'id': sim_conf['id']
+            'simId': sim_conf['id']
         }
-        self.db.add_sim_step_trace(msg)
         self.send_message(sim_conf['userId'], SimStepTrace.TYPE, msg)
 
     def process_sim_trace(self, sim_conf, sim_trace):
         user_id = sim_conf['userId']
         sim_id = sim_conf['id']
 
-        result = {
-            'id': sim_id,
+        self.db.create_sim_trace({
+            **sim_trace,
+            'simId': sim_id,
+            'userId': user_id,
+        })
+
+        status_message = {
+            'simId': sim_id,
             'userId': user_id,
             'status': SimStatus.FINISHED
         }
 
-        result.update(sim_trace)
-        self.db.update_simulation(result)
-        self.send_message(user_id, SimTrace.TYPE, result)
+        status_message.update(sim_trace)
+        # self.db.update_simulation(result)
+        self.send_message(user_id, SimTrace.TYPE, status_message)
 
     def send_sim_status(self, sim_conf, status, context={}):
         self.send_message(sim_conf['userId'], SimStatus.TYPE, {
             **context,
-            'id': sim_conf['id'],
+            'simId': sim_conf['id'],
             'status': status
         })
 

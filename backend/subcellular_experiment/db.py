@@ -110,6 +110,19 @@ class Db():
             ('deleted', pymongo.ASCENDING)
         ], unique=True, background=True)
 
+        self.db.simSpatialStepTraces.create_index([
+            ('simId', pymongo.ASCENDING),
+            ('stepIdx', pymongo.ASCENDING),
+        ], unique=True, background=True)
+
+        self.db.simTraces.create_index([
+            ('simId', pymongo.ASCENDING)
+        ], unique=True, background=True)
+
+        self.db.simLogs.create_index([
+            ('simId', pymongo.ASCENDING)
+        ], unique=True, background=True)
+
     def create_geometry(self, geometry_config):
         db_geometry = {
             'name': geometry_config['name'],
@@ -161,31 +174,47 @@ class Db():
             '$set': simulation
         })
 
-    def add_sim_step_trace(self, step_trace_data):
-        self.db.simulations.update_one({
-            'id': step_trace_data['id']
-        }, {
-            '$push': {
-                'values': step_trace_data['values'],
-                'times': step_trace_data['t']
-            },
-            '$set': {
-                'currentStepIdx': step_trace_data['stepIdx']
-            }
+    def create_sim_spatial_step_trace(self, spatial_step_trace):
+        self.db.simSpatialStepTraces.insert_one(spatial_step_trace)
+
+    def create_sim_trace(self, sim_trace):
+        self.db.simTraces.insert_one(sim_trace)
+
+    def delete_sim_trace(self, simulation):
+        self.db.simTraces.delete_many({ 'simId': simulation['id'] })
+
+    def get_sim_trace(self, sim_id):
+        return self.db.simTraces.find_one({ 'simId': sim_id })
+
+    def create_sim_log(self, sim_log):
+        self.db.simLogs.insert_one(sim_log)
+
+    def get_sim_log(self, sim_id):
+        return self.db.simLogs.find_one({ 'simId': sim_id })
+
+    def delete_sim_log(self, simulation):
+        self.db.simLogs.delete_many({ 'simId': simulation['id'] })
+
+    def get_spatial_step_trace(self, sim_id, step_idx):
+        return self.db.simSpatialStepTraces.find_one({
+            'simId': sim_id,
+            'stepIdx': step_idx,
         })
 
-    def add_sim_trace_meta(self, trace_meta):
-        self.db.simulations.update_one({
-            'id': trace_meta['id']
-        }, {
-            '$set': {
-                'observables': trace_meta['observables'],
-                'species': trace_meta['species'],
-                'structures': trace_meta['structures'],
-                'traceTarget': trace_meta['traceTarget'],
-                'nSteps': trace_meta['nSteps']
-            }
-        })
+    def get_last_spatial_step_trace_idx(self, sim_id):
+        spatial_step_traces = self.db.simSpatialStepTraces.find(
+            {'simId': sim_id},
+            projection=['stepIdx'],
+            sort=[('stepIdx', pymongo.DESCENDING)],
+            limit=1
+        )
+
+        try:
+            last_idx = spatial_step_traces[0]['stepIdx']
+        except IndexError:
+            last_idx = None
+
+        return last_idx
 
     def delete_simulation(self, simulation):
         self.db.simulations.update_one({
@@ -195,6 +224,11 @@ class Db():
             '$set': {
                 'deleted': True
             }
+        })
+
+    def delete_sim_spatial_traces(self, simulation):
+        self.db.simSpatialStepTraces.delete_many({
+            'simId': simulation['id']
         })
 
     def query_branch_names(self, search_str):

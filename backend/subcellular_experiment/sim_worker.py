@@ -15,7 +15,7 @@ import websocket
 import numpy as np
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace,SimTraceMeta, SimStepTrace, TraceTarget, SimLog
+from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
@@ -25,6 +25,58 @@ from .logger import get_logger
 L = get_logger(__name__)
 
 BNG_MODEL_EXPORT_TIMEOUT = 5
+
+
+class SimTmpDataStore():
+    def __init__(self):
+        self.log = {}
+        self.n_steps = 0
+        self.observables = []
+        self.times = []
+        self.values = []
+
+    def add(self, sim_data):
+        if sim_data.type == SimLogMessage.TYPE:
+            self._add_log(sim_data)
+        elif sim_data.type == SimStepTrace.TYPE:
+            self._add_step_trace(sim_data)
+        elif sim_data.type == SimTrace.TYPE:
+            self._set_trace(sim_data)
+
+    def get_log(self):
+        return self.log
+
+    def get_trace(self):
+        return {
+            'nSteps': self.n_steps,
+            'observables': self.observables,
+            'times': self.times,
+            'values': self.values
+        }
+
+    def _add_log(self, sim_log_msg: SimLogMessage):
+        source = sim_log_msg.source
+        message = sim_log_msg.message
+
+        if source not in self.log:
+            self.log[source] = [message]
+        else:
+            self.log[source].append(message)
+
+
+    def _add_step_trace(self, step_trace: SimStepTrace):
+        self.n_steps = step_trace.step_idx + 1
+        self.times.append(step_trace.t)
+        self.values.append(step_trace.values)
+
+        if not len(self.observables):
+            self.observables = step_trace.observables
+
+    def _set_trace(self, trace: SimTrace):
+        self.observables = trace.observables
+        self.times = trace.times
+        self.values = trace.values
+        self.n_steps = trace.n_steps
 
 
 class SimWorker():
@@ -76,8 +128,14 @@ class SimWorker():
         if msg == 'run_sim':
             self.on_run_sim_msg(sim_config)
 
-        if msg == 'cancel_sim':
+        elif msg == 'cancel_sim':
             self.on_cancel_sim_msg()
+
+        elif msg == 'get_tmp_sim_log':
+            self.send_message('tmp_sim_log', self.sim_tmp_data_store.get_log(), cmdid=cmdid)
+
+        elif msg == 'get_tmp_sim_trace':
+            self.send_message('tmp_sim_trace', self.sim_tmp_data_store.get_trace(), cmdid=cmdid)
 
     def on_cancel_sim_msg(self):
         L.debug('send SIGTERM to simulation process')
@@ -85,6 +143,7 @@ class SimWorker():
 
     def on_run_sim_msg(self, sim_config):
         self.send_message('status', SimWorkerStatus.BUSY)
+        self.sim_tmp_data_store = SimTmpDataStore()
 
         def wait_for_sim_result():
             L.debug('creating process to run a sim')
@@ -96,9 +155,16 @@ class SimWorker():
             while sim_running:
                 sim_data = self.sim_queue.get()
                 if sim_data is not None:
+                    self.sim_tmp_data_store.add(sim_data)
+
+                    # TODO: refactor this switch
+                    # simTrace will be sent at the end of the simulation by code below
+                    if sim_data.type == SimTrace.TYPE:
+                        continue
+
                     sim_data_dict = sim_data.to_dict()
                     sim_data_dict.update({
-                        'id': sim_config['id'],
+                        'simId': sim_config['id'],
                         'userId': sim_config['userId']
                     })
                     self.send_message(sim_data.type, sim_data_dict)
@@ -109,10 +175,15 @@ class SimWorker():
             self.sim_proc.join()
             self.sim_proc = None
 
+            self.send_message('simLog', self.sim_tmp_data_store.get_log())
+            self.send_message('simTrace', self.sim_tmp_data_store.get_trace())
+
+            self.sim_tmp_data_store = None
+
             if self.terminating:
                 self.teardown()
 
-            # TODO: consider recreaction of proc_queue
+            # TODO: consider recreation of proc_queue
             # might it be damaged after process terminates?
             self.send_message('status', SimWorkerStatus.READY)
 
@@ -142,7 +213,7 @@ class SimWorker():
 def run_sim_proc(result_queue, sim_config):
     def on_sigterm(signal, frame):
         L.debug('got SIGTERM on simulation process')
-        result_queue.put(SimLog('STOP'))
+        result_queue.put(SimLogMessage('STOP'))
         result_queue.put(None)
         sys.exit(0)
 
@@ -169,7 +240,7 @@ def run_sim_proc(result_queue, sim_config):
         L.debug('Sim error')
         L.exception(error)
         sim_status = SimStatus(SimStatus.ERROR)
-        sim_log = SimLog(str(error))
+        sim_log = SimLogMessage(str(error))
         result_queue.put(sim_log)
         result_queue.put(sim_status)
         result_queue.put(None)
