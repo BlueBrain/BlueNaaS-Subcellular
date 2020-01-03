@@ -286,8 +286,8 @@ class ModelGeometryRenderer {
     const colorBufferAttr = new BufferAttribute(colorBuffer, 3);
 
     const geometry = new BufferGeometry();
-    geometry.addAttribute('position', positionBufferAttr);
-    geometry.addAttribute('color', colorBufferAttr);
+    geometry.setAttribute('position', positionBufferAttr);
+    geometry.setAttribute('color', colorBufferAttr);
 
     const texture = new TextureLoader().load('/disc.png');
 
