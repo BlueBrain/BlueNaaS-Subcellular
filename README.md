@@ -36,6 +36,10 @@ To start both dev envs in a single session use:
 make run_dev
 ```
 
+## Usage
+
+See [Guidebook](https://humanbrainproject.github.io/hbp-sp6-guidebook/online_usecases/subcellular_level/subcellular_app/subcellular_app.html)
+
 ## Deployment
 
 Makefile has a `create_oo_deployment` target that will deploy current version of the app to an OpenShift instance.
