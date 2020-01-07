@@ -58,7 +58,6 @@ const UnitType = {
   VOL_REAC_RATE: 'volReacRate',
   SURF_REAC_RATE: 'surfReacRate',
   TIME: 'time',
-  OTHER: 'other',
 };
 
 const units = [{
@@ -76,12 +75,6 @@ const units = [{
 }, {
   val: 's',
   type: UnitType.TIME,
-}, {
-  val: 'item',
-  type: UnitType.OTHER,
-}, {
-  val: 'other',
-  type: UnitType.OTHER,
 }];
 
 const SimSolver = {

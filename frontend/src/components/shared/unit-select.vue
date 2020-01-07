@@ -37,7 +37,6 @@
     [UnitType.VOL_REAC_RATE]: 'Vol. reac rate',
     [UnitType.SURF_REAC_RATE]: 'Surf. reac rate',
     [UnitType.TIME]: 'Time',
-    [UnitType.OTHER]: 'Other',
   };
 
   export default {

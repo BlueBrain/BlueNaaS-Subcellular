@@ -27,7 +27,7 @@
         @input="onParameterChange"
       />
     </FormItem>
-    <FormItem label="Unit *">
+    <FormItem label="Unit">
       <unit-select
         ref="unitSelect"
         v-model="parameter.unit"
@@ -73,7 +73,7 @@
         this.$emit('input', this.parameter);
       },
       isValid() {
-        return this.parameter.name.trim() && this.parameter.definition && this.parameter.unit;
+        return this.parameter.name.trim() && this.parameter.definition;
       },
       onDefinitionInputTab() {
         this.$refs.unitSelect.focus();

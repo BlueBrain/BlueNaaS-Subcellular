@@ -127,7 +127,7 @@
           }),
         }, {
           title: 'Unit',
-          render: (h, params) => h('span', get(params, 'row.unit.val'), '-'),
+          render: (h, params) => h('span', get(params, 'row.unit.val'), ''),
           maxWidth: 80,
         }, {
           title: 'Annotation',
