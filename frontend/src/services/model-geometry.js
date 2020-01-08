@@ -277,14 +277,14 @@ class ModelGeometry {
     Object.keys(this.mesh.surface).length;
   }
 
-  async init() {
+  async init({ removeRawMesh } = { removeRawMesh: true }) {
     if (this.hasSurfaceMesh) return;
 
     if (!this.hasVolumeMesh) {
       await this.parseTetGen();
     }
 
-    this.removeRawMesh();
+    if (removeRawMesh) this.removeRawMesh();
 
     await this.generateSurfaceMeshes();
   }
@@ -368,6 +368,24 @@ class ModelGeometry {
     });
 
     await Promise.all([parseFaces, parseElements]);
+  }
+
+  getRaw() {
+    const { id, name, description, meta, structures } = this;
+    const { raw } = this.mesh.volume;
+
+    return {
+      id,
+      name,
+      description,
+      meta,
+      structures,
+      mesh: {
+        volume: {
+          raw,
+        },
+      },
+    }
   }
 
   getClean() {
