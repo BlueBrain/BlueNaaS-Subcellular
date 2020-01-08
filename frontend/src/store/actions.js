@@ -450,7 +450,7 @@ export default {
       /** ####################### END OF TEMPORARY BLOCK ###################### */
 
 
-      const simFreeModel = Object.assign({}, model, { simulations: [], id: uuidv4() });
+      const simFreeModel = Object.assign({ id: uuidv4() }, model, { simulations: [] });
       commit('setModel', simFreeModel);
 
       dispatch('cloneSimulations', model.simulations);
