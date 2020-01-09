@@ -8,6 +8,8 @@ import socket from '@/services/websocket';
 import storage from '@/services/storage';
 
 
+const MAX_INMEM_SPATIAL_STEP_TRACES = 400;
+
 const cache = {};
 const watcher = {};
 const simStore = {};
@@ -135,6 +137,11 @@ function _getSpatialStepTrace(simId, stepIdx) {
 function _setSpatialStepTrace(spatialStepTrace) {
   const { simId, stepIdx } = spatialStepTrace;
   set(cache, `${simId}.spatialTrace.${stepIdx}`, spatialStepTrace);
+
+  const idxToDelete = stepIdx - MAX_INMEM_SPATIAL_STEP_TRACES;
+  if (idxToDelete >= 0 && _getSpatialStepTrace(simId, stepIdx)) {
+    delete cache[simId].spatialTrace[stepIdx];
+  }
 }
 
 function subscribeSpatialTraceChange(simId, cb) {
