@@ -41,6 +41,8 @@
   import simDataStorage from '@/services/sim-data-storage';
 
 
+  const MAX_LINES = 2000;
+  
   const logTypeLabel = {
     bng_stdout: 'BioNetGen stdout',
     bng_stderr: 'BioNetGen stderr',
@@ -82,25 +84,37 @@
 
         this.logTypes = Object.keys(this.log);
         this.logType = this.logTypes[0] || '';
-        this.logContent = this.logType ? this.log[this.logType].join('\n') : '';
+        this.logContent = this.logType
+          ? this.getLogStr(this.logType)
+          : '';
+
+        this.scrollToBottom();
       },
       onLogTypeChange(logType) {
-        this.logContent = this.log[logType].join('\n');
+        this.logContent = this.getLogStr(logType)
+      },
+      scrollToBottom() {
+        this.$nextTick(() => {
+          const logContainer = this.$refs.log;
+          logContainer.scrollTop = logContainer.scrollHeight;
+        })
+      },
+      getLogStr(type) {
+        return this.log[type]
+          .slice(-MAX_LINES)
+          .join('\n');
       },
       updateLog(log) {
         if (!this.logType) {
           this.init(log);
         } else {
           this.log = log;
-          this.logContent = log[this.logType].join('\n');
+          this.logContent = this.getLogStr(this.logType);
         }
 
         if (!this.follow) return;
 
-        this.$nextTick(() => {
-          const logContainer = this.$refs.log;
-          logContainer.scrollTop = logContainer.scrollHeight;
-        });
+        this.scrollToBottom();
       },
     },
   };
