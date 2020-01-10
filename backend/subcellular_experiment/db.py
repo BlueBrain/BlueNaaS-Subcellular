@@ -169,7 +169,8 @@ class Db():
     def update_simulation(self, simulation):
         self.db.simulations.update_one({
             'id': simulation['id'],
-            'userId': simulation['userId']
+            'userId': simulation['userId'],
+            'deleted': False
         }, {
             '$set': simulation
         })

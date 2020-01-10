@@ -193,13 +193,16 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.closed = True
         if self.user_id is not None:
             sim_manager.remove_client(self.user_id, self)
-        L.debug('client disconnected')
+        L.debug('client connection has been closed')
 
     def send_message(self, cmd, data=None, cmdid=None):
         if not self.closed:
             payload = json.dumps({'cmd': cmd, 'cmdid': cmdid, 'data': data},
                                  cls=ExtendedJSONEncoder)
-            self.write_message(payload)
+            try:
+                self.write_message(payload)
+            except Exception as e:
+                pass
 
 
 class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
@@ -223,6 +226,7 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         sim_manager.process_worker_message(self.sim_worker, msg, data, cmdid=cmdid)
 
     def on_close(self):
+        L.info('sim worker connection has been closed')
         self.closed = True
         sim_manager.remove_worker(self.sim_worker)
 
@@ -230,7 +234,10 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         if not self.closed:
             payload = json.dumps({'cmd': cmd, 'cmdid': cmdid, 'data': data},
                                  cls=ExtendedJSONEncoder)
-            self.write_message(payload)
+            try:
+                self.write_message(payload)
+            except Exception as e:
+                pass
 
 
 class HealthHandler(tornado.web.RequestHandler):

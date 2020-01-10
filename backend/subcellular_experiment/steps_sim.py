@@ -2,6 +2,7 @@
 import os
 import json
 import re
+import time
 
 from datetime import datetime
 
@@ -689,13 +690,19 @@ class StepsSim():
                     else:
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
 
-        self.log('about to run sim')
+        self.log('run sim')
         self.send_progress(SimStatus(SimStatus.STARTED))
 
+        progress = 0
+
         for tidx, tpnt in enumerate(tpnts):
-            self.log(f'run step {tidx + 1} out of {len(tpnts)}, t: {tpnt} s')
 
             sim.run(tpnt)
+
+            current_progress = int(tidx / len(tpnts) * 100)
+            if current_progress > progress:
+                progress = current_progress
+                self.log(f'done {progress}% (sim time: {tpnt} s)')
 
             if tpnt in stim_tpnt_set:
                 self.log(f'about to apply stimuli for t: {tpnt} s')
@@ -724,6 +731,12 @@ class StepsSim():
 
                 # sample spatial molecule amounts if requested by user
                 if 'spatialSampling' in solver_config and solver_config['spatialSampling']['enabled']:
+
+                    # make a small pause not to flood a client in case of fast simulation
+                    # TODO: implement subscriptions and send spatial step traces only when
+                    # client requires them, waiting for ack for each of them.
+                    time.sleep(0.02)
+
                     spatial_trace_data_dict = {}
                     for structure in solver_config['spatialSampling']['structures']:
                         structure_name = structure['name']

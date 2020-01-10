@@ -8,6 +8,7 @@ import tempfile
 import shutil
 import threading
 import signal
+import socket
 
 from multiprocessing import Process, Queue
 
@@ -108,7 +109,10 @@ class SimWorker():
         # TODO: SIGINT handler?
         signal.signal(signal.SIGTERM, on_terminate)
 
-        self.socket.run_forever()
+        self.socket.run_forever(
+            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),),
+            ping_interval=30
+        )
 
     def teardown(self):
         self.socket.close()

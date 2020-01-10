@@ -239,7 +239,6 @@ class SimManager():
         }
 
         status_message.update(sim_trace)
-        # self.db.update_simulation(result)
         self.send_message(user_id, SimTrace.TYPE, status_message)
 
     def send_sim_status(self, sim_conf, status, context={}):
