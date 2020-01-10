@@ -268,7 +268,7 @@
       },
       async initModelGeometry() {
         this.loading = true;
-        await this.modelGeometry.init();
+        await this.modelGeometry.init({ removeRawMesh: false });
         this.loading = false;
       },
       getMeshNameMismatchErrorStr(meshNameRoot, tetgenMeshName) {

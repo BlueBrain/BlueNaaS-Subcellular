@@ -400,9 +400,9 @@ class ModelGeometry {
       structures,
       mesh: {
         volume: {
-          nodes,
-          faces,
-          elements,
+          nodes: Array.from(nodes),
+          faces: Array.from(faces),
+          elements: Array.from(elements),
         },
       },
     };

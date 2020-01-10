@@ -329,7 +329,7 @@ class ModelGeometryRenderer {
         : this.genRandTriPoint.bind(this);
 
       for (let i = 0; i < count; i += 1) {
-        if (pntIdx === MAX_MOLECULES) {
+        if (pntIdx + 1 === MAX_MOLECULES) {
           return console.warn('Molecule renderer reached MAX_MOLECULES');
         }
 
@@ -342,12 +342,12 @@ class ModelGeometryRenderer {
       }
     };
 
-    Object.keys(spatialSample).forEach((structureName) => {
+    Object.keys(spatialSample.data).forEach((structureName) => {
       // if (!this.structureConfig[structureName].visible) return;
 
       const structureType = this.modelGeometry.meta.structures.find(st => st.name === structureName).type;
       const simplexIdxProp = structureType === 'compartment' ? 'tetIdxs' : 'triIdxs';
-      const structCount = spatialSample[structureName];
+      const structCount = spatialSample.data[structureName];
       Object.keys(structCount).forEach((moleculeName) => {
         if (!this.moleculeConfig[moleculeName].visible) return;
 

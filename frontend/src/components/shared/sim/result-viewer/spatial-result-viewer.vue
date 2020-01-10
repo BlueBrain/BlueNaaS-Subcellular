@@ -263,7 +263,7 @@
 
         if (this.progressCtrl.live) {
           this.progressCtrl.stepIdx = this.lastSpatialStepTrace.stepIdx;
-          this.renderMolecules(this.lastSpatialStepTrace.data);
+          this.renderMolecules(this.lastSpatialStepTrace);
         }
       },
       onNextStepClick() {
@@ -343,7 +343,8 @@
           return;
         }
 
-        this.renderMoleculesThrottled(spatialStepTrace.data);
+        this.lastSpatialStepTrace = spatialStepTrace;
+        this.renderMoleculesThrottled(spatialStepTrace);
       },
       onStructureVisibilityChange(comp) {
         this.renderer.setVisible(comp.name, comp.visible);

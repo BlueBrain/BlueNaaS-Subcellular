@@ -3,7 +3,12 @@
   <div
     ref="chart"
     class="temporal-graph-container"
-  />
+  >
+    <Spin
+      v-if="!initialized"
+      fix
+    />
+  </div>
 </template>
 
 
@@ -73,8 +78,8 @@
     created() {
       this.redrawThrottled = throttle(this.redraw.bind(this), 250);
     },
-    mounted() {
-      this.init();
+    async mounted() {
+      await this.init();
       simDataStorage.trace.subscribe(this.simId, this.redrawThrottled);
     },
     beforeDestroy() {
@@ -89,17 +94,17 @@
         if (!trace || !trace.times.length) return;
 
         this.chartPointN = trace.values.length;
-        Plotly.newPlot(this.$refs.chart, this.getChartData(), layout, config);
+        await Plotly.newPlot(this.$refs.chart, this.getChartData(), layout, config);
         downloadCsvBtn.click = () => this.downloadCsv();
         this.initialized = true;
       },
-      redraw() {
+      async redraw() {
         const chartDataDiff = this.getChartData(this.chartPointN);
         const xDiffList = chartDataDiff.map(diff => diff.x);
         const yDiffList = chartDataDiff.map(diff => diff.y);
         const extTraceTarget = [...Array(xDiffList.length).keys()];
-        Plotly.extendTraces(this.$refs.chart, { x: xDiffList, y: yDiffList }, extTraceTarget);
         this.chartPointN += xDiffList[0].length;
+        await Plotly.extendTraces(this.$refs.chart, { x: xDiffList, y: yDiffList }, extTraceTarget);
       },
       getChartData(startIndex = 0) {
         const trace = simDataStorage.trace.getCached(this.simId);

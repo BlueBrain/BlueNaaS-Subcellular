@@ -386,7 +386,6 @@ export default {
         model = JSON.parse(fileContent);
       }
 
-
       /** ####################### START OF TEMPORARY BLOCK ###################### */
       if (model.geometry) {
         if (model.geometry.nodes) {
