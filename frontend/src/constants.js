@@ -8,6 +8,8 @@ const ServerMessageType = {
   SIM_STATUS: 'simStatus',
 };
 
+export const SIM_TRACE_MAX_SIZE = 1e6;
+
 const EntityType = {
   STRUCTURE_TYPE: 'structureType',
   STRUCTURE: 'structure',
@@ -203,5 +205,6 @@ export default {
   formMode,
   agentType,
   validationMessageType,
+  SIM_TRACE_MAX_SIZE,
   DEFAULT_VISIBLE_CONC_N_PER_REV,
 };

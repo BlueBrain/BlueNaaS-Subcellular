@@ -6,23 +6,31 @@
   >
     <FormItem label="max_dt, s *">
       <InputNumber
-        size="small"
-        :min="0.000001"
-        :max="10"
-        :step="0.01"
         v-model="conf.dt"
+        size="small"
+        :min="0.000000001"
+        :max="1"
+        :step="0.01"
+        :active-change="false"
         @input="onChange"
       />
     </FormItem>
     <FormItem label="t_end, s *">
       <InputNumber
+        v-model="conf.tEnd"
         size="small"
         :min="0.01"
         :max="1000"
         :step="1"
-        v-model="conf.tEnd"
+        :active-change="false"
         @input="onChange"
       />
+      <span
+        class="text-error form-input-msg"
+        v-if="traceMaxSizeReached"
+      >
+        Max simulation result size reached, <code>[observable_n] * [t_end] / [max_dt]</code> should be less then 1M
+      </span>
     </FormItem>
     <FormItem label="Stimulation">
       <Collapse class="small-collapse">
@@ -63,6 +71,8 @@
 
 
 <script>
+  import { SIM_TRACE_MAX_SIZE } from '@/constants';
+
   import StepsStimulationForm from './steps-stimulation-form.vue';
   import SpatialSamplingConf from './steps-conf-form/spatial-sampling-conf-form.vue';
 
@@ -75,16 +85,21 @@
     },
     data() {
       return {
-        conf: Object.assign({}, this.value),
+        conf: { ...this.value },
       };
     },
     methods: {
       onChange() {
-        const valid = this.isValid();
-        this.$emit('input', Object.assign({ valid }, this.conf));
+        this.$emit('input', { ...this.conf, valid: this.isValid });
+      },
+    },
+    computed: {
+      traceMaxSizeReached() {
+        const observableN = this.$store.state.model.observables.length;
+        return observableN * this.conf.tEnd / this.conf.dt > SIM_TRACE_MAX_SIZE;
       },
       isValid() {
-        return this.conf.dt && this.conf.tEnd;
+        return this.conf.dt && this.conf.tEnd && !this.traceMaxSizeReached;
       },
     },
     watch: {
