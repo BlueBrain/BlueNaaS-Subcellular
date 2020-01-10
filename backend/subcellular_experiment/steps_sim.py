@@ -21,7 +21,7 @@ import steps.solver as ssolver
 import steps.utilities.meshio as meshio
 
 from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
-from .sim import SimStepTrace, SimTrace, SimSpatialStepTrace, SimStatus, SimLogMessage, StimulusType, decompress_stimulation
+from .sim import SimProgress, SimStepTrace, SimTrace, SimSpatialStepTrace, SimStatus, SimLogMessage, StimulusType, decompress_stimulation
 from .logger import get_logger
 
 
@@ -699,11 +699,6 @@ class StepsSim():
 
             sim.run(tpnt)
 
-            current_progress = int(tidx / len(tpnts) * 100)
-            if current_progress > progress:
-                progress = current_progress
-                self.log(f'done {progress}% (sim time: {tpnt} s)')
-
             if tpnt in stim_tpnt_set:
                 self.log(f'about to apply stimuli for t: {tpnt} s')
                 current_stimuli = [stim for stim in stimuli if stim['t'] == tpnt]
@@ -778,6 +773,12 @@ class StepsSim():
                             del spatial_trace_data_dict[structure_name]
 
                     self.send_progress(SimSpatialStepTrace(tidx, tpnt, spatial_trace_data_dict))
+
+            current_progress = int((tidx + 1) / len(tpnts) * 100)
+            if current_progress > progress:
+                progress = current_progress
+                self.log(f'done {progress}% (sim time: {tpnt} s)')
+                self.send_progress(SimProgress(progress))
 
         self.send_progress(SimTrace(tpnts,
                                     trace_values,

@@ -6,7 +6,7 @@ import signal
 import tornado
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage, SimSpatialStepTrace, SimLog
+from .sim import SimProgress, SimStatus, SimTrace, SimStepTrace, SimLogMessage, SimSpatialStepTrace, SimLog
 from .logger import get_logger
 
 
@@ -75,6 +75,8 @@ class SimManager():
             L.debug('sim worker reported as {}'.format(data))
             self.on_worker_change()
             self.run_available()
+        elif msg == SimProgress.TYPE:
+            self.process_sim_progress(worker.sim_conf, data['progress'])
         elif msg == SimStepTrace.TYPE:
             self.process_sim_step_trace(worker.sim_conf, data)
         elif msg == SimTrace.TYPE:
@@ -180,6 +182,22 @@ class SimManager():
         })
 
         self.send_sim_status(sim_conf, status, context=context)
+
+    def process_sim_progress(self, sim_conf, progress, context={}):
+        user_id = sim_conf['userId']
+        sim_id = sim_conf['id']
+        self.db.update_simulation({
+            **context,
+            'id': sim_id,
+            'userId': user_id,
+            'progress': progress
+        })
+
+        self.send_message(user_id, SimProgress.TYPE, {
+            **context,
+            'simId': sim_conf['id'],
+            'progress': progress
+        })
 
     def process_sim_log_msg(self, sim_conf, log_msg):
         self.send_message(sim_conf['userId'], SimLogMessage.TYPE, {

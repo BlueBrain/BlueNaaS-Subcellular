@@ -60,6 +60,19 @@ class SimLogMessage:
             'source': self.source
         }
 
+class SimProgress:
+    TYPE = 'simProgress'
+
+    def __init__(self, progress):
+        self.type = self.TYPE
+
+        self.progress = progress
+
+    def to_dict(self):
+        return {
+            'progress': self.progress
+        }
+
 
 class SimLog:
     TYPE = 'simLog'

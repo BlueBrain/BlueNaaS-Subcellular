@@ -191,6 +191,7 @@
     userId: null,
     modelId: null,
     status: SimStatus.CREATED,
+    progress: null,
     name: null,
     solver: null,
     solverConf: null,
@@ -254,15 +255,48 @@
         }, {
           title: 'Solver',
           key: 'solver',
-          maxWidth: 160,
+          maxWidth: 120,
+        }, {
+          title: 'max_dt',
+          maxWidth: 120,
+          render: (h, params) => h('span', params.row.solverConf.dt),
         }, {
           title: 't_end',
-          maxWidth: 160,
+          maxWidth: 120,
           render: (h, params) => h('span', params.row.solverConf.tEnd),
         }, {
-          title: 'n_steps',
-          key: 'nSteps',
-          maxWidth: 160,
+          title: 'Progress',
+          maxWidth: 240,
+          slot: 'progress',
+          render: (h, params) => {
+            const { progress, status } = params.row;
+
+            if (!progress) return h('span', '-');
+
+            let progressStatus;
+            switch (status) {
+              case SimStatus.STARTED:
+                progressStatus = 'active';
+                break;
+              case SimStatus.ERROR:
+                progressStatus = 'wrong';
+                break;
+              case SimStatus.FINISHED:
+                progressStatus = 'success';
+                break;
+              default:
+                progressStatus = 'normal';
+                break;
+            }
+
+            return h('Progress', {
+              props: {
+                percent: progress,
+                status: progressStatus,
+                'stroke-width': 5,
+              },
+            });
+          },
         }, {
           title: 'Status',
           maxWidth: 132,
@@ -366,8 +400,9 @@
     computed: mapState({
       simulations(state) {
         return state.model.simulations.map((sim) => {
-          const solverConf = pick(sim.solverConf, ['tEnd']);
-          const strippedSim = pick(sim, ['name', 'solver', 'nSteps', 'status', 'annotation']);
+          const solverConf = pick(sim.solverConf, ['tEnd', 'dt']);
+          const props = ['name', 'solver', 'nSteps', 'status', 'progress', 'annotation'];
+          const strippedSim = pick(sim, props);
           return { ...strippedSim, ...{ solverConf } };
         });
       },

@@ -93,6 +93,17 @@ export default {
     Vue.set(state.model.simulations[simulationIndex], 'status', status);
   },
 
+  setSimProgress(state, { simId, progress }) {
+    const simIndex = state.model.simulations
+      .map(simulation => simulation.id)
+      .indexOf(simId);
+
+    const currentSim = state.model.simulations[simIndex];
+    const simulation = Object.assign({}, currentSim, { progress });
+
+    Vue.set(state.model.simulations, simIndex, simulation);
+  },
+
   setSimStatus(state, status) {
     // TODO: deprecate in favor of upper one
     const simIndex = state.model.simulations.map(sim => sim.id).indexOf(status.simId);
