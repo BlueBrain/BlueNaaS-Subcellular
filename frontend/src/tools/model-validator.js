@@ -389,6 +389,17 @@ class ModelValidator {
       });
     }
 
+    const reacMoleculeDefinitions = reaction.definition.split(/[^!]\+|<->|->/);
+    const allMolDefsHaveStructs = reacMoleculeDefinitions
+      .every(molDef => getDefStructNames(molDef).length);
+
+    if (!allMolDefsHaveStructs) {
+      validationResult.addMessage({
+        type: messageType.ERROR,
+        text: `missing structures in reaction definition`,
+      });
+    }
+
     const modelStructureNames = this.model.structures.map(s => s.name);
     const reactionStructureNames = getDefStructNames(reaction.definition);
     const diffStructNames = difference(reactionStructureNames, modelStructureNames);
