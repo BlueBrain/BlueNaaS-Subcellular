@@ -28,7 +28,7 @@ import {
   VertexColors,
   TextureLoader,
 } from 'three';
-import * as DistinctColors from 'distinct-colors';
+import distinctColors from 'distinct-colors';
 
 import TrackballControls from './trackball-controls';
 
@@ -182,7 +182,7 @@ class ModelGeometryRenderer {
 
     const structures = modelGeometry.meta.structures || [getDefaultStructure()];
 
-    this.colors = new DistinctColors({
+    this.colors = distinctColors({
       count: structures.length,
       chromaMin: 60,
       chromaMax: 100,
@@ -270,10 +270,8 @@ class ModelGeometryRenderer {
   }
 
   initMolecules(moleculeNames) {
-    const molColors = new DistinctColors({
+    const molColors = distinctColors({
       count: moleculeNames.length,
-      // chromaMin: 40,
-      // chromaMax: 80,
     });
 
     this.moleculeConfig = moleculeNames
