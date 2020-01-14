@@ -136,7 +136,7 @@
         }, {
           title: 'Annotation',
           maxWidth: 260,
-          render: (h, params) => h('span', params.row.annotation.split('\n')[0]),
+          render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
         }],
       };
     },
