@@ -52,6 +52,7 @@
           placeholder="Branch"
           transfer
           @on-change="validateBranch"
+          @on-focus="onBranchInputFocus"
         />
         <i-button
           class="mt-12"
@@ -91,11 +92,17 @@
         saving: false,
       };
     },
-    async mounted() {
-      const userBranchesRes = await socket.request('get_user_branches');
-      this.userBranches = userBranchesRes.userBranches;
+    mounted() {
+      this.loadUserBranches();
     },
     methods: {
+      onBranchInputFocus() {
+        this.loadUserBranches();
+      },
+      async loadUserBranches() {
+        const userBranchesRes = await socket.request('get_user_branches');
+        this.userBranches = userBranchesRes.userBranches;
+      },
       userBranchesFilter(searchStr, branch) {
         return branch.toUpperCase().indexOf(searchStr.toUpperCase()) !== -1;
       },

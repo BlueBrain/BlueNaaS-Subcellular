@@ -29,6 +29,7 @@
           :loading="loading.branches"
           @on-change="onBranchSelect"
           @on-query-change="onBranchQueryChange"
+          @on-open-change="onBranchSelectOpenChange"
         >
           <i-option
             v-for="branch in branches"
@@ -74,10 +75,11 @@
 
 
 <script>
-  // TODO: refactor to reuse branche selection logic in revision editor as well
+  // TODO: refactor to reuse branch selection logic in revision editor as well
   import cloneDeep from 'lodash/cloneDeep';
 
   import socket from '@/services/websocket';
+
 
   export default {
     name: 'revision-select',
@@ -128,6 +130,11 @@
         const { branches } = await socket.request('query_branch_names', searchStr);
         this.branches = branches;
         this.loading.branches = false;
+      },
+      onBranchSelectOpenChange(opened) {
+        if (!opened) return;
+
+        this.queryBranchNames();
       },
       onBranchSelect() {
         this.queryRevisions();

@@ -14,6 +14,7 @@
         :loading="loading.branches"
         @on-change="onBranchSelect"
         @on-query-change="onBranchQueryChange"
+        @on-open-change="onBranchSelectOpenChange"
       >
         <i-option
           v-for="branch in branches"
@@ -83,6 +84,11 @@
         const { branches } = await socket.request('query_branch_names', searchStr);
         this.branches = branches;
         this.loading.branches = false;
+      },
+      onBranchSelectOpenChange(opened) {
+        if (!opened) return;
+
+        this.queryBranchNames();
       },
       onBranchSelect() {
         this.queryRevisions();
