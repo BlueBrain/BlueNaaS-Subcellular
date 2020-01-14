@@ -22,6 +22,13 @@
           Edit
         </i-button>
       </template>
+
+      <template
+        slot-scope="{ row }"
+        slot="status"
+      >
+        <entity-status :entity="row" />
+      </template>
     </i-table>
 
     <Row
@@ -115,7 +122,11 @@
   import ParameterForm from './forms/parameter-form.vue';
   import FunctionForm from './forms/function-form.vue';
 
+  import EntityStatus from '@/components/shared/entity-status';
+
   import SpeciesTools from './forms/tools/species-tools.vue';
+
+  const { validationMessageType: msgType } = constants;
 
   const { EntityType, entityTypeCollectionMap, formMode } = constants;
 
@@ -139,6 +150,9 @@
   export default {
     name: 'revision-entities',
     props: ['entityType'],
+    components: {
+      'entity-status': EntityStatus,
+    },
     data() {
       return {
         formByEntityType,
@@ -193,7 +207,11 @@
         });
       },
       initTableColumnConfig() {
-        this.tableColumns = contentConfig.build(contentConfig.Type.EDITOR, this.entityType, this.revisionConfig);
+        this.tableColumns = contentConfig.build(
+          contentConfig.Type.EDITOR,
+          this.entityType,
+          this.revisionConfig
+        );
       },
     },
     computed: {

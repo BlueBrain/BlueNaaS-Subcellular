@@ -248,6 +248,8 @@ class ModelValidator {
       });
     }
 
+    // TODO: add duplicate definition check
+
     if (!molecule.definition || !molecule.definition.trim()) {
       validationResult.addMessage({
         type: messageType.ERROR,
@@ -576,6 +578,10 @@ class ModelValidator {
       Object.assign(entity, { valid: true, validationMessages: [] });
 
       const result = this.validateEntity[entityType](entity);
+
+      entity.validationMessages = result.messages
+      entity.valid = result.valid;
+
       this.allMessages = this.allMessages.concat(result.messages);
       if (!result.valid) {
         this.model.valid = false;

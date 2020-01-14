@@ -334,6 +334,11 @@ function build(configType, structureType, config = {}) {
       key: 'description',
       tooltip: true,
     }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
+    }, {
       title: 'Actions',
       maxWidth: 90,
       slot: 'actions',
@@ -383,6 +388,11 @@ function build(configType, structureType, config = {}) {
       key: 'comments',
       tooltip: true,
     }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
+    }, {
       title: 'Actions',
       maxWidth: 90,
       slot: 'actions',
@@ -414,6 +424,11 @@ function build(configType, structureType, config = {}) {
       title: 'Units',
       maxWidth: 120,
       key: 'units',
+    }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
     }, {
       title: 'Actions',
       maxWidth: 90,
@@ -456,6 +471,11 @@ function build(configType, structureType, config = {}) {
       key: 'comments',
       tooltip: true,
     }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
+    }, {
       title: 'Actions',
       maxWidth: 90,
       slot: 'actions',
@@ -496,6 +516,11 @@ function build(configType, structureType, config = {}) {
       key: 'comments',
       tooltip: true,
     }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
+    }, {
       title: 'Actions',
       maxWidth: 90,
       slot: 'actions',
@@ -528,6 +553,11 @@ function build(configType, structureType, config = {}) {
       title: 'Comments',
       key: 'comments',
       tooltip: true,
+    }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
     }, {
       title: 'Actions',
       maxWidth: 90,
@@ -564,6 +594,11 @@ function build(configType, structureType, config = {}) {
       key: 'comments',
       tooltip: true,
     }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
+    }, {
       title: 'Actions',
       maxWidth: 90,
       slot: 'actions',
@@ -588,6 +623,11 @@ function build(configType, structureType, config = {}) {
           value: params.row.definition,
         },
       }),
+    }, {
+      title: 'Status',
+      maxWidth: 100,
+      slot: 'status',
+      align: 'center',
     }, {
       title: 'Actions',
       maxWidth: 90,

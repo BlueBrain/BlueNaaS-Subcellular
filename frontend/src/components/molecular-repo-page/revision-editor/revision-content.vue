@@ -7,56 +7,56 @@
     >
       <TabPane
         tab="revision-content"
-        :label="`Structure types (${revision.structures.length})`"
+        :label="getTabLabel(revision.structures, 'Structure types')"
       >
         <revision-entities entity-type="structure"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Parameters (${revision.parameters.length})`"
+        :label="getTabLabel(revision.parameters, 'Parameters')"
       >
         <revision-entities entity-type="parameter"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Functions (${revision.functions.length})`"
+        :label="getTabLabel(revision.functions, 'Functions')"
       >
         <revision-entities entity-type="function"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Molecules (${revision.molecules.length})`"
+        :label="getTabLabel(revision.molecules, 'Molecules')"
       >
         <revision-entities entity-type="molecule"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Species (${revision.species.length})`"
+        :label="getTabLabel(revision.species, 'Species')"
       >
         <revision-entities entity-type="species"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Observables (${revision.observables.length})`"
+        :label="getTabLabel(revision.observables, 'Observables')"
       >
         <revision-entities entity-type="observable"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Reactions (${revision.reactions.length})`"
+        :label="getTabLabel(revision.reactions, 'Reactions')"
       >
         <revision-entities entity-type="reaction"/>
       </TabPane>
 
       <TabPane
         tab="revision-content"
-        :label="`Diffusions (${revision.diffusions.length})`"
+        :label="getTabLabel(revision.diffusions, 'Diffusions')"
       >
         <revision-entities entity-type="diffusion"/>
       </TabPane>
@@ -67,11 +67,37 @@
 
 <script>
   import RevisionEntities from './revision-content/revision-entities.vue';
+  import constants from '@/constants';
+
+  const { validationMessageType: msgType } = constants;
 
   export default {
     name: 'revision-content',
     components: {
       'revision-entities': RevisionEntities,
+    },
+    methods: {
+      getLabelBadgeStatus(collection) {
+        const allValidationMsgs = collection.flatMap(entity => entity.validationMessages);
+
+        if (!allValidationMsgs.length) return 'success';
+
+        const hasErrors = allValidationMsgs.some(msg => msg.type === msgType.ERROR);
+        if (hasErrors) return 'error';
+
+        const hasWarnings = allValidationMsgs.some(msg => msg.type === msgType.WARNING);
+        if (hasWarnings) return 'warning';
+
+        return 'default'
+      },
+      getTabLabel(collection, labelText) {
+        const status = this.getLabelBadgeStatus(collection);
+
+        return (h) => h('div', [
+          h('Badge', { props: { status }}),
+          h('span', `${labelText} (${collection.length})`),
+        ]);
+      }
     },
     computed: {
       revision() {
