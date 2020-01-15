@@ -45,7 +45,9 @@
                               Autoscaling group
 ```
 
-Subcellular app with molecular repository was designed as extensible, scalable and platform agnostic solution that can be deployed to various types of cloud environments. Below is the list of high level subsystems and their roles.
+Subcellular app with molecular repository was designed as extensible, scalable and platform
+agnostic solution that can be deployed to various types of cloud environments. Below is the list of
+high level subsystems and their roles.
 
 * DB engine
 * Geometry storage
@@ -55,7 +57,9 @@ Subcellular app with molecular repository was designed as extensible, scalable a
 
 ## DB engine
 
-The component provides persistence for the application data utilising already existing solutions like Blue Brain Nexus and mongoDB.
+The component provides persistence for the application data utilising already existing solutions
+like Blue Brain Nexus and mongoDB.
+
 Used as central storage for:
 * subcellular app, containing:
   * user info (optional)
@@ -97,16 +101,20 @@ Incorporates a logic to:
 
 ## Backend
 
-Provides methods and procedures that can be invoked remotely by a client application via the WebSocket connection:
+Provides methods and procedures that can be invoked remotely by a client application via the
+WebSocket connection:
 * manage data related to models, geometries, simulations and their artifacts
 * run and stop simulations
 * query and operate data from molecular repository
 
-As a central subsystem keeps track of connected simulation workers, manages their state by issuing requests to run or stop simulations and processes changes in their state.
+As a central subsystem keeps track of connected simulation workers, manages their state by issuing
+requests to run or stop simulations and processes changes in their state.
 
 ## Client Single Page Application
 
-Contains all presentation logic and enables users to manage models and run simulations without special setup or configuration.
+Contains all presentation logic and enables users to manage models and run simulations without
+special setup or configuration.
+
 Communicates with the Backend through WebSockets.
 Consists of three top-level components:
 * model editor

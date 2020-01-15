@@ -1,8 +1,11 @@
 
 # Subcellular experiment application with molecular repository
 
-The molecular repository and subcellular application were developed  as a software environment for simulation of brain molecular networks.
-It was designed to reach several objectives related to major restrictions of currently available software tools, such as the lack of integration with existing biological data relevant for modeling and low compatibility of different types of models.
+The molecular repository and subcellular application were developed  as a software environment for
+simulation of brain molecular networks.
+It was designed to reach several objectives related to major restrictions of currently available
+software tools, such as the lack of integration with existing biological data relevant for modeling
+and low compatibility of different types of models.
 
 ## System design
 
@@ -42,6 +45,7 @@ See [Guidebook](https://humanbrainproject.github.io/hbp-sp6-guidebook/online_use
 
 ## Deployment
 
-Makefile has a `create_oo_deployment` target that will deploy current version of the app to an OpenShift instance.
-This target will create OpenShift deployment configs, services and external routes needed by the app to function.
+Makefile has a `create_oo_deployment` target that will deploy current version of the app to an
+OpenShift instance. This target will create OpenShift deployment configs, services and external
+routes needed by the app to function.
 See `makefile` for configuration and options; requires OpenShift CLI.
