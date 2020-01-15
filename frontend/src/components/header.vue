@@ -2,17 +2,30 @@
 <template>
   <header>
     <div class="title">
-      <span>Subcellular app. </span>
-      <span v-if="modelName"> Model: {{ modelName }}</span>
+      <span>Subcellular app</span>
+      <span v-if="modelName">| Model: {{ modelName }}</span>
     </div>
+
+    <div class="menu-item ml-12">
+      <a
+        href="https://humanbrainproject.github.io/hbp-sp6-guidebook/online_usecases/subcellular_level/subcellular_app/subcellular_app.html"
+        target="_blank"
+      >
+        <Icon
+          type="md-help-circle"
+          size="16"
+          color="white"
+        />
+      </a>
+    </div>
+
     <div
-      class="user-profile"
+      class="menu-item"
       @click="showUserProfile"
     >
       {{ user.fullName || 'Unknown user' }}
       <Icon
-        class="user-icon"
-        type="md-person"
+        type="md-person" size="16"
       />
     </div>
 
@@ -55,11 +68,8 @@
   .title {
     display: inline-block;
   }
-  .user-profile {
+  .menu-item {
     float: right;
     cursor: pointer;
-  }
-  .user-icon {
-    line-height: 28px;
   }
 </style>
