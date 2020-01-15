@@ -291,6 +291,9 @@ class Db():
 
         structures = list(self.db.repo.find(structure_q))
 
+        if struct_q_tokens and not structures:
+            return revision_data_from_entity_list([])
+
         # Query molecules
         mol_q = {
             'entityType': EntityType.MOLECULE,
