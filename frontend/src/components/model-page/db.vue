@@ -36,9 +36,6 @@
 
   export default {
     name: 'db-component',
-    mounted() {
-      this.$store.dispatch('loadDbModels');
-    },
     data() {
       return {
         dbData: [{

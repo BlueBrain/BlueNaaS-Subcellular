@@ -15,6 +15,7 @@ import simDataStorage from '@/services/sim-data-storage';
 import constants from '@/constants';
 import modelTools from '@/tools/model-tools';
 import arrayBufferToBase64 from '@/tools/array-buffer-to-base64';
+import publicModels from '@/data/public-models';
 
 
 export default {
@@ -30,6 +31,7 @@ export default {
     dispatch('setUser', user);
     socket.userId = user.id;
     socket.init();
+    await dispatch('loadDbModels');
   },
 
   setUser({ commit }, user) {
@@ -126,6 +128,13 @@ export default {
     await storage.setItem('models', models);
     commit('updateDbModels', cloneDeep(models));
     commit('resetEntitySelection');
+  },
+
+  async loadPublicModelByName({ state, dispatch }, modelName) {
+    const model = publicModels.find(model => model.name === modelName);
+    if (!model) return;
+
+    dispatch('loadDbModel', model);
   },
 
   async loadDbModel({ commit, dispatch, state }, dbModel) {

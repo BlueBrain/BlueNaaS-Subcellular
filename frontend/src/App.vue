@@ -26,9 +26,15 @@
       'header-component': Header,
       'footer-component': Footer,
     },
-    mounted() {
-      this.$store.dispatch('init');
+    async mounted() {
       window.addEventListener('resize', () => bus.$emit('layoutChange'));
+      await this.$store.dispatch('init');
+
+      const publicModel = this.$route.query.publicModel;
+      if (publicModel) {
+        this.$router.replace({ query: {}});
+        await this.$store.dispatch('loadPublicModelByName', publicModel);
+      }
     },
   };
 </script>
