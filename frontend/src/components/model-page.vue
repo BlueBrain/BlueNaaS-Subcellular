@@ -64,7 +64,7 @@
     data() {
       return {
         split: {
-          vertical: '300px',
+          vertical: 0.2,
           leftHorizontal: 0.5,
           rightHorizontal: 0.5,
         },
