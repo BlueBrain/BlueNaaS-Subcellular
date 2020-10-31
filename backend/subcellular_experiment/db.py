@@ -1,5 +1,4 @@
 import os
-import json
 import re
 
 import pymongo
@@ -8,16 +7,13 @@ from pymongo import MongoClient
 from .bngl_extended_model import EntityType, entity_coll_name_map
 from .logger import get_logger
 
-
-# TODO: refactor, split into modules
-
 L = get_logger(__name__)
 
 DB_HOST = os.getenv("DB_HOST")
 L.debug("Using mongo host: {}".format(DB_HOST))
 
 
-mol_def_r = re.compile("([a-zA-Z][a-zA-Z_0-9]*)\(")
+mol_def_r = re.compile(r"([a-zA-Z][a-zA-Z_0-9]*)\(")
 st_def_r = re.compile("@([a-zA-Z][a-zA-Z_0-9]*)")
 param_def_r = re.compile("([a-zA-Z][a-zA-Z_0-9]*)")
 
@@ -94,7 +90,9 @@ class Db:
             background=True,
         )
 
-        self.db.simTraces.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
+        self.db.simTraces.create_index(
+            [("simId", pymongo.ASCENDING), ("index", pymongo.ASCENDING)], unique=True, background=True
+        )
 
         self.db.simLogs.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
 

@@ -5,10 +5,9 @@ import math
 import numpy as np
 import pandas as pd
 
-from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage, Sim, StimulusType, decompress_stimulation
+from .sim import SimStatus, SimTrace, SimLogMessage, Sim, StimulusType, decompress_stimulation
 from .bngl_extended_model import BnglExtModel
 from .logger import get_logger
-
 
 L = get_logger(__name__)
 
@@ -88,7 +87,7 @@ class NfSim(Sim):
 
         self.log(bng_run.stdout.decode("utf-8"), "bng_stdout")
         self.log(bng_run.stderr.decode("utf-8"), "bng_stderr")
-        if bng_run.returncode is not 0:
+        if bng_run.returncode != 0:
             self.send_progress(SimStatus(SimStatus.ERROR))
             return
         L.debug("BNG xml model export has been finished")
@@ -99,7 +98,7 @@ class NfSim(Sim):
         self.log(nfsim_run.stderr.decode("utf-8"), "nfsim_stderr")
 
         L.debug("NFsim return code is {}".format(nfsim_run.returncode))
-        if nfsim_run.returncode is not 0:
+        if nfsim_run.returncode != 0:
             self.send_progress(SimStatus(SimStatus.ERROR))
             return
 
@@ -113,7 +112,21 @@ class NfSim(Sim):
         times = np.array(sim_traces.values.tolist())[:, 0]
         values = np.array(sim_traces.values.tolist())[:, 1:]
 
-        self.send_progress(SimTrace(times, values, observables))
+        times_size_bytes = times.itemsize * len(times)
+        values_size_bytes = values.size * values.itemsize
+        total_size_bytes = times_size_bytes + values_size_bytes
+
+        chunk_size = 1_000_000  # Roughly 1 MB
+        nchunks = total_size_bytes // chunk_size + 1
+
+        elements_per_chunk = len(times) // nchunks
+
+        for i in range(0, len(times), elements_per_chunk):
+            times_chunk = times[i : i + elements_per_chunk]
+
+            values_chunk = values[i : i + elements_per_chunk]
+
+            self.send_progress(SimTrace(i, times_chunk, values_chunk, observables))
 
         self.send_progress(SimStatus(SimStatus.FINISHED))
 

@@ -8,3 +8,7 @@ bus.$on('ws:simStatus', (simStatus) => {
 bus.$on('ws:simProgress', (simProgress) => {
   store.commit('setSimProgress', simProgress)
 })
+
+bus.$on('ws:trace', (simTrace) => {
+  store.commit('addSimTrace', simTrace)
+})

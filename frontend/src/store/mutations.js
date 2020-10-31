@@ -4,6 +4,7 @@ import cloneDeep from 'lodash/cloneDeep'
 
 import constants from '@/constants'
 import ModelValidator from '@/tools/model-validator'
+import { uniqBy, sortBy } from 'lodash'
 
 const { entityTypeCollectionMap, defaultEmptyModel, DEFAULT_VISIBLE_CONC_N_PER_REV } = constants
 
@@ -359,5 +360,22 @@ export default {
       const conc = importObj.newConcentrations[importObj.newConcentrationIdx]
       Vue.set(revSpec.concentration, concSource, conc)
     })
+  },
+
+  addSimTrace(state, simTrace) {
+    const existingSimTraces = state.simTraces[simTrace.simId] || []
+
+    /* Freeze each simTrace so that getters aren't notified
+        We only need reactivity when we add more traces
+        Individual traces are immutable 
+    */
+    simTrace = Object.freeze(simTrace)
+
+    const traces = sortBy([...existingSimTraces, simTrace], 'index')
+
+    state.simTraces = {
+      ...state.simTraces,
+      [simTrace.simId]: uniqBy(traces, 'index'),
+    }
   },
 }

@@ -1,7 +1,7 @@
 import os
-import time
 import json
 
+import pymongo
 import tornado.ioloop
 import tornado.websocket
 import tornado.web
@@ -62,8 +62,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if sim_id in sim_manager.get_running_sim_ids():
                 sim_manager.request_tmp_sim_trace(sim_id, cmdid)
             else:
-                sim_trace = db.get_sim_trace(sim_id)
-                self.send_message("trace", sim_trace, cmdid=cmdid)
+                traces = db.db.simTraces.find({"simId": sim_id})
+                count = traces.count()
+                for i, trace in enumerate(traces):
+                    if i == count - 1:
+                        trace["last"] = True
+                    self.send_message("trace", trace)
 
         if cmd == "cancel_simulation":
             sim_conf = msg["data"]
@@ -171,7 +175,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             try:
                 self.write_message(payload)
             except Exception as e:
-                pass
+                L.error(e)
 
 
 class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
@@ -204,7 +208,7 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
             payload = json.dumps({"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder)
             try:
                 self.write_message(payload)
-            except Exception as e:
+            except Exception:
                 pass
 
 

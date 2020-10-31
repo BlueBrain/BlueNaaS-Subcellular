@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import json
 import time
@@ -8,11 +7,9 @@ import shutil
 import threading
 import signal
 import socket
-
 from multiprocessing import Process, Queue
 
 import websocket
-import numpy as np
 
 from .enums import SimWorkerStatus
 from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage
@@ -41,7 +38,7 @@ class SimTmpDataStore:
         elif sim_data.type == SimStepTrace.TYPE:
             self._add_step_trace(sim_data)
         elif sim_data.type == SimTrace.TYPE:
-            self._set_trace(sim_data)
+            self._add_trace(sim_data)
 
     def get_log(self):
         return self.log
@@ -66,11 +63,12 @@ class SimTmpDataStore:
         if not len(self.observables):
             self.observables = step_trace.observables
 
-    def _set_trace(self, trace: SimTrace):
+    def _add_trace(self, trace: SimTrace):
         self.observables = trace.observables
-        self.times = trace.times
-        self.values = trace.values
-        self.n_steps = trace.n_steps
+        self.times.append(trace.times)
+        self.values.append(trace.values)
+        # TODO: This is redundant, it can be derived from .times
+        self.n_steps += len(trace.times)
 
 
 class SimWorker:
@@ -147,29 +145,21 @@ class SimWorker:
             self.sim_proc.start()
             L.debug("start loop to get sim data from MP queue")
 
-            sim_running = True
-            while sim_running:
+            while True:
                 sim_data = self.sim_queue.get()
-                if sim_data is not None:
-                    self.sim_tmp_data_store.add(sim_data)
+                if sim_data is None:
+                    break
 
-                    # TODO: refactor this switch
-                    # simTrace will be sent at the end of the simulation by code below
-                    if sim_data.type == SimTrace.TYPE:
-                        continue
-
-                    sim_data_dict = sim_data.to_dict()
-                    sim_data_dict.update({"simId": sim_config["id"], "userId": sim_config["userId"]})
-                    self.send_message(sim_data.type, sim_data_dict)
-                else:
-                    sim_running = False
+                self.sim_tmp_data_store.add(sim_data)
+                payload = {**sim_data.to_dict(), **{"simId": sim_config["id"], "userId": sim_config["userId"]}}
+                self.send_message(sim_data.type, payload)
 
             L.debug("joining simulator process")
             self.sim_proc.join()
             self.sim_proc = None
 
             self.send_message("simLog", self.sim_tmp_data_store.get_log())
-            self.send_message("simTrace", self.sim_tmp_data_store.get_trace())
+            # self.send_message("simTrace", self.sim_tmp_data_store.get_trace())
 
             self.sim_tmp_data_store = None
 
@@ -185,7 +175,7 @@ class SimWorker:
         self.sim_thread.start()
 
     def on_error(self, error):
-        if error is not 0:
+        if error != 0:
             L.debug("ws: error {}".format(error))
 
     def on_close(self):

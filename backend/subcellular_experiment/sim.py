@@ -88,10 +88,11 @@ class SimStepTrace:
 
 class SimTrace:
     TYPE = "simTrace"
+    index: int
 
-    def __init__(self, times, values, observables):
+    def __init__(self, index: int, times, values, observables):
         self.type = self.TYPE
-
+        self.index = index
         self.n_steps = len(times)
         self.times = times
         self.values = values
@@ -99,6 +100,7 @@ class SimTrace:
 
     def to_dict(self):
         return {
+            "index": self.index,
             "nSteps": self.n_steps,
             "times": self.times,
             "values": self.values,

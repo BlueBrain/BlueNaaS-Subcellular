@@ -22,4 +22,5 @@ export default {
     visibleConcSources: ['default'],
   },
   repoQueryHighlightVersionKey: null,
+  simTraces: {},
 }

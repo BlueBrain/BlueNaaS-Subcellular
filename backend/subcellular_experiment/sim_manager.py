@@ -1,5 +1,3 @@
-import os
-import json
 import signal
 
 import tornado
@@ -207,13 +205,13 @@ class SimManager:
             connection.send_message(name, message, cmdid=cmdid)
 
     def run_available(self):
-        if len(self.sim_conf_queue) is 0:
+        if len(self.sim_conf_queue) == 0:
             L.debug("sim queueu is empty, nothing to run")
             return
 
         L.debug("{} simulations in the queue".format(len(self.sim_conf_queue)))
         free_workers = self.get_free_workers()
-        if len(free_workers) is 0:
+        if len(free_workers) == 0:
             L.debug("all workers are busy")
             return
 

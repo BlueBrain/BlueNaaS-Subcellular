@@ -2,6 +2,7 @@ import get from 'lodash/get'
 
 import config from '@/config'
 import eventBus from './event-bus'
+import store from '@/store'
 
 const socketState = {
   CONNECTING: 0,

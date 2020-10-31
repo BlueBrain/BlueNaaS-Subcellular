@@ -1,16 +1,18 @@
 <template>
   <div ref="chart" class="temporal-graph-container">
-    <Spin v-if="!initialized" fix />
+    <Spin v-if="!simTraces" fix />
   </div>
 </template>
 
 <script>
 import noop from 'lodash/noop'
 import throttle from 'lodash/throttle'
-import Plotly from 'plotly.js-basic-dist'
+import Plotly, { layoutAttributes } from 'plotly.js-basic-dist'
 import { saveAs } from 'file-saver'
+import unzip from 'lodash/unzip'
 
 import simDataStorage from '@/services/sim-data-storage'
+import socket from '@/services/websocket'
 
 const layout = {
   xaxis: {
@@ -58,56 +60,36 @@ const config = {
 export default {
   name: 'temporal-result-viewer',
   props: ['simId'],
-  data() {
-    return {
-      initialized: false,
-      chartPointN: 0,
-    }
-  },
+
   created() {
-    this.redrawThrottled = throttle(this.redraw.bind(this), 250)
+    this.redrawThrottled = throttle(this.redraw, 500)
   },
-  async mounted() {
-    await this.init()
-    simDataStorage.trace.subscribe(this.simId, this.redrawThrottled)
+  mounted() {
+    // Request traces
+    socket.request('get_trace', this.simId)
+    Plotly.newPlot(this.$refs.chart, [], layout, config)
+    downloadCsvBtn.click = () => this.downloadCsv()
   },
   beforeDestroy() {
     this.redrawThrottled.cancel()
-    simDataStorage.trace.unsubscribe(this.simId)
     Plotly.purge(this.$refs.chart)
   },
   methods: {
-    async init() {
-      const trace = await simDataStorage.trace.get(this.simId)
-
-      if (!trace || !trace.times.length) return
-
-      this.chartPointN = trace.values.length
-      await Plotly.newPlot(this.$refs.chart, this.getChartData(), layout, config)
-      downloadCsvBtn.click = () => this.downloadCsv()
-      this.initialized = true
+    redraw() {
+      Plotly.react(this.$refs.chart, this.getChartData())
     },
-    async redraw() {
-      const chartDataDiff = this.getChartData(this.chartPointN)
-      const xDiffList = chartDataDiff.map((diff) => diff.x)
-      const yDiffList = chartDataDiff.map((diff) => diff.y)
-      const extTraceTarget = [...Array(xDiffList.length).keys()]
-      this.chartPointN += xDiffList[0].length
-      await Plotly.extendTraces(this.$refs.chart, { x: xDiffList, y: yDiffList }, extTraceTarget)
-    },
-    getChartData(startIndex = 0) {
-      const trace = simDataStorage.trace.getCached(this.simId)
+    getChartData() {
+      const traces = this.simTraces
+      const observables = traces[0].observables
+      const times = traces.flatMap((trace) => trace.times)
+      const values = unzip(traces.flatMap((trace) => trace.values))
 
-      return trace.observables.reduce((chartDataArray, observable, idx) => {
-        const molCounts = trace.values.slice(startIndex).map((concentrations) => concentrations[idx])
-
-        return chartDataArray.concat({
-          x: trace.times.slice(startIndex),
-          y: molCounts,
-          name: observable,
-          type: 'scattergl',
-        })
-      }, [])
+      return observables.map((observable, idx) => ({
+        x: times,
+        y: values[idx],
+        name: observable,
+        type: 'scattergl',
+      }))
     },
     downloadCsv() {
       const chartData = this.getChartData()
@@ -133,14 +115,22 @@ export default {
     simulation() {
       return this.$store.state.model.simulations.find((sim) => sim.id === this.simId)
     },
+    simTraces() {
+      const traces = this.$store.state.simTraces[this.simId]
+      const latest = traces && traces[traces.length - 1]
+      const allReceived = latest && latest.last
+
+      if (!allReceived) return
+
+      return traces
+    },
   },
   watch: {
     simulation() {
-      if (this.initialized) {
-        this.redrawThrottled()
-      } else {
-        this.init()
-      }
+      if (this.simTraces && this.simTraces.length) this.redrawThrottled()
+    },
+    simTraces() {
+      if (this.simTraces && this.simTraces.length) this.redrawThrottled()
     },
   },
 }
