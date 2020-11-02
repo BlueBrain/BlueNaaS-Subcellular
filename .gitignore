@@ -233,7 +233,7 @@ Session.vim
 tags
 
 ### VisualStudioCode ###
-.vscode/*
+**/.vscode
 .history
 
 

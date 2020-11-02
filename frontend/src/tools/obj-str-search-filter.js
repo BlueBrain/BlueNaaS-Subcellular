@@ -1,6 +1,4 @@
-
-import lowerCase from 'lodash/lowerCase';
-
+import lowerCase from 'lodash/lowerCase'
 
 /**
  * Filter function to match given, excluding or all object properties
@@ -15,23 +13,20 @@ import lowerCase from 'lodash/lowerCase';
  * @returns {Boolean}
  */
 function objStrSearchFilter(searchStr, obj, { include, exclude } = { include: null, exclude: null }) {
-  if (!searchStr) return true;
+  if (!searchStr) return true
 
-  const searchStrNorm = lowerCase(searchStr);
+  const searchStrNorm = lowerCase(searchStr)
 
   const props = Object.keys(obj)
-    .filter(prop => include ? include.includes(prop) : true)
-    .filter(prop => exclude ? !exclude.includes(prop) : true);
+    .filter((prop) => (include ? include.includes(prop) : true))
+    .filter((prop) => (exclude ? !exclude.includes(prop) : true))
 
   const fFunc = (prop) => {
-    const propVal = obj[prop];
-    return typeof(propVal) === 'string'
-      ? lowerCase(propVal).includes(searchStrNorm)
-      : false;
-  };
+    const propVal = obj[prop]
+    return typeof propVal === 'string' ? lowerCase(propVal).includes(searchStrNorm) : false
+  }
 
-  return props.some(fFunc);
+  return props.some(fFunc)
 }
 
-
-export default objStrSearchFilter;
+export default objStrSearchFilter

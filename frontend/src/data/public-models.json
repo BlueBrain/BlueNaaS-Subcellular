@@ -1050,17 +1050,7 @@
             "size": 3.982017674624739e-19
           },
           {
-            "triIdxs": [
-              73,
-              285,
-              287,
-              420,
-              453,
-              454,
-              463,
-              467,
-              468
-            ],
+            "triIdxs": [73, 285, 287, 420, 453, 454, 463, 467, 468],
             "type": "membrane",
             "name": "PSD",
             "size": 3.8885256954266447e-13
@@ -1068,23 +1058,9 @@
         ],
         "freeDiffusionBoundaries": [
           {
-            "triIdxs": [
-              611,
-              678,
-              550,
-              231,
-              530,
-              181,
-              534,
-              728,
-              156,
-              182
-            ],
+            "triIdxs": [611, 678, 550, 231, 530, 181, 534, 728, 156, 182],
             "name": "diffb_0",
-            "adjacent": [
-              "Dendrite",
-              "Synapse"
-            ]
+            "adjacent": ["Dendrite", "Synapse"]
           }
         ],
         "meshNameRoot": "spine"

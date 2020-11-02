@@ -22,6 +22,7 @@
     "lodash": "^4.17.15",
     "papaparse": "^5.1.1",
     "plotly.js-basic-dist": "^1.52.2",
+    "sass": "^1.27.0",
     "simple-web-worker": "^1.2.0",
     "superscript-text": "^1.0.0",
     "three": "^0.113.2",
@@ -43,7 +44,7 @@
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-vue": "^6.1.2",
-    "node-sass": "^4.13.1",
+    "prettier": "^2.1.2",
     "sass-loader": "^8.0.2",
     "vue-template-compiler": "^2.6.11"
   },
@@ -91,6 +92,11 @@
         ]
       }
     }
+  },
+  "prettier": {
+    "semi": false,
+    "printWidth": 120,
+    "singleQuote": true
   },
   "postcss": {
     "plugins": {

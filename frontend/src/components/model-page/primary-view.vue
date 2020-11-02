@@ -1,11 +1,9 @@
-
 <template>
-    <router-view/>
+  <router-view />
 </template>
 
-
 <script>
-  export default {
-    name: 'primary-view',
-  };
+export default {
+  name: 'primary-view',
+}
 </script>

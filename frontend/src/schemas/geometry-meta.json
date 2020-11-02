@@ -4,12 +4,7 @@
   "$id": "http://example.com/root.json",
   "type": "object",
   "title": "The Root Schema",
-  "required": [
-    "meshNameRoot",
-    "scale",
-    "structures",
-    "freeDiffusionBoundaries"
-  ],
+  "required": ["meshNameRoot", "scale", "structures", "freeDiffusionBoundaries"],
   "properties": {
     "meshNameRoot": {
       "$id": "#/properties/meshNameRoot",
@@ -25,9 +20,7 @@
       "title": "The Scale Schema",
       "description": "Mesh scale",
       "default": 1,
-      "examples": [
-        1e-06
-      ]
+      "examples": [1e-6]
     },
     "structures": {
       "$id": "#/properties/structures",
@@ -39,34 +32,24 @@
         "$id": "#/properties/structures/items",
         "type": "object",
         "title": "The Items Schema",
-        "required": [
-          "name",
-          "type"
-        ],
+        "required": ["name", "type"],
         "properties": {
           "name": {
             "$id": "#/properties/structures/items/properties/name",
             "type": "string",
             "title": "The Name Schema",
             "default": "",
-            "examples": [
-              "Dendrite"
-            ],
+            "examples": ["Dendrite"],
             "pattern": "^(.*)$"
           },
           "type": {
             "$id": "#/properties/structures/items/properties/type",
             "type": "string",
-            "enum": [
-              "compartment",
-              "membrane"
-            ],
+            "enum": ["compartment", "membrane"],
             "title": "Structure Type Schema",
             "description": "Mesh 2d and 3d structures",
             "default": "",
-            "examples": [
-              "compartment"
-            ],
+            "examples": ["compartment"],
             "pattern": "^(.*)$"
           },
           "tetIdxs": {
@@ -80,11 +63,7 @@
               "type": "integer",
               "title": "The Items Schema",
               "default": 0,
-              "examples": [
-                0,
-                1,
-                2
-              ]
+              "examples": [0, 1, 2]
             }
           },
           "triIdxs": {
@@ -98,10 +77,7 @@
               "type": "integer",
               "title": "The Items Schema",
               "default": 0,
-              "examples": [
-                133,
-                141
-              ]
+              "examples": [133, 141]
             }
           }
         }
@@ -121,9 +97,7 @@
             "type": "string",
             "title": "The Name Schema",
             "default": "",
-            "examples": [
-              "Dend_syn"
-            ],
+            "examples": ["Dend_syn"],
             "pattern": "^(.*)$"
           },
           "triIdxs": {
@@ -135,16 +109,11 @@
               "type": "integer",
               "title": "The Items Schema",
               "default": 0,
-              "examples": [
-                2,
-                3
-              ]
+              "examples": [2, 3]
             }
           }
         },
-        "required": [
-          "triIdxs"
-        ]
+        "required": ["triIdxs"]
       }
     }
   }

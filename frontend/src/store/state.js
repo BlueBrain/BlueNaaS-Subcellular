@@ -1,11 +1,10 @@
+import cloneDeep from 'lodash/cloneDeep'
+import uuidv5 from 'uuid/v5'
 
-import cloneDeep from 'lodash/cloneDeep';
-import uuidv5 from 'uuid/v5';
+import constants from '@/constants'
 
-import constants from '@/constants';
-
-const model = cloneDeep(constants.defaultEmptyModel, { id: uuidv5 });
-const revision = cloneDeep(constants.defaultEmptyRevision);
+const model = cloneDeep(constants.defaultEmptyModel, { id: uuidv5 })
+const revision = cloneDeep(constants.defaultEmptyRevision)
 
 export default {
   model,
@@ -23,4 +22,4 @@ export default {
     visibleConcSources: ['default'],
   },
   repoQueryHighlightVersionKey: null,
-};
+}

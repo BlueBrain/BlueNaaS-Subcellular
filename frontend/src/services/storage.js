@@ -1,4 +1,3 @@
+import localForage from 'localforage'
 
-import localForage from 'localforage';
-
-export default localForage;
+export default localForage

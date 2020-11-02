@@ -1,7 +1,6 @@
+import constants from '@/constants'
 
-import constants from '@/constants';
-
-const { SimSolver } = constants;
+const { SimSolver } = constants
 
 const collectionNames = [
   'structures',
@@ -12,7 +11,7 @@ const collectionNames = [
   'functions',
   'observables',
   'parameters',
-];
+]
 
 class SolverState {
   /**
@@ -22,64 +21,64 @@ class SolverState {
    * @param {Str} reason
    */
   constructor(enabled, reason = '') {
-    this.enabled = enabled;
-    this.reason = reason;
+    this.enabled = enabled
+    this.reason = reason
   }
 }
 
 function getStepsSolverState(state) {
   if (!state.model.geometry) {
-    return new SolverState(false, 'No geometry provided');
+    return new SolverState(false, 'No geometry provided')
   }
 
-  return new SolverState(true);
+  return new SolverState(true)
 }
 
 function getNfsimSolverState(state) {
   if (state.model.nonBnglStructures) {
-    return new SolverState(false, 'Non compliant BNG structs');
+    return new SolverState(false, 'Non compliant BNG structs')
   }
 
-  return new SolverState(true);
+  return new SolverState(true)
 }
 
 export default {
-  solverState: state => (solver) => {
-    if (solver === SimSolver.NFSIM) return getNfsimSolverState(state);
-    if (solver === SimSolver.STEPS) return getStepsSolverState(state);
+  solverState: (state) => (solver) => {
+    if (solver === SimSolver.NFSIM) return getNfsimSolverState(state)
+    if (solver === SimSolver.STEPS) return getStepsSolverState(state)
 
-    throw new Error(`Unrecognised solver ${solver}`);
+    throw new Error(`Unrecognised solver ${solver}`)
   },
   queryResultVersions: (state) => {
-    if (!state.repoQueryResult) return [];
+    if (!state.repoQueryResult) return []
 
-    const versionMap = new Map();
+    const versionMap = new Map()
 
     collectionNames.forEach((collName) => {
       state.repoQueryResult[collName].forEach((entity) => {
-        const key = `${entity.branch}:${entity.rev}`;
+        const key = `${entity.branch}:${entity.rev}`
         if (!versionMap.has(key)) {
           const version = {
             key,
             branch: entity.branch,
             revision: entity.rev,
-          };
-          versionMap.set(key, version);
+          }
+          versionMap.set(key, version)
         }
-      });
-    });
+      })
+    })
 
-    return Array.from(versionMap.values());
+    return Array.from(versionMap.values())
   },
   revisionSources: (state) => {
-    const sourceSet = new Set();
+    const sourceSet = new Set()
 
     collectionNames.forEach((collName) => {
       state.revision[collName].forEach((entity) => {
-        sourceSet.add(entity.source);
-      });
-    });
+        sourceSet.add(entity.source)
+      })
+    })
 
-    return Array.from(sourceSet.values());
+    return Array.from(sourceSet.values())
   },
-};
+}

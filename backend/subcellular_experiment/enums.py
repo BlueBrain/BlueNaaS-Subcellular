@@ -1,4 +1,3 @@
-
-class SimWorkerStatus():
-    READY = 'ready'
-    BUSY = 'busy'
+class SimWorkerStatus:
+    READY = "ready"
+    BUSY = "busy"

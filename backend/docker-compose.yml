@@ -9,7 +9,6 @@ services:
   backend:
     image: sc-svc-o1
     volumes:
-      - /gpfs:/gpfs:ro
       - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
       - ./tmp/geometries:/data/geometries
     ports:

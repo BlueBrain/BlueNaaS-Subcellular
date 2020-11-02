@@ -1,4 +1,3 @@
-
 <template>
   <div class="h-100 o-scroll-y">
     <i-menu
@@ -14,9 +13,7 @@
         <Badge class="float-right" status="success" />
       </MenuItem>
       <Submenu name="physiology">
-        <template slot="title">
-          Physiology
-        </template>
+        <template slot="title"> Physiology </template>
 
         <MenuItem name="structures">
           Structures
@@ -65,11 +62,8 @@
           <strong v-if="model.diffusions.length">({{ model.diffusions.length }})</strong>
           <span v-else>(0)</span>
         </MenuItem>
-
       </Submenu>
-      <MenuItem name="geometry">
-        Geometry
-      </MenuItem>
+      <MenuItem name="geometry"> Geometry </MenuItem>
 
       <MenuItem name="simulations">
         Simulations
@@ -80,34 +74,33 @@
   </div>
 </template>
 
-
 <script>
-  export default {
-    name: 'model-menu',
-    methods: {
-      onEntityTypeSelect(entityType) {
-        this.$store.commit('resetEntitySelection');
-        const path = `/model/${entityType}`;
-        if (path !== this.$router.currentRoute.path) {
-          this.$router.push({ path });
-        }
-      },
+export default {
+  name: 'model-menu',
+  methods: {
+    onEntityTypeSelect(entityType) {
+      this.$store.commit('resetEntitySelection')
+      const path = `/model/${entityType}`
+      if (path !== this.$router.currentRoute.path) {
+        this.$router.push({ path })
+      }
     },
-    computed: {
-      model() {
-        return this.$store.state.model;
-      },
-      currentEntityType() {
-        return this.$route.path.split('/')[2];
-      },
+  },
+  computed: {
+    model() {
+      return this.$store.state.model
     },
-  };
+    currentEntityType() {
+      return this.$route.path.split('/')[2]
+    },
+  },
+}
 </script>
 
-
 <style lang="scss" scoped>
-  .ivu-menu-vertical .ivu-menu-item, .ivu-menu-vertical .ivu-menu-submenu-title {
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
+.ivu-menu-vertical .ivu-menu-item,
+.ivu-menu-vertical .ivu-menu-submenu-title {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
 </style>

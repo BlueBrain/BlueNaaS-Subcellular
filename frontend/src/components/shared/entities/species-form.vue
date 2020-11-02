@@ -1,22 +1,9 @@
-
 <template>
-  <i-form
-    :label-width="120"
-    @submit.native.prevent
-  >
-    <FormItem
-      label="Name *"
-    >
-      <i-input
-        size="small"
-        ref="nameInput"
-        v-model="species.name"
-        @input="onSpeciesChange"
-      />
+  <i-form :label-width="120" @submit.native.prevent>
+    <FormItem label="Name *">
+      <i-input size="small" ref="nameInput" v-model="species.name" @input="onSpeciesChange" />
     </FormItem>
-    <FormItem
-      label="BioNetGen def. *"
-    >
+    <FormItem label="BioNetGen def. *">
       <bngl-input
         ref="definitionInput"
         size="small"
@@ -26,9 +13,7 @@
         @input="onSpeciesChange"
       />
     </FormItem>
-    <FormItem
-      label="Concentration *"
-    >
+    <FormItem label="Concentration *">
       <bngl-input
         ref="concentrationInput"
         size="small"
@@ -51,53 +36,49 @@
   </i-form>
 </template>
 
-
 <script>
-  import constants from '@/constants';
+import constants from '@/constants'
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
-
-  export default {
-    name: 'species-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'species-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      constants,
+      species: Object.assign({}, this.value),
+    }
+  },
+  methods: {
+    onSpeciesChange() {
+      this.species.valid = this.isValid()
+      this.$emit('input', this.species)
     },
-    data() {
-      return {
-        constants,
-        species: Object.assign({}, this.value),
-      };
+    isValid() {
+      return this.species.name.trim() && this.species.definition && this.species.concentration
     },
-    methods: {
-      onSpeciesChange() {
-        this.species.valid = this.isValid();
-        this.$emit('input', this.species);
-      },
-      isValid() {
-        return this.species.name.trim()
-          && this.species.definition
-          && this.species.concentration;
-      },
-      onDefinitionInputTab() {
-        this.$refs.concentrationInput.focus();
-      },
-      onConcentrationInputTab() {
-        this.$refs.annotationInput.focus();
-      },
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        this.$refs.concentrationInput.refresh();
-      },
+    onDefinitionInputTab() {
+      this.$refs.concentrationInput.focus()
     },
-    watch: {
-      value() {
-        this.species = Object.assign({}, this.value);
-      },
+    onConcentrationInputTab() {
+      this.$refs.annotationInput.focus()
     },
-  };
+    focus() {
+      this.$refs.nameInput.focus()
+    },
+    refresh() {
+      this.$refs.definitionInput.refresh()
+      this.$refs.concentrationInput.refresh()
+    },
+  },
+  watch: {
+    value() {
+      this.species = Object.assign({}, this.value)
+    },
+  },
+}
 </script>

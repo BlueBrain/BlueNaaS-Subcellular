@@ -1,17 +1,13 @@
-
 <template>
   <div>
-    <Tabs
-      name="search-content"
-      :animated="false"
-    >
+    <Tabs name="search-content" :animated="false">
       <TabPane
         v-if="queryResult.structures.length"
         tab="search-content"
         :index="0"
         :label="`Structure types (${queryResult.structures.length})`"
       >
-        <search-entities entity-type="structure"/>
+        <search-entities entity-type="structure" />
       </TabPane>
 
       <TabPane
@@ -20,7 +16,7 @@
         :index="1"
         :label="`Parameters (${queryResult.parameters.length})`"
       >
-        <search-entities entity-type="parameter"/>
+        <search-entities entity-type="parameter" />
       </TabPane>
 
       <TabPane
@@ -29,7 +25,7 @@
         :index="2"
         :label="`Functions (${queryResult.functions.length})`"
       >
-        <search-entities entity-type="function"/>
+        <search-entities entity-type="function" />
       </TabPane>
 
       <TabPane
@@ -38,7 +34,7 @@
         :index="3"
         :label="`Molecules (${queryResult.molecules.length})`"
       >
-        <search-entities entity-type="molecule"/>
+        <search-entities entity-type="molecule" />
       </TabPane>
 
       <TabPane
@@ -47,7 +43,7 @@
         :index="4"
         :label="`Species (${queryResult.species.length})`"
       >
-        <search-entities entity-type="species"/>
+        <search-entities entity-type="species" />
       </TabPane>
 
       <TabPane
@@ -56,7 +52,7 @@
         :index="5"
         :label="`Observables (${queryResult.observables.length})`"
       >
-        <search-entities entity-type="observable"/>
+        <search-entities entity-type="observable" />
       </TabPane>
 
       <TabPane
@@ -65,7 +61,7 @@
         :index="6"
         :label="`Reactions (${queryResult.reactions.length})`"
       >
-        <search-entities entity-type="reaction"/>
+        <search-entities entity-type="reaction" />
       </TabPane>
 
       <TabPane
@@ -74,25 +70,24 @@
         :index="7"
         :label="`Diffusions (${queryResult.diffusions.length})`"
       >
-        <search-entities entity-type="diffusion"/>
+        <search-entities entity-type="diffusion" />
       </TabPane>
     </Tabs>
   </div>
 </template>
 
-
 <script>
-  import SearchEntities from './search-content/search-entities.vue';
+import SearchEntities from './search-content/search-entities.vue'
 
-  export default {
-    name: 'search-content',
-    components: {
-      'search-entities': SearchEntities,
+export default {
+  name: 'search-content',
+  components: {
+    'search-entities': SearchEntities,
+  },
+  computed: {
+    queryResult() {
+      return this.$store.state.repoQueryResult
     },
-    computed: {
-      queryResult() {
-        return this.$store.state.repoQueryResult;
-      },
-    },
-  };
+  },
+}
 </script>

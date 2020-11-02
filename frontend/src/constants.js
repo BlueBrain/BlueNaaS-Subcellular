@@ -1,14 +1,12 @@
-
 // TODO: split into different files
-
 
 const ServerMessageType = {
   SIM_TRACE: 'simTrace',
   SIM_STEP_TRACE: 'simStepTrace',
   SIM_STATUS: 'simStatus',
-};
+}
 
-export const SIM_TRACE_MAX_SIZE = 1e6;
+export const SIM_TRACE_MAX_SIZE = 10e6
 
 const EntityType = {
   STRUCTURE_TYPE: 'structureType',
@@ -21,19 +19,19 @@ const EntityType = {
   OBSERVABLE: 'observable',
   DIFFUSION: 'diffusion',
   GEOMETRY: 'geometry',
-};
+}
 
 const StructureType = {
   COMPARTMENT: 'compartment',
   MEMBRANE: 'membrane',
-};
+}
 
 const ModelExportFormats = {
   BNGL: 'bngl',
   PYSB_FLAT: 'pysb_flat',
   SBML: 'sbml',
   STEPS: 'steps',
-};
+}
 
 const ModelFormatExtensions = {
   bngl: 'bngl',
@@ -41,7 +39,7 @@ const ModelFormatExtensions = {
   pysb_flat: 'py',
   sbml: 'sbml',
   steps: 'py',
-};
+}
 
 const SimStatus = {
   CREATED: 'created',
@@ -52,7 +50,7 @@ const SimStatus = {
   CANCELLED: 'cancelled',
   ERROR: 'error',
   FINISHED: 'finished',
-};
+}
 
 const UnitType = {
   VOL_SIZE: 'volSize',
@@ -60,35 +58,41 @@ const UnitType = {
   VOL_REAC_RATE: 'volReacRate',
   SURF_REAC_RATE: 'surfReacRate',
   TIME: 'time',
-};
+}
 
-const units = [{
-  val: 'm³',
-  type: UnitType.VOL_SIZE,
-}, {
-  val: 'm²',
-  type: UnitType.SURF_SIZE,
-}, {
-  val: 'm³.s⁻¹',
-  type: UnitType.VOL_REAC_RATE,
-}, {
-  val: 'm².s⁻¹',
-  type: UnitType.SURF_REAC_RATE,
-}, {
-  val: 's',
-  type: UnitType.TIME,
-}];
+const units = [
+  {
+    val: 'm³',
+    type: UnitType.VOL_SIZE,
+  },
+  {
+    val: 'm²',
+    type: UnitType.SURF_SIZE,
+  },
+  {
+    val: 'm³.s⁻¹',
+    type: UnitType.VOL_REAC_RATE,
+  },
+  {
+    val: 'm².s⁻¹',
+    type: UnitType.SURF_REAC_RATE,
+  },
+  {
+    val: 's',
+    type: UnitType.TIME,
+  },
+]
 
 const SimSolver = {
   NFSIM: 'nfsim',
   STEPS: 'steps',
-};
+}
 
 const StimulusTypeEnum = {
   SET_PARAM: 'setParam',
   SET_CONC: 'setConc',
   CLAMP_CONC: 'clampConc',
-};
+}
 
 const defaultEmptyModel = {
   id: null,
@@ -106,7 +110,7 @@ const defaultEmptyModel = {
 
   geometry: null,
   simulations: [],
-};
+}
 
 const defaultEmptyRevision = {
   name: '',
@@ -126,7 +130,7 @@ const defaultEmptyRevision = {
   observables: [],
   reactions: [],
   diffusions: [],
-};
+}
 
 const defaultSolverConfig = {
   [SimSolver.STEPS]: {
@@ -152,7 +156,7 @@ const defaultSolverConfig = {
       data: [],
     },
   },
-};
+}
 
 const entityTypeCollectionMap = {
   parameter: 'parameters',
@@ -164,12 +168,12 @@ const entityTypeCollectionMap = {
   observable: 'observables',
   simulation: 'simulations',
   diffusion: 'diffusions',
-};
+}
 
 const formMode = {
   CREATE_NEW: 'createNew',
   EDIT: 'edit',
-};
+}
 
 const agentType = {
   ION: 'ion',
@@ -177,15 +181,15 @@ const agentType = {
   PROTEIN_FAMILY: 'protein family',
   PROTEIN_MULTIMER: 'protein multimer',
   METABOLITE: 'metabolite',
-};
+}
 
 const validationMessageType = {
   ERROR: 'error',
   WARNING: 'warning',
   INFO: 'info',
-};
+}
 
-const DEFAULT_VISIBLE_CONC_N_PER_REV = 5;
+const DEFAULT_VISIBLE_CONC_N_PER_REV = 5
 
 export default {
   EntityType,
@@ -207,4 +211,4 @@ export default {
   validationMessageType,
   SIM_TRACE_MAX_SIZE,
   DEFAULT_VISIBLE_CONC_N_PER_REV,
-};
+}

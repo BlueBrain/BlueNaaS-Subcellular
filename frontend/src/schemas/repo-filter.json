@@ -4,21 +4,14 @@
   "$id": "http://example.com/root.json",
   "type": "object",
   "title": "The Root Schema",
-  "required": [
-    "moleculeStr",
-    "structureStr",
-    "versions",
-    "entityTypes"
-  ],
+  "required": ["moleculeStr", "structureStr", "versions", "entityTypes"],
   "properties": {
     "moleculeStr": {
       "$id": "#/properties/moleculeStr",
       "type": "string",
       "title": "The Moleculestr Schema",
       "default": "",
-      "examples": [
-        "NMDA"
-      ],
+      "examples": ["NMDA"],
       "pattern": "(.*)"
     },
     "structureStr": {
@@ -26,9 +19,7 @@
       "type": "string",
       "title": "The Structurestr Schema",
       "default": "",
-      "examples": [
-        "PSD"
-      ],
+      "examples": ["PSD"],
       "pattern": "(.*)"
     },
     "versions": {
@@ -39,20 +30,14 @@
         "$id": "#/properties/versions/items",
         "type": "object",
         "title": "The Items Schema",
-        "required": [
-          "branch",
-          "revision",
-          "key"
-        ],
+        "required": ["branch", "revision", "key"],
         "properties": {
           "branch": {
             "$id": "#/properties/versions/items/properties/branch",
             "type": "string",
             "title": "The Branch Schema",
             "default": "",
-            "examples": [
-              "master"
-            ],
+            "examples": ["master"],
             "pattern": "^(.*)$"
           },
           "revision": {
@@ -60,10 +45,7 @@
             "type": ["string", "integer"],
             "title": "The Revision Schema",
             "default": "",
-            "examples": [
-              "latest",
-              1
-            ],
+            "examples": ["latest", 1],
             "pattern": "^(.*)$"
           },
           "key": {
@@ -71,9 +53,7 @@
             "type": "string",
             "title": "The Key Schema",
             "default": "",
-            "examples": [
-              "master:latest"
-            ],
+            "examples": ["master:latest"],
             "pattern": "^(.*)\\:(.*)$"
           }
         }
@@ -90,26 +70,10 @@
       "items": {
         "$id": "#/properties/entityTypes/items",
         "type": "string",
-        "enum": [
-          "parameter",
-          "structure",
-          "molecule",
-          "species",
-          "observable",
-          "function",
-          "reaction"
-        ],
+        "enum": ["parameter", "structure", "molecule", "species", "observable", "function", "reaction"],
         "title": "The Items Schema",
         "default": "",
-        "examples": [
-          "parameter",
-          "structure",
-          "molecule",
-          "species",
-          "observable",
-          "function",
-          "reaction"
-        ],
+        "examples": ["parameter", "structure", "molecule", "species", "observable", "function", "reaction"],
         "pattern": "^(.*)$"
       }
     }

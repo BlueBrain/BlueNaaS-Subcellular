@@ -1,34 +1,29 @@
-
 import os
 import tempfile
 import shutil
 
 
 STIMULUS_TYPE_BY_CODE = {
-    0: 'setParam',
-    1: 'setConc',
-    2: 'clampConc',
+    0: "setParam",
+    1: "setConc",
+    2: "clampConc",
 }
+
 
 def decompress_stimulation(stimulation):
     stimuli = []
-    for idx in range(stimulation['size']):
-        t = stimulation['data'][idx * 4]
-        stim_type = STIMULUS_TYPE_BY_CODE[stimulation['data'][idx * 4 + 1]]
-        target = stimulation['targetValues'][stimulation['data'][idx * 4 + 2]]
-        value = stimulation['data'][idx * 4 + 3]
-        stimuli.append({
-            't': t,
-            'type': stim_type,
-            'target': target,
-            'value': value
-        })
+    for idx in range(stimulation["size"]):
+        t = stimulation["data"][idx * 4]
+        stim_type = STIMULUS_TYPE_BY_CODE[stimulation["data"][idx * 4 + 1]]
+        target = stimulation["targetValues"][stimulation["data"][idx * 4 + 2]]
+        value = stimulation["data"][idx * 4 + 3]
+        stimuli.append({"t": t, "type": stim_type, "target": target, "value": value})
 
     return stimuli
 
 
 class SimSpatialStepTrace:
-    TYPE = 'simSpatialStepTrace'
+    TYPE = "simSpatialStepTrace"
 
     def __init__(self, step_idx, t, trace_data):
         self.type = self.TYPE
@@ -38,30 +33,24 @@ class SimSpatialStepTrace:
         self.trace_data = trace_data
 
     def to_dict(self):
-        return {
-            'stepIdx': self.step_idx,
-            't': self.t,
-            'data': self.trace_data
-        }
+        return {"stepIdx": self.step_idx, "t": self.t, "data": self.trace_data}
 
 
 class SimLogMessage:
-    TYPE = 'simLogMessage'
+    TYPE = "simLogMessage"
 
-    def __init__(self, message, source='system'):
+    def __init__(self, message, source="system"):
         self.type = self.TYPE
 
         self.message = message
         self.source = source
 
     def to_dict(self):
-        return {
-            'message': self.message,
-            'source': self.source
-        }
+        return {"message": self.message, "source": self.source}
+
 
 class SimProgress:
-    TYPE = 'simProgress'
+    TYPE = "simProgress"
 
     def __init__(self, progress):
         self.type = self.TYPE
@@ -69,13 +58,11 @@ class SimProgress:
         self.progress = progress
 
     def to_dict(self):
-        return {
-            'progress': self.progress
-        }
+        return {"progress": self.progress}
 
 
 class SimLog:
-    TYPE = 'simLog'
+    TYPE = "simLog"
 
     def __init__(self, log_dict):
         self.log = log_dict
@@ -85,7 +72,7 @@ class SimLog:
 
 
 class SimStepTrace:
-    TYPE = 'simStepTrace'
+    TYPE = "simStepTrace"
 
     def __init__(self, t, step_idx, values, observables):
         self.type = self.TYPE
@@ -96,16 +83,11 @@ class SimStepTrace:
         self.observables = observables
 
     def to_dict(self):
-        return {
-            't': self.t,
-            'stepIdx': self.step_idx,
-            'observables': self.observables,
-            'values': self.values
-        }
+        return {"t": self.t, "stepIdx": self.step_idx, "observables": self.observables, "values": self.values}
 
 
 class SimTrace:
-    TYPE = 'simTrace'
+    TYPE = "simTrace"
 
     def __init__(self, times, values, observables):
         self.type = self.TYPE
@@ -117,22 +99,22 @@ class SimTrace:
 
     def to_dict(self):
         return {
-            'nSteps': self.n_steps,
-            'times': self.times,
-            'values': self.values,
-            'observables': self.observables,
+            "nSteps": self.n_steps,
+            "times": self.times,
+            "values": self.values,
+            "observables": self.observables,
         }
 
 
 class SimStatus:
-    QUEUED = 'queued'
-    INIT = 'init'
-    STARTED = 'started'
-    ERROR = 'error'
-    FINISHED = 'finished'
-    CANCELLED = 'cancelled'
+    QUEUED = "queued"
+    INIT = "init"
+    STARTED = "started"
+    ERROR = "error"
+    FINISHED = "finished"
+    CANCELLED = "cancelled"
 
-    TYPE = 'simStatus'
+    TYPE = "simStatus"
 
     def __init__(self, status, description=None):
         self.type = self.TYPE
@@ -141,14 +123,16 @@ class SimStatus:
 
     def to_dict(self):
         return {
-            'status': self.status,
-            'description': self.description,
+            "status": self.status,
+            "description": self.description,
         }
 
+
 class StimulusType:
-    SET_PARAM = 'setParam'
-    SET_CONC = 'setConc'
-    CLAMP_CONC = 'clampConc'
+    SET_PARAM = "setParam"
+    SET_CONC = "setConc"
+    CLAMP_CONC = "clampConc"
+
 
 class Sim:
     def prepare_tmp_dir(self):
