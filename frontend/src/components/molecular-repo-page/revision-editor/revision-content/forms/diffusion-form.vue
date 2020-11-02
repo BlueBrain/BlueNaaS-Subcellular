@@ -32,7 +32,13 @@
       </FormItem>
 
       <FormItem prop="description" label="Description">
-        <i-input type="textarea" ref="descriptionInput" autosize v-model="diffusion.description" @input="onChange" />
+        <i-input
+          type="textarea"
+          ref="descriptionInput"
+          autosize
+          v-model="diffusion.description"
+          @input="onChange"
+        />
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
@@ -43,43 +49,43 @@
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'diffusion-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      diffusion: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    focus() {
-      this.$refs.nameInput.focus()
+  export default {
+    name: 'diffusion-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    refresh() {
-      this.$refs.definitionInput.refresh()
-      this.$refs.rateInput.refresh()
+    data() {
+      return {
+        diffusion: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.rateInput.focus()
+    methods: {
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+        this.$refs.rateInput.refresh();
+      },
+      onDefinitionInputTab() {
+        this.$refs.rateInput.focus();
+      },
+      onRateInputTab() {
+        this.$refs.descriptionInput.focus();
+      },
+      onChange() {
+        // TODO: add validation
+        this.diffusion.valid = true;
+        this.$emit('input', this.diffusion);
+      },
     },
-    onRateInputTab() {
-      this.$refs.descriptionInput.focus()
+    watch: {
+      value() {
+        this.diffusion = { ...this.value };
+      },
     },
-    onChange() {
-      // TODO: add validation
-      this.diffusion.valid = true
-      this.$emit('input', this.diffusion)
-    },
-  },
-  watch: {
-    value() {
-      this.diffusion = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

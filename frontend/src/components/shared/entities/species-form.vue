@@ -37,48 +37,48 @@
 </template>
 
 <script>
-import constants from '@/constants'
+  import constants from '@/constants';
 
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'species-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      constants,
-      species: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    onSpeciesChange() {
-      this.species.valid = this.isValid()
-      this.$emit('input', this.species)
+  export default {
+    name: 'species-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    isValid() {
-      return this.species.name.trim() && this.species.definition && this.species.concentration
+    data() {
+      return {
+        constants,
+        species: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.concentrationInput.focus()
+    methods: {
+      onSpeciesChange() {
+        this.species.valid = this.isValid();
+        this.$emit('input', this.species);
+      },
+      isValid() {
+        return this.species.name.trim() && this.species.definition && this.species.concentration;
+      },
+      onDefinitionInputTab() {
+        this.$refs.concentrationInput.focus();
+      },
+      onConcentrationInputTab() {
+        this.$refs.annotationInput.focus();
+      },
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+        this.$refs.concentrationInput.refresh();
+      },
     },
-    onConcentrationInputTab() {
-      this.$refs.annotationInput.focus()
+    watch: {
+      value() {
+        this.species = { ...this.value };
+      },
     },
-    focus() {
-      this.$refs.nameInput.focus()
-    },
-    refresh() {
-      this.$refs.definitionInput.refresh()
-      this.$refs.concentrationInput.refresh()
-    },
-  },
-  watch: {
-    value() {
-      this.species = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

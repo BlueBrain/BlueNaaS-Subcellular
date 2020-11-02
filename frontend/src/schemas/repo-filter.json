@@ -70,10 +70,26 @@
       "items": {
         "$id": "#/properties/entityTypes/items",
         "type": "string",
-        "enum": ["parameter", "structure", "molecule", "species", "observable", "function", "reaction"],
+        "enum": [
+          "parameter",
+          "structure",
+          "molecule",
+          "species",
+          "observable",
+          "function",
+          "reaction"
+        ],
         "title": "The Items Schema",
         "default": "",
-        "examples": ["parameter", "structure", "molecule", "species", "observable", "function", "reaction"],
+        "examples": [
+          "parameter",
+          "structure",
+          "molecule",
+          "species",
+          "observable",
+          "function",
+          "reaction"
+        ],
         "pattern": "^(.*)$"
       }
     }

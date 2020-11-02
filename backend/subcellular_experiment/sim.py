@@ -1,3 +1,7 @@
+from pydantic import BaseModel
+from typing import Dict, List, ClassVar
+from typing_extensions import Literal
+
 import os
 import tempfile
 import shutil
@@ -86,26 +90,20 @@ class SimStepTrace:
         return {"t": self.t, "stepIdx": self.step_idx, "observables": self.observables, "values": self.values}
 
 
-class SimTrace:
-    TYPE = "simTrace"
+class SimTrace(BaseModel):
+    """Simulation trace for a given observable
+
+    Attributes:
+        times: List of time points
+        values: Dict mapping of observables to values
+    """
+
+    TYPE: ClassVar[Literal["simTrace"]] = "simTrace"
     index: int
-
-    def __init__(self, index: int, times, values, observables):
-        self.type = self.TYPE
-        self.index = index
-        self.n_steps = len(times)
-        self.times = times
-        self.values = values
-        self.observables = observables
-
-    def to_dict(self):
-        return {
-            "index": self.index,
-            "nSteps": self.n_steps,
-            "times": self.times,
-            "values": self.values,
-            "observables": self.observables,
-        }
+    persist: bool = False
+    stream: bool = True
+    times: List[float]
+    values_by_observable: Dict[str, List[float]]
 
 
 class SimStatus:

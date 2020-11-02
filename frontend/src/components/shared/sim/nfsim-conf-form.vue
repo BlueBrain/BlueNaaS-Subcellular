@@ -12,9 +12,16 @@
       />
     </FormItem>
     <FormItem label="t_end, s *">
-      <InputNumber v-model="conf.tEnd" size="small" :min="1" :active-change="false" @input="onChange" />
+      <InputNumber
+        v-model="conf.tEnd"
+        size="small"
+        :min="1"
+        :active-change="false"
+        @input="onChange"
+      />
       <span class="text-error form-input-msg" v-if="traceMaxSizeReached">
-        Max simulation result size reached, <code>[observable_n] * [t_end] / [max_dt]</code> should be less then 1M
+        Max simulation result size reached,
+        <code>[observable_n] * [t_end] / [max_dt]</code> should be less then 10M
       </span>
     </FormItem>
     <FormItem label="Stimulation">
@@ -33,39 +40,39 @@
 </template>
 
 <script>
-import { SIM_TRACE_MAX_SIZE } from '@/constants'
+  import { SIM_TRACE_MAX_SIZE } from '@/constants';
 
-import NfsimStimulationForm from './nfsim-stimulation-form.vue'
+  import NfsimStimulationForm from './nfsim-stimulation-form.vue';
 
-export default {
-  name: 'sim-nfsim-conf-form',
-  props: ['value'],
-  components: {
-    'nfsim-stimulation-form': NfsimStimulationForm,
-  },
-  data() {
-    return {
-      conf: { ...this.value },
-    }
-  },
-  methods: {
-    onChange() {
-      this.$emit('input', { ...this.conf, valid: this.isValid })
+  export default {
+    name: 'sim-nfsim-conf-form',
+    props: ['value'],
+    components: {
+      'nfsim-stimulation-form': NfsimStimulationForm,
     },
-  },
-  computed: {
-    traceMaxSizeReached() {
-      const observableN = this.$store.state.model.observables.length
-      return (observableN * this.conf.tEnd) / this.conf.dt > SIM_TRACE_MAX_SIZE
+    data() {
+      return {
+        conf: { ...this.value },
+      };
     },
-    isValid() {
-      return this.conf.tEnd && this.conf.dt && !this.traceMaxSizeReached
+    methods: {
+      onChange() {
+        this.$emit('input', { ...this.conf, valid: this.isValid });
+      },
     },
-  },
-  watch: {
-    value() {
-      this.conf = Object.assign({}, this.value)
+    computed: {
+      traceMaxSizeReached() {
+        const observableN = this.$store.state.model.observables.length;
+        return (observableN * this.conf.tEnd) / this.conf.dt > SIM_TRACE_MAX_SIZE;
+      },
+      isValid() {
+        return this.conf.tEnd && this.conf.dt && !this.traceMaxSizeReached;
+      },
     },
-  },
-}
+    watch: {
+      value() {
+        this.conf = { ...this.value };
+      },
+    },
+  };
 </script>

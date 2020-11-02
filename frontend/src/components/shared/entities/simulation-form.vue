@@ -4,7 +4,12 @@
       <Row>
         <i-col span="12">
           <FormItem label="Name *">
-            <i-input size="small" ref="nameInput" v-model="simulation.name" @input="onSimulationChange" />
+            <i-input
+              size="small"
+              ref="nameInput"
+              v-model="simulation.name"
+              @input="onSimulationChange"
+            />
           </FormItem>
         </i-col>
         <i-col span="12">
@@ -39,68 +44,79 @@
 
     <i-form :label-width="100" @submit.native.prevent>
       <FormItem label="Annotation">
-        <i-input size="small" type="textarea" autosize v-model="simulation.annotation" @input="onSimulationChange" />
+        <i-input
+          size="small"
+          type="textarea"
+          autosize
+          v-model="simulation.annotation"
+          @input="onSimulationChange"
+        />
       </FormItem>
     </i-form>
   </div>
 </template>
 
 <script>
-import constants from '@/constants'
+  import constants from '@/constants';
 
-import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue'
-import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue'
+  import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
+  import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue';
 
-const { defaultSolverConfig, SimSolver } = constants
+  const { defaultSolverConfig, SimSolver } = constants;
 
-const solverLabel = {
-  [SimSolver.NFSIM]: 'NFsim',
-  [SimSolver.STEPS]: 'STEPS',
-}
+  const solverLabel = {
+    [SimSolver.NFSIM]: 'NFsim',
+    [SimSolver.STEPS]: 'STEPS',
+  };
 
-export default {
-  name: 'simulation-form',
-  props: ['value'],
-  components: {
-    'steps-conf-form': StepsConfForm,
-    'nfsim-conf-form': NfsimConfForm,
-  },
-  data() {
-    return {
-      SimSolver,
-      simulation: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    onSolverChange() {
-      const { solver } = this.simulation
-      this.simulation.solverConf = Object.assign({ valid: true }, defaultSolverConfig[solver])
-      this.onSimulationChange()
+  export default {
+    name: 'simulation-form',
+    props: ['value'],
+    components: {
+      'steps-conf-form': StepsConfForm,
+      'nfsim-conf-form': NfsimConfForm,
     },
-    onSimulationChange() {
-      this.simulation.valid = this.isValid()
-      this.$emit('input', this.simulation)
+    data() {
+      return {
+        SimSolver,
+        simulation: { ...this.value },
+      };
     },
-    isValid() {
-      return this.simulation.name.trim() && this.simulation.solverConf.valid && this.simulation.solver
+    methods: {
+      onSolverChange() {
+        const { solver } = this.simulation;
+        this.simulation.solverConf = {
+          valid: true,
+          ...defaultSolverConfig[solver],
+        };
+        this.onSimulationChange();
+      },
+      onSimulationChange() {
+        this.simulation.valid = this.isValid();
+        this.$emit('input', this.simulation);
+      },
+      isValid() {
+        return (
+          this.simulation.name.trim() && this.simulation.solverConf.valid && this.simulation.solver
+        );
+      },
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      getSolverSelectLabel(solver) {
+        const solverState = this.solverState(solver);
+        return solverLabel[solver] + (solverState.reason ? ` (${solverState.reason})` : '');
+      },
     },
-    focus() {
-      this.$refs.nameInput.focus()
+    computed: {
+      solverState() {
+        return this.$store.getters.solverState;
+      },
     },
-    getSolverSelectLabel(solver) {
-      const solverState = this.solverState(solver)
-      return solverLabel[solver] + (solverState.reason ? ` (${solverState.reason})` : '')
+    watch: {
+      value() {
+        this.simulation = { ...this.value };
+      },
     },
-  },
-  computed: {
-    solverState() {
-      return this.$store.getters.solverState
-    },
-  },
-  watch: {
-    value() {
-      this.simulation = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

@@ -30,44 +30,44 @@
 </template>
 
 <script>
-import constants from '@/constants'
+  import constants from '@/constants';
 
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'function-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      constants,
-      func: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    onFunctionChange() {
-      this.func.valid = this.isValid()
-      this.$emit('input', this.func)
+  export default {
+    name: 'function-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    isValid() {
-      return this.func.name.trim() && this.func.definition
+    data() {
+      return {
+        constants,
+        func: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.annotationInput.focus()
+    methods: {
+      onFunctionChange() {
+        this.func.valid = this.isValid();
+        this.$emit('input', this.func);
+      },
+      isValid() {
+        return this.func.name.trim() && this.func.definition;
+      },
+      onDefinitionInputTab() {
+        this.$refs.annotationInput.focus();
+      },
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+      },
     },
-    focus() {
-      this.$refs.nameInput.focus()
+    watch: {
+      value() {
+        this.func = { ...this.value };
+      },
     },
-    refresh() {
-      this.$refs.definitionInput.refresh()
-    },
-  },
-  watch: {
-    value() {
-      this.func = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

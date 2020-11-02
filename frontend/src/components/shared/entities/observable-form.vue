@@ -27,41 +27,41 @@
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'observable-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      observable: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    onObservableChange() {
-      this.observable.valid = this.isValid()
-      this.$emit('input', this.observable)
+  export default {
+    name: 'observable-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    isValid() {
-      return this.observable.name.trim() && this.observable.definition
+    data() {
+      return {
+        observable: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.annotationInput.focus()
+    methods: {
+      onObservableChange() {
+        this.observable.valid = this.isValid();
+        this.$emit('input', this.observable);
+      },
+      isValid() {
+        return this.observable.name.trim() && this.observable.definition;
+      },
+      onDefinitionInputTab() {
+        this.$refs.annotationInput.focus();
+      },
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+      },
     },
-    focus() {
-      this.$refs.nameInput.focus()
+    watch: {
+      value() {
+        this.observable = { ...this.value };
+      },
     },
-    refresh() {
-      this.$refs.definitionInput.refresh()
-    },
-  },
-  watch: {
-    value() {
-      this.observable = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

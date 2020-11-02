@@ -75,32 +75,32 @@
 </template>
 
 <script>
-export default {
-  name: 'model-menu',
-  methods: {
-    onEntityTypeSelect(entityType) {
-      this.$store.commit('resetEntitySelection')
-      const path = `/model/${entityType}`
-      if (path !== this.$router.currentRoute.path) {
-        this.$router.push({ path })
-      }
+  export default {
+    name: 'model-menu',
+    methods: {
+      onEntityTypeSelect(entityType) {
+        this.$store.commit('resetEntitySelection');
+        const path = `/model/${entityType}`;
+        if (path !== this.$router.currentRoute.path) {
+          this.$router.push({ path });
+        }
+      },
     },
-  },
-  computed: {
-    model() {
-      return this.$store.state.model
+    computed: {
+      model() {
+        return this.$store.state.model;
+      },
+      currentEntityType() {
+        return this.$route.path.split('/')[2];
+      },
     },
-    currentEntityType() {
-      return this.$route.path.split('/')[2]
-    },
-  },
-}
+  };
 </script>
 
 <style lang="scss" scoped>
-.ivu-menu-vertical .ivu-menu-item,
-.ivu-menu-vertical .ivu-menu-submenu-title {
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
+  .ivu-menu-vertical .ivu-menu-item,
+  .ivu-menu-vertical .ivu-menu-submenu-title {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
 </style>

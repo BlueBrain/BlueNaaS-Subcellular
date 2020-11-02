@@ -30,6 +30,7 @@ services:
     environment:
       - MASTER_HOST=backend
       - DEBUG=True
+      - PYTHONUNBUFFERED=True
     depends_on:
       - "backend"
     entrypoint: ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "-m", "subcellular_experiment.main"]

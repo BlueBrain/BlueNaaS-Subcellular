@@ -21,46 +21,52 @@
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
-        <i-input type="textarea" ref="commentsInput" autosize v-model="observable.comments" @input="onChange" />
+        <i-input
+          type="textarea"
+          ref="commentsInput"
+          autosize
+          v-model="observable.comments"
+          @input="onChange"
+        />
       </FormItem>
     </i-form>
   </div>
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'observable-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      observable: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    focus() {
-      this.$refs.nameInput.focus()
+  export default {
+    name: 'observable-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    refresh() {
-      this.$refs.definitionInput.refresh()
+    data() {
+      return {
+        observable: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.commentsInput.focus()
+    methods: {
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+      },
+      onDefinitionInputTab() {
+        this.$refs.commentsInput.focus();
+      },
+      onChange() {
+        // TODO: add validation
+        this.observable.valid = true;
+        this.$emit('input', this.observable);
+      },
     },
-    onChange() {
-      // TODO: add validation
-      this.observable.valid = true
-      this.$emit('input', this.observable)
+    watch: {
+      value() {
+        this.observable = { ...this.value };
+      },
     },
-  },
-  watch: {
-    value() {
-      this.observable = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

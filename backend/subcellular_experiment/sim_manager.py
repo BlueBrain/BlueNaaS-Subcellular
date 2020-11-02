@@ -180,18 +180,20 @@ class SimManager:
         user_id = sim_conf["userId"]
         sim_id = sim_conf["id"]
 
-        self.db.create_sim_trace(
-            {
-                **sim_trace,
-                "simId": sim_id,
-                "userId": user_id,
-            }
-        )
+        if sim_trace["persist"]:
+            self.db.create_sim_trace(
+                {
+                    **sim_trace,
+                    "simId": sim_id,
+                    "userId": user_id,
+                }
+            )
 
         status_message = {"simId": sim_id, "userId": user_id, "status": SimStatus.FINISHED}
 
         status_message.update(sim_trace)
-        self.send_message(user_id, SimTrace.TYPE, status_message)
+        if sim_trace["stream"]:
+            self.send_message(user_id, SimTrace.TYPE, status_message)
 
     def send_sim_status(self, sim_conf, status, context={}):
         self.send_message(sim_conf["userId"], SimStatus.TYPE, {**context, "simId": sim_conf["id"], "status": status})

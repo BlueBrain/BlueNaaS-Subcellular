@@ -21,7 +21,13 @@
       </FormItem>
 
       <FormItem prop="description" label="Description">
-        <i-input type="textarea" ref="descriptionInput" autosize v-model="func.description" @input="onChange" />
+        <i-input
+          type="textarea"
+          ref="descriptionInput"
+          autosize
+          v-model="func.description"
+          @input="onChange"
+        />
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
@@ -32,39 +38,39 @@
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue'
+  import BnglInput from '@/components/shared/bngl-input.vue';
 
-export default {
-  name: 'function-form',
-  props: ['value'],
-  components: {
-    'bngl-input': BnglInput,
-  },
-  data() {
-    return {
-      func: Object.assign({}, this.value),
-    }
-  },
-  methods: {
-    focus() {
-      this.$refs.nameInput.focus()
+  export default {
+    name: 'function-form',
+    props: ['value'],
+    components: {
+      'bngl-input': BnglInput,
     },
-    refresh() {
-      this.$refs.definitionInput.refresh()
+    data() {
+      return {
+        func: { ...this.value },
+      };
     },
-    onDefinitionInputTab() {
-      this.$refs.descriptionInput.focus()
+    methods: {
+      focus() {
+        this.$refs.nameInput.focus();
+      },
+      refresh() {
+        this.$refs.definitionInput.refresh();
+      },
+      onDefinitionInputTab() {
+        this.$refs.descriptionInput.focus();
+      },
+      onChange() {
+        // TODO: add validation
+        this.func.valid = true;
+        this.$emit('input', this.func);
+      },
     },
-    onChange() {
-      // TODO: add validation
-      this.func.valid = true
-      this.$emit('input', this.func)
+    watch: {
+      value() {
+        this.func = { ...this.value };
+      },
     },
-  },
-  watch: {
-    value() {
-      this.func = Object.assign({}, this.value)
-    },
-  },
-}
+  };
 </script>

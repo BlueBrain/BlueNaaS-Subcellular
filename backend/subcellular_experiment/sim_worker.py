@@ -150,9 +150,13 @@ class SimWorker:
                 if sim_data is None:
                     break
 
-                self.sim_tmp_data_store.add(sim_data)
-                payload = {**sim_data.to_dict(), **{"simId": sim_config["id"], "userId": sim_config["userId"]}}
-                self.send_message(sim_data.type, payload)
+                # self.sim_tmp_data_store.Îadd(sim_data)
+
+                data = sim_data.dict() if isinstance(sim_data, SimTrace) else sim_data.to_dict()
+
+                payload = {**data, **{"simId": sim_config["id"], "userId": sim_config["userId"]}}
+
+                self.send_message(sim_data.TYPE, payload)
 
             L.debug("joining simulator process")
             self.sim_proc.join()

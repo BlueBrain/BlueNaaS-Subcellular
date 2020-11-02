@@ -5,7 +5,7 @@
 </template>
 
 <script>
-export default {
-  name: 'entity-properties-placeholder',
-}
+  export default {
+    name: 'entity-properties-placeholder',
+  };
 </script>

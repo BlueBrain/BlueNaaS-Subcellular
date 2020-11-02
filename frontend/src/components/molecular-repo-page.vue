@@ -20,28 +20,28 @@
 </template>
 
 <script>
-import RepoSearch from './molecular-repo-page/repo-search.vue'
-import RevisionEditor from './molecular-repo-page/revision-editor.vue'
+  import RepoSearch from './molecular-repo-page/repo-search.vue';
+  import RevisionEditor from './molecular-repo-page/revision-editor.vue';
 
-export default {
-  name: 'molecular-repo-page',
-  components: {
-    'search-tab': RepoSearch,
-    'revision-editor': RevisionEditor,
-  },
-  methods: {
-    goBack() {
-      if (window.history.length) {
-        this.$router.go(-1)
-      } else {
-        this.$router.push({ path: '/model-meta' })
-      }
+  export default {
+    name: 'molecular-repo-page',
+    components: {
+      'search-tab': RepoSearch,
+      'revision-editor': RevisionEditor,
     },
-  },
-  computed: {
-    modelName() {
-      return this.$store.state.model.name
+    methods: {
+      goBack() {
+        if (window.history.length) {
+          this.$router.go(-1);
+        } else {
+          this.$router.push({ path: '/model-meta' });
+        }
+      },
     },
-  },
-}
+    computed: {
+      modelName() {
+        return this.$store.state.model.name;
+      },
+    },
+  };
 </script>

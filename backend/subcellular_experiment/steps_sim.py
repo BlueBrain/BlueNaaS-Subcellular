@@ -12,7 +12,6 @@ from pysb.importers import bngl
 
 import sympy
 
-import steps
 import steps.model as smodel
 import steps.geom as sgeom
 import steps.rng as srng
@@ -22,7 +21,6 @@ import steps.utilities.meshio as meshio
 from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
 from .sim import (
     SimProgress,
-    SimStepTrace,
     SimTrace,
     SimSpatialStepTrace,
     SimStatus,
@@ -31,8 +29,9 @@ from .sim import (
     decompress_stimulation,
 )
 from .logger import get_logger
+from .db import Db
 
-
+db = Db()
 L = get_logger(__name__)
 
 GEOMETRY_ROOT_PATH = "/data/geometries"
@@ -48,7 +47,7 @@ PATCH_COMP_TYPE_DICT = {0: "i", 1: "s", 2: "o"}  # inner  # surface  # outer
 
 def get_pysb_spec_comp_name(pysb_spec):
     spec_str = str(pysb_spec)
-    return re.search(".*\*\*\s+(\w+)", spec_str).groups()[0]
+    return re.search(r".*\*\*\s+(\w+)", spec_str).groups()[0]
 
 
 class StepsSim:
@@ -78,26 +77,26 @@ class StepsSim:
                 name = re.sub("=None", "", name)
                 name = re.sub("=", "~", name)
                 name = re.sub("'", "", name)
-                name = re.sub("\*\*", "@", name)
+                name = re.sub(r"\*\*", "@", name)
                 name = re.sub("%", ".", name)
 
                 if not compartments:
-                    name = re.sub("@\s+\w+", "", name)
+                    name = re.sub(r"@\s+\w+", "", name)
 
                 return name
 
             if st0[0] == "(":
                 # find outer parens
-                outer = re.compile("\((.+)\)")
+                outer = re.compile(r"\((.+)\)")
                 m = outer.search(st0)
                 st = m.group(1)
             else:
                 st = st0
 
-            if compartments == False:
-                st = re.sub("\*\*\s+\w+", "", st)
+            if not compartments:
+                st = re.sub(r"\*\*\s+\w+", "", st)
 
-            sim = re.split("\W+", st)
+            sim = re.split(r"\W+", st)
             st2 = sim[0]
             for i in range(1, len(sim)):
                 st2 = st2 + "_" + sim[i]
@@ -394,7 +393,7 @@ class StepsSim:
         diff_observables = [
             observable
             for observable in pysb_model.observables
-            if re.match(f"{DIFF_PREFIX}\w+", observable.name) is not None
+            if re.match(rf"{DIFF_PREFIX}\w+", observable.name) is not None
         ]
 
         for observable_idx, observable in enumerate(diff_observables):
@@ -551,13 +550,13 @@ class StepsSim:
         trace_observables = [
             observable
             for observable in pysb_model.observables
-            if re.match(f"({DIFF_PREFIX}|{STIM_PREFIX}|{SPAT_PREFIX})\w+", observable.name) is None
+            if re.match(rf"({DIFF_PREFIX}|{STIM_PREFIX}|{SPAT_PREFIX})\w+", observable.name) is None
         ]
         trace_observable_names = [observable.name for observable in trace_observables]
         trace_values = np.zeros((len(tpnts), len(trace_observables)))
 
         spatial_observables = [
-            observable for observable in pysb_model.observables if re.match(f"({SPAT_PREFIX})\w+", observable.name)
+            observable for observable in pysb_model.observables if re.match(rf"({SPAT_PREFIX})\w+", observable.name)
         ]
 
         # Send simulation meta
@@ -659,10 +658,15 @@ class StepsSim:
                         else:
                             spec_count = sim.getPatchCount(comp_name, pysb_spec.name)
                         mol_count += spec_count
-                    trace_values[tidx, observable_idx] = mol_count
+                    trace_values[tidx, observable_idx] = mol_count  # Ndarray of (nPoints, nObservables)
 
-                sim_step_trace = SimStepTrace(tpnt, tidx, trace_values[tidx], trace_observable_names)
-                self.send_progress(sim_step_trace)
+                values_by_observable = {
+                    observable: [value] for observable, value in zip(trace_observable_names, trace_values[tidx])
+                }
+
+                sim_trace = SimTrace(index=tpnt, times=[tpnt], values_by_observable=values_by_observable)
+
+                self.send_progress(sim_trace)
 
                 # sample spatial molecule amounts if requested by user
                 if "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]:
@@ -719,7 +723,33 @@ class StepsSim:
                 self.log(f"done {progress}% (sim time: {tpnt} s)")
                 self.send_progress(SimProgress(progress))
 
-        self.send_progress(SimTrace(tpnts, trace_values, trace_observable_names))
+        # self.send_progress(SimTrace(tpnts, trace_values, trace_observable_names))
+
+        times_size_bytes = tpnts.itemsize * len(tpnts)
+        values_size_bytes = trace_values.size * trace_values.itemsize
+        total_size_bytes = times_size_bytes + values_size_bytes
+
+        chunk_size = 1_000_000  # Roughly 1 MB
+        nchunks = total_size_bytes // chunk_size + 1
+
+        elements_per_chunk = len(tpnts) // nchunks
+
+        for i in range(0, len(tpnts), elements_per_chunk):
+            times_chunk = tpnts[i : i + elements_per_chunk]
+            values_chunk = trace_values[i : i + elements_per_chunk].T
+
+            values_by_observable = {
+                trace_observable_names[i]: values_chunk[i].tolist() for i in range(len(trace_observable_names))
+            }
+            self.send_progress(
+                SimTrace(
+                    index=i,
+                    times=times_chunk.tolist(),
+                    values_by_observable=values_by_observable,
+                    persist=True,
+                    stream=False,
+                )
+            )
 
         self.log("done")
         self.send_progress(SimStatus(SimStatus.FINISHED))

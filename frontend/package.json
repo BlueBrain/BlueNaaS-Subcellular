@@ -6,12 +6,13 @@
   "scripts": {
     "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "npx prettier --write src; vue-cli-service lint --no-fix"
   },
   "dependencies": {
     "@msgpack/msgpack": "^1.11.0",
     "@sentry/browser": "^5.12.1",
     "@sentry/integrations": "^5.12.0",
+    "@types/uuid": "^8.3.0",
     "ajv": "^6.11.0",
     "chroma-js": "^2.1.0",
     "codemirror": "^5.51.0",
@@ -30,22 +31,34 @@
     "uuid": "^3.4.0",
     "view-design": "^4.1.2",
     "vue": "^2.6.11",
+    "vue-class-component": "^7.2.3",
     "vue-codemirror": "^4.0.6",
+    "vue-property-decorator": "^8.4.2",
     "vue-router": "^3.1.5",
     "vuex": "^3.1.2"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.165",
+    "@typescript-eslint/eslint-plugin": "^2.33.0",
+    "@typescript-eslint/parser": "^2.33.0",
+    "@vue/cli": "^4.5.8",
     "@vue/cli-plugin-babel": "^4.1.2",
     "@vue/cli-plugin-eslint": "^4.1.2",
+    "@vue/cli-plugin-typescript": "~4.5.0",
     "@vue/cli-service": "^4.1.2",
     "@vue/eslint-config-airbnb": "^5.0.2",
+    "@vue/eslint-config-typescript": "^5.0.2",
     "babel-eslint": "^10.0.3",
-    "eslint": "^6.8.0",
+    "eslint": "7.2.0",
+    "eslint-config-airbnb-base": "14.2.0",
+    "eslint-config-prettier": "^6.15.0",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-vue": "^6.1.2",
     "prettier": "^2.1.2",
     "sass-loader": "^8.0.2",
+    "typescript": "~3.9.3",
     "vue-template-compiler": "^2.6.11"
   },
   "babel": {
@@ -59,28 +72,28 @@
     },
     "extends": [
       "plugin:vue/essential",
-      "@vue/airbnb"
+      "@vue/airbnb",
+      "airbnb-base",
+      "prettier",
+      "@vue/typescript"
     ],
     "rules": {
-      "indent": "off",
-      "vue/script-indent": [
+      "no-underscore-dangle": "off",
+      "no-param-reassign": "off",
+      "no-trailing-spaces": "error",
+      "import/extensions": [
         "error",
-        2,
+        "ignorePackages",
         {
-          "baseIndent": 1
-        }
-      ],
-      "no-underscore-dangle": [
-        "error",
-        {
-          "allow": [
-            "_id"
-          ]
+          "js": "never",
+          "jsx": "never",
+          "ts": "never",
+          "tsx": "never"
         }
       ]
     },
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@typescript-eslint/parser"
     },
     "settings": {
       "import/resolver": {
@@ -94,9 +107,10 @@
     }
   },
   "prettier": {
-    "semi": false,
-    "printWidth": 120,
-    "singleQuote": true
+    "printWidth": 100,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "vueIndentScriptAndStyle": true
   },
   "postcss": {
     "plugins": {

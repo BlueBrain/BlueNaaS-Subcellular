@@ -109,6 +109,7 @@ class NfSim(Sim):
 
         sim_traces = pd.read_csv("model.gdat")
         observables = [col for col in sim_traces.columns.tolist()[1:]]
+
         times = np.array(sim_traces.values.tolist())[:, 0]
         values = np.array(sim_traces.values.tolist())[:, 1:]
 
@@ -123,10 +124,12 @@ class NfSim(Sim):
 
         for i in range(0, len(times), elements_per_chunk):
             times_chunk = times[i : i + elements_per_chunk]
+            values_chunk = values[i : i + elements_per_chunk].T
 
-            values_chunk = values[i : i + elements_per_chunk]
-
-            self.send_progress(SimTrace(i, times_chunk, values_chunk, observables))
+            values_by_observable = {observables[i]: values_chunk[i].tolist() for i in range(len(observables))}
+            self.send_progress(
+                SimTrace(index=i, times=times_chunk.tolist(), values_by_observable=values_by_observable, persist=True)
+            )
 
         self.send_progress(SimStatus(SimStatus.FINISHED))
 

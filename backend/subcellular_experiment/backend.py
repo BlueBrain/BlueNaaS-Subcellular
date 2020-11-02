@@ -63,11 +63,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 sim_manager.request_tmp_sim_trace(sim_id, cmdid)
             else:
                 traces = db.db.simTraces.find({"simId": sim_id})
-                count = traces.count()
-                for i, trace in enumerate(traces):
-                    if i == count - 1:
-                        trace["last"] = True
-                    self.send_message("trace", trace)
+                for trace in traces:
+                    self.send_message("simTrace", trace)
 
         if cmd == "cancel_simulation":
             sim_conf = msg["data"]

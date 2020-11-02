@@ -2,7 +2,11 @@
   <div>
     <i-button type="primary" long @click="showImportModal"> Import from a file </i-button>
 
-    <Modal v-model="importModalVisible" title="Import revision data from a file" class-name="vertical-center-modal">
+    <Modal
+      v-model="importModalVisible"
+      title="Import revision data from a file"
+      class-name="vertical-center-modal"
+    >
       <div v-if="concSources.length > 1">
         <p>Select target concentration to import</p>
         <i-select class="mt-12" v-model="concSource">
@@ -33,95 +37,95 @@
 </template>
 
 <script>
-import FileImport from '@/components/shared/file-import.vue'
+  import FileImport from '@/components/shared/file-import.vue';
 
-const typeByExt = {
-  bngl: 'bngl',
-  xml: 'sbml',
-  json: 'ebngl',
-  ebngl: 'ebngl',
-  xlsx: 'xlsx',
-}
+  const typeByExt = {
+    bngl: 'bngl',
+    xml: 'sbml',
+    json: 'ebngl',
+    ebngl: 'ebngl',
+    xlsx: 'xlsx',
+  };
 
-const importFileFormats = [
-  { type: 'BNGL', extension: 'bngl' },
-  { type: 'eBNGL', extension: 'ebngl', mode: 'binary' },
-  { type: 'SBML*', extension: 'xml' },
-  { type: 'Excel', extension: 'xlsx', mode: 'binary' },
-]
+  const importFileFormats = [
+    { type: 'BNGL', extension: 'bngl' },
+    { type: 'eBNGL', extension: 'ebngl', mode: 'binary' },
+    { type: 'SBML*', extension: 'xml' },
+    { type: 'Excel', extension: 'xlsx', mode: 'binary' },
+  ];
 
-export default {
-  name: 'file-import-button',
-  components: {
-    'file-import': FileImport,
-  },
-  data() {
-    return {
-      importFileFormats,
-      concSource: null,
-      loading: false,
-      importModalVisible: false,
-      errorMsg: null,
-    }
-  },
-  mounted() {
-    this.init()
-  },
-  methods: {
-    init() {
-      this.concSource = this.concSources.length === 1 ? this.concSources[0] : null
+  export default {
+    name: 'file-import-button',
+    components: {
+      'file-import': FileImport,
     },
-    showImportModal() {
-      this.importModalVisible = true
+    data() {
+      return {
+        importFileFormats,
+        concSource: null,
+        loading: false,
+        importModalVisible: false,
+        errorMsg: null,
+      };
     },
-    hideImportModal() {
-      this.importModalVisible = false
+    mounted() {
+      this.init();
     },
-    onImportSuccess() {
-      this.importModalVisible = false
-      this.$Notice.success({
-        title: 'Imported successfully',
-      })
-    },
-    onImportError(err) {
-      this.$Notice.error({
-        title: 'Import error',
-        desc: err.message,
-      })
-    },
-    disableLoadingState() {
-      this.loading = false
-    },
-    onFileRead({ name, content }) {
-      // TODO: add revision preview
-      this.loading = true
-      const fileExtNorm = name.split('.').pop().toLowerCase()
+    methods: {
+      init() {
+        this.concSource = this.concSources.length === 1 ? this.concSources[0] : null;
+      },
+      showImportModal() {
+        this.importModalVisible = true;
+      },
+      hideImportModal() {
+        this.importModalVisible = false;
+      },
+      onImportSuccess() {
+        this.importModalVisible = false;
+        this.$Notice.success({
+          title: 'Imported successfully',
+        });
+      },
+      onImportError(err) {
+        this.$Notice.error({
+          title: 'Import error',
+          desc: err.message,
+        });
+      },
+      disableLoadingState() {
+        this.loading = false;
+      },
+      onFileRead({ name, content }) {
+        // TODO: add revision preview
+        this.loading = true;
+        const fileExtNorm = name.split('.').pop().toLowerCase();
 
-      this.type = typeByExt[fileExtNorm]
+        this.type = typeByExt[fileExtNorm];
 
-      const importRevFileParams = {
-        name,
-        fileContent: content,
-        type: this.type,
-        targetConcSource: this.concSource,
-      }
+        const importRevFileParams = {
+          name,
+          fileContent: content,
+          type: this.type,
+          targetConcSource: this.concSource,
+        };
 
-      this.$store
-        .dispatch('importRevisionFile', importRevFileParams)
-        .then(() => this.onImportSuccess())
-        .catch((err) => this.onImportError(err))
-        .finally(() => this.disableLoadingState())
+        this.$store
+          .dispatch('importRevisionFile', importRevFileParams)
+          .then(() => this.onImportSuccess())
+          .catch((err) => this.onImportError(err))
+          .finally(() => this.disableLoadingState());
+      },
     },
-  },
-  computed: {
-    concSources() {
-      return this.$store.state.revision.config.concSources
+    computed: {
+      concSources() {
+        return this.$store.state.revision.config.concSources;
+      },
     },
-  },
-  watch: {
-    concSources() {
-      this.init()
+    watch: {
+      concSources() {
+        this.init();
+      },
     },
-  },
-}
+  };
 </script>
