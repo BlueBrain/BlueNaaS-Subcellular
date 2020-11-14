@@ -29,9 +29,7 @@ from .sim import (
     decompress_stimulation,
 )
 from .logger import get_logger
-from .db import Db
 
-db = Db()
 L = get_logger(__name__)
 
 GEOMETRY_ROOT_PATH = "/data/geometries"

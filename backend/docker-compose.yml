@@ -17,6 +17,7 @@ services:
       - DEBUG=True
       - DB_HOST=mongo
       - PYTHONUNBUFFERED=True
+      - "MONGO_URI=subcellular_app"
     depends_on:
       - 'mongo'
     entrypoint: ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "-m", "subcellular_experiment.main"]

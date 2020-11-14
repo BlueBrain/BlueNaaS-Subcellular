@@ -3,6 +3,7 @@ import re
 
 import pymongo
 from pymongo import MongoClient
+from pymongo.errors import ConfigurationError
 
 from .bngl_extended_model import EntityType, entity_coll_name_map
 from .logger import get_logger
@@ -69,7 +70,12 @@ class Db:
     def __init__(self):
         self.mongo_client = MongoClient("mongodb://{}:27017/".format(DB_HOST))
         L.debug("connected to db")
-        self.db = self.mongo_client["subcellular-app"]
+
+        mongo_uri = os.getenv("MONGO_URI")
+        if mongo_uri is None:
+            raise ConfigurationError(message="MONGO_URI envar not set")
+
+        self.db = self.mongo_client[mongo_uri]
         self.db.simulations.create_index(
             [
                 ("id", pymongo.ASCENDING),
