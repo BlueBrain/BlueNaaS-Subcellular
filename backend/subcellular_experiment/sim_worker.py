@@ -33,11 +33,11 @@ class SimTmpDataStore:
         self.values = []
 
     def add(self, sim_data):
-        if sim_data.type == SimLogMessage.TYPE:
+        if sim_data.TYPE == SimLogMessage.TYPE:
             self._add_log(sim_data)
-        elif sim_data.type == SimStepTrace.TYPE:
+        elif sim_data.TYPE == SimStepTrace.TYPE:
             self._add_step_trace(sim_data)
-        elif sim_data.type == SimTrace.TYPE:
+        elif sim_data.TYPE == SimTrace.TYPE:
             self._add_trace(sim_data)
 
     def get_log(self):
@@ -150,9 +150,14 @@ class SimWorker:
                 if sim_data is None:
                     break
 
-                # self.sim_tmp_data_store.Îadd(sim_data)
+                is_sim_trace = isinstance(sim_data, SimTrace)
 
-                data = sim_data.dict() if isinstance(sim_data, SimTrace) else sim_data.to_dict()
+                if is_sim_trace:
+
+                    data = sim_data.dict()
+                else:
+                    self.sim_tmp_data_store.add(sim_data)
+                    data = sim_data.to_dict()
 
                 payload = {**data, **{"simId": sim_config["id"], "userId": sim_config["userId"]}}
 
