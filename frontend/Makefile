@@ -11,8 +11,6 @@ DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 
 SENTRY_DSN?=https://957bc91f672d4e8a83f09af8ad015a6e@sentry.io/1374434
 
-CIRCUIT_NAME?=o1
-
 define HELPTEXT
 Makefile usage
  Targets:
@@ -33,41 +31,56 @@ $(NODE_MODULES):
 	npm install
 
 run_dev: | $(NODE_MODULES)
-	VUE_APP_CIRCUIT_NAME=$(CIRCUIT_NAME) \
 	npm run serve
 
 build: | $(NODE_MODULES)
-	VUE_APP_CIRCUIT_NAME=$(CIRCUIT_NAME) \
 	VUE_APP_SENTRY_DSN=$(SENTRY_DSN) \
 	npm run build
 
 docker_build_version: build
-	docker build -t sc-$(CIRCUIT_NAME):$(VERSION) \
+	docker build -t sc:$(VERSION) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		.
 
 docker_build_latest: build
-	docker build -t sc-$(CIRCUIT_NAME):latest \
+	docker build -t sc:latest \
+		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
+		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
+		.
+
+docker_build_dev: build
+	docker build -t sc:dev \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		.
 
 docker_push_version: docker_build_version
 	docker tag \
-		$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION) \
-		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION)
+		$(APP_NAME_PREFIX):$(VERSION) \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):$(VERSION)
 
-	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):$(VERSION)
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):$(VERSION)
 
 	@echo 'frontend version($(VERSION)) pushed to OpenShift registy'
 
 docker_push_latest: docker_build_latest
 	docker tag \
-		$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest \
-		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest
+		$(APP_NAME_PREFIX):latest \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):latest
 
-	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME):latest
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):latest
+
+	@echo 'frontend latest version pushed to OpenShift registry.'
+	@echo 'frontend release done'
+
+
+docker_push_dev:
+	docker tag \
+		$(APP_NAME_PREFIX):dev \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):dev
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):dev
 
 	@echo 'frontend latest version pushed to OpenShift registry.'
 	@echo 'frontend release done'

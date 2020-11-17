@@ -2,7 +2,7 @@ import os
 import json
 import re
 import time
-
+import math
 from datetime import datetime
 
 import numpy as np
@@ -630,8 +630,6 @@ class StepsSim:
         self.log("run sim")
         self.send_progress(SimStatus(SimStatus.STARTED))
 
-        progress = 0
-
         for tidx, tpnt in enumerate(tpnts):
 
             sim.run(tpnt)
@@ -715,13 +713,12 @@ class StepsSim:
 
                     self.send_progress(SimSpatialStepTrace(tidx, tpnt, spatial_trace_data_dict))
 
-            current_progress = int((tidx + 1) / len(tpnts) * 100)
-            if current_progress > progress:
-                progress = current_progress
+            num_points = len(tpnts)
+            progress = int((tidx + 1) / num_points * 100)
+
+            if (tidx) % math.ceil(len(tpnts) / 100) == 0:
                 self.log(f"done {progress}% (sim time: {tpnt} s)")
                 self.send_progress(SimProgress(progress))
-
-        # self.send_progress(SimTrace(tpnts, trace_values, trace_observable_names))
 
         times_size_bytes = tpnts.itemsize * len(tpnts)
         values_size_bytes = trace_values.size * trace_values.itemsize

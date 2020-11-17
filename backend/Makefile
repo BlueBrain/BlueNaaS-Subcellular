@@ -12,8 +12,6 @@ DB_HOST?=mongo
 
 BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioNetGen-2.5.0/BioNetGen-2.5.0-Linux.tgz
 
-CIRCUIT_NAME?=o1
-
 define HELPTEXT
 Makefile usage
   Targets:
@@ -41,7 +39,7 @@ run_dev:
 	docker-compose up --scale sim_worker=1
 
 docker_build_version: python_build
-	docker build -t sc-svc-$(CIRCUIT_NAME):$(VERSION) \
+	docker build -t sc-svc:$(VERSION) \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
@@ -49,7 +47,15 @@ docker_build_version: python_build
 		.
 
 docker_build_latest: python_build
-	docker build -t sc-svc-$(CIRCUIT_NAME):latest \
+	docker build -t sc-svc:latest \
+		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
+		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
+		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
+		--build-arg=db_host=$(DB_HOST) \
+		.
+
+docker_build_dev: python_build
+	docker build -t sc-svc:dev \
 		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
 		--build-arg=bionetgen_src_url=$(BIONETGEN_SRC_URL) \
@@ -59,18 +65,29 @@ docker_build_latest: python_build
 docker_push_version: docker_build_version
 	docker tag \
 		$(APP_NAME_PREFIX)-svc:$(VERSION) \
-		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):$(VERSION)
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:$(VERSION)
 
-	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):$(VERSION)
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:$(VERSION)
 
 	@echo 'backend version($(VERSION)) pushed to OpenShift registy'
 
 docker_push_latest:
 	docker tag \
-		$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest \
-		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
+		$(APP_NAME_PREFIX)-svc:latest \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:latest
 
-	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME):latest
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:latest
+
+	@echo 'backend latest version pushed to OpenShift registry.'
+	@echo 'backend release done'
+
+
+docker_push_dev:
+	docker tag \
+		$(APP_NAME_PREFIX)-svc:dev \
+		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:dev
+
+	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:dev
 
 	@echo 'backend latest version pushed to OpenShift registry.'
 	@echo 'backend release done'

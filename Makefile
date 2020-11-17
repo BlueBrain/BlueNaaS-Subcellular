@@ -8,8 +8,6 @@ APP_DNS_BASE?=ocp.bbp.epfl.ch
 OO_PROJECT?=bbp-ou-nse
 DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 
-CIRCUIT_NAME?=o1
-
 define HELPTEXT
 Makefile usage
  Targets:
@@ -49,9 +47,7 @@ endif
 			echo "tagging $(VERSION)" && \
 			echo "VERSION = '$(VERSION)'" > backend/subcellular_experiment/version.py && \
 			sed -i 's/"version": "\([0-9.]\+\)"/"version": "$(VERSION)"/' frontend/package.json && \
-			CIRCUIT_NAME=$(CIRCUIT_NAME) \
 				$(MAKE) -C backend docker_push_version && \
-			CIRCUIT_NAME=$(CIRCUIT_NAME) \
 				$(MAKE) -C frontend docker_push_version && \
 			git add backend/subcellular_experiment/version.py frontend/package.json && \
 			git commit -m "release $(VERSION)" && \
@@ -66,9 +62,7 @@ deploy: docker_push_latest
 
 docker_push_latest:
 	@echo "pushing docker images for version $(VERSION)"
-	CIRCUIT_NAME=$(CIRCUIT_NAME) \
 		$(MAKE) -C backend docker_push_latest
-	CIRCUIT_NAME=$(CIRCUIT_NAME) \
 		$(MAKE) -C frontend docker_push_latest
 
 create_oo_deployment:
@@ -76,24 +70,52 @@ create_oo_deployment:
 
 	@echo "Creating and exposing frontend deployment"
 	oc new-app \
-		--name=$(APP_NAME_PREFIX)-$(CIRCUIT_NAME) \
-		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-$(CIRCUIT_NAME)
+		--name=$(APP_NAME_PREFIX) \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)
 
-	oc expose service $(APP_NAME_PREFIX)-$(CIRCUIT_NAME) \
-		--hostname=$(APP_NAME_PREFIX)-$(CIRCUIT_NAME).$(APP_DNS_BASE) \
+	oc expose service $(APP_NAME_PREFIX) \
+		--hostname=$(APP_NAME_PREFIX).$(APP_DNS_BASE) \
 		--port=8000
 
 	@echo "Creating and exposing backend deployment"
 	oc new-app \
-		--name=$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME) \
-		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME)
+		--name=$(APP_NAME_PREFIX)-svc \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc
 
-	oc expose service $(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME) \
-		--hostname=$(APP_NAME_PREFIX)-$(CIRCUIT_NAME).$(APP_DNS_BASE) \
+	oc expose service $(APP_NAME_PREFIX)-svc \
+		--hostname=$(APP_NAME_PREFIX).$(APP_DNS_BASE) \
 		--path=/ws
 
 	@echo "Creating simulation worker deployment"
 	oc new-app \
-		--name=$(APP_NAME_PREFIX)-svc-worker-$(CIRCUIT_NAME) \
-		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME) \
-		-e MASTER_HOST=$(APP_NAME_PREFIX)-svc-$(CIRCUIT_NAME)
+		--name=$(APP_NAME_PREFIX)-svc-worker \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc \
+		-e MASTER_HOST=$(APP_NAME_PREFIX)-svc
+
+
+create_oo_dev_deployment:
+	oc project $(OO_PROJECT)
+
+	@echo "Creating and exposing frontend deployment"
+	oc new-app \
+		--name=$(APP_NAME_PREFIX)-dev \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):dev
+
+	oc expose service $(APP_NAME_PREFIX)-dev \
+		--hostname=$(APP_NAME_PREFIX).$(APP_DNS_BASE) \
+		--port=8000
+
+	@echo "Creating and exposing backend deployment"
+	oc new-app \
+		--name=$(APP_NAME_PREFIX)-svc-dev \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:dev
+
+	oc expose service $(APP_NAME_PREFIX)-svc-dev \
+		--hostname=$(APP_NAME_PREFIX).$(APP_DNS_BASE) \
+		--path=/ws
+
+	@echo "Creating simulation worker deployment"
+	oc new-app \
+		--name=$(APP_NAME_PREFIX)-svc-worker-dev \
+		--docker-image=$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX)-svc:dev \
+		-e MASTER_HOST=$(APP_NAME_PREFIX)-svc-dev

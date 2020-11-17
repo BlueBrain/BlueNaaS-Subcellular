@@ -1,6 +1,6 @@
 <template>
   <div ref="chart" class="temporal-graph-container">
-    <Spin v-if="loadingF" fix />
+    <Spin v-if="loading" fix />
   </div>
 </template>
 
@@ -14,7 +14,7 @@
 
   import simDataStorage from '@/services/sim-data-storage';
   import socket from '@/services/websocket';
-  import { Simulation } from '@/types';
+  import { SimTrace, Simulation } from '@/types';
 
   const layout = {
     xaxis: {
@@ -65,42 +65,63 @@
     data() {
       return {
         loading: true,
+        chartPointN: 0,
       };
     },
 
     created() {
-      this.redrawThrottled = throttle(this.redraw, 500);
+      this.draw = throttle(this.draw, 1000);
     },
-    async mounted() {
-      const data = this.getChartData();
-      if (data) await Plotly.newPlot(this.$refs.chart, data);
 
-      simDataStorage.trace.subscribe(this.simId, this.redrawThrottled);
-      if (!data) socket.request('get_trace', this.simId);
+    async mounted() {
+      const observableNames = this.$store.state.model.observables.map((o) => o.name);
+
+      await Plotly.newPlot(
+        this.$refs.chart,
+        observableNames.map((ob) => ({
+          name: ob,
+          type: 'scattergl',
+          x: [],
+          y: [],
+        })),
+      );
+
+      simDataStorage.trace.subscribe(this.simId, this.draw);
+      const trace = simDataStorage.trace.getCached(this.simId);
+      if (!trace) socket.request('get_trace', this.simId);
+      if (trace) await this.draw();
       downloadCsvBtn.click = () => this.downloadCsv();
     },
     beforeDestroy() {
-      this.redrawThrottled.cancel();
+      this.draw.cancel();
       simDataStorage.trace.unsubscribe(this.simId);
       Plotly.purge(this.$refs.chart);
     },
     methods: {
-      redraw() {
-        const data = this.getChartData();
+      async draw() {
+        const data = this.getChartData(this.chartPointN);
+
         if (!data) return;
-        Plotly.newPlot(this.$refs.chart, data);
+
+        this.chartPointN += data[0].x.length - 1;
+
+        const traceExtension = {
+          x: data.map((line) => line.x),
+          y: data.map((line) => line.y),
+        };
+
+        await Plotly.extendTraces(this.$refs.chart, traceExtension, [...Array(data.length).keys()]);
       },
 
-      getChartData() {
+      getChartData(startIndex = 0) {
         const trace = simDataStorage.trace.getCached(this.simId);
+
         if (trace) this.loading = false;
         if (!trace) return;
 
         return Object.keys(trace.values_by_observable).map((k) => ({
-          name: k,
-          type: 'scattergl',
-          x: trace.times,
-          y: trace.values_by_observable[k],
+          x: trace.times.slice(startIndex),
+          y: trace.values_by_observable[k].slice(startIndex),
         }));
       },
       downloadCsv() {
@@ -127,17 +148,10 @@
       simulation(): Simulation | undefined {
         return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
       },
-      simTrace() {
-        return this.$store.state.simTraces[this.simId];
-      },
     },
     watch: {
       simulation() {
-        if (this.simTraces && this.simTraces.length) this.redrawThrottled();
-      },
-      simTrace() {
-        if (!this.simTrace) return;
-        this.redrawThrottled();
+        if (this.simTraces && this.simTraces.length) this.draw();
       },
     },
   });

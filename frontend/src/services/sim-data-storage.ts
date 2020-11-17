@@ -40,7 +40,7 @@ bus.$on('ws:simLogMessage', (logMsg) => {
   watcherCb(cache[logMsg.simId].log);
 });
 
-bus.$on('ws:simTrace', (trace) => {
+bus.$on('ws:simTrace', (trace: SimTrace) => {
   if (!get(cache, `${trace.simId}.trace`)) {
     set(cache, `${trace.simId}.trace`, trace);
   } else {
@@ -51,9 +51,8 @@ bus.$on('ws:simTrace', (trace) => {
         set(cache, `${trace.simId}.trace.values_by_observable.${observable}`, values);
       }
     }
+    cache[trace.simId].trace.times.push(...trace.times);
   }
-
-  cache[trace.simId].trace.times.push(...trace.times);
 
   const watcherCb = get(watcher, `${trace.simId}.trace`, noop);
   watcherCb(trace);

@@ -375,30 +375,4 @@ export default {
       Vue.set(revSpec.concentration, concSource, conc);
     });
   },
-
-  addSimTrace(state: State, simTrace: SimTrace) {
-
-    const existingSimTrace = state.simTraces[simTrace.simId] || {
-      latestIndex: 0,
-      simTrace: {
-        times: [],
-        values_by_observable: {},
-      } as SimTrace,
-    };
-
-    for (const [observable, values] of Object.entries(simTrace.values_by_observable)) {
-      const existingValues = existingSimTrace.simTrace.values_by_observable[observable] 
-      if (existingValues) existingSimTrace.simTrace.values_by_observable[observable].push(...values)
-      else {
-        existingSimTrace.simTrace.values_by_observable[observable] = values
-      }
-    }
-
-    existingSimTrace.simTrace.times.push(...simTrace.times);
-
-    state.simTraces = {
-      ...state.simTraces,
-      [simTrace.simId]: { ...existingSimTrace, latestIndex:simTrace.index},
-    };
-  },
 };
