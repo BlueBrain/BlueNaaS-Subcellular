@@ -65,6 +65,11 @@ docker_push_latest:
 		$(MAKE) -C backend docker_push_latest
 		$(MAKE) -C frontend docker_push_latest
 
+docker_push_dev:
+	@echo "pushing docker images for version $(VERSION)"
+		$(MAKE) -C backend docker_push_dev
+		$(MAKE) -C frontend docker_push_dev
+
 create_oo_deployment:
 	oc project $(OO_PROJECT)
 

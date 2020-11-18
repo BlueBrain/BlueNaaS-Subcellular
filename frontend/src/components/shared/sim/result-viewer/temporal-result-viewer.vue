@@ -8,6 +8,7 @@
   import Vue from 'vue';
   import noop from 'lodash/noop';
   import throttle from 'lodash/throttle';
+  import debounce from 'lodash/debounce';
   import Plotly, { layoutAttributes } from 'plotly.js-basic-dist';
   import { saveAs } from 'file-saver';
   import unzip from 'lodash/unzip';
@@ -20,12 +21,15 @@
     xaxis: {
       ticks: 'outside',
       title: 'Time, s',
+      autorange: true,
     },
     yaxis: {
       ticks: 'outside',
       title: 'Amount of molecules, #',
+      autorange: true,
     },
     hovermode: 'closest',
+    uirevision: 'true',
   };
 
   const downloadCsvBtn = {
@@ -59,6 +63,11 @@
     },
   };
 
+  type ChartData = {
+    x: number[];
+    y: number[];
+  };
+
   export default Vue.extend({
     name: 'temporal-result-viewer',
     props: ['simId'],
@@ -66,44 +75,56 @@
       return {
         loading: true,
         chartPointN: 0,
+        canExtendTraces: true,
       };
     },
 
     created() {
-      this.draw = throttle(this.draw, 1000);
+      this.extendTraces = throttle(this.extendTraces, 3000);
+      this.renrenderChart = debounce(this.rerenderChart, 500);
     },
 
     async mounted() {
       const observableNames = this.$store.state.model.observables.map((o) => o.name);
+      const graphDiv = this.$refs.chart;
 
       await Plotly.newPlot(
-        this.$refs.chart,
+        graphDiv,
         observableNames.map((ob) => ({
           name: ob,
           type: 'scattergl',
+          line: { shape: 'spline' },
           x: [],
           y: [],
         })),
+        layout,
       );
 
-      simDataStorage.trace.subscribe(this.simId, this.draw);
+      graphDiv.on('plotly_relayout', (eventData) => {
+        if (!eventData['xaxis.range[0]']) return;
+        this.canExtendTraces = false;
+        this.rerenderChart(eventData);
+      });
+
+      simDataStorage.trace.subscribe(this.simId, this.extendTraces);
       const trace = simDataStorage.trace.getCached(this.simId);
       if (!trace) socket.request('get_trace', this.simId);
-      if (trace) await this.draw();
+      if (trace) await this.extendTraces();
       downloadCsvBtn.click = () => this.downloadCsv();
     },
     beforeDestroy() {
-      this.draw.cancel();
+      this.extendTraces.cancel();
       simDataStorage.trace.unsubscribe(this.simId);
       Plotly.purge(this.$refs.chart);
     },
     methods: {
-      async draw() {
-        const data = this.getChartData(this.chartPointN);
+      async extendTraces() {
+        if (!this.canExtendTraces) return;
+        const data = this.getChartData(this.chartPointN) as ChartData[];
 
         if (!data) return;
 
-        this.chartPointN += data[0].x.length - 1;
+        this.chartPointN = simDataStorage.trace?.getCached(this.simId).times.length || 0;
 
         const traceExtension = {
           x: data.map((line) => line.x),
@@ -113,17 +134,69 @@
         await Plotly.extendTraces(this.$refs.chart, traceExtension, [...Array(data.length).keys()]);
       },
 
-      getChartData(startIndex = 0) {
-        const trace = simDataStorage.trace.getCached(this.simId);
+      getChartData(start = 0, end = -1) {
+        const trace = simDataStorage.trace.getCached(this.simId) as SimTrace;
 
         if (trace) this.loading = false;
         if (!trace) return;
 
-        return Object.keys(trace.values_by_observable).map((k) => ({
-          x: trace.times.slice(startIndex),
-          y: trace.values_by_observable[k].slice(startIndex),
-        }));
+        const times = trace.times;
+        const samplingPeriod = this.getSamplingPeriod(times.length);
+
+        return Object.keys(trace.values_by_observable).map((k) => {
+          const filterPoint = (time) => (time / this.dt) % samplingPeriod === 0;
+          return {
+            x: times.slice(start, end).filter(filterPoint),
+            y: trace.values_by_observable[k]
+              .slice(start, end)
+              .filter((value, idx) => filterPoint(times[idx])),
+          };
+        });
       },
+
+      async rerenderChart(eventData) {
+        if (!eventData['xaxis.range[0]']) return;
+
+        const trace = simDataStorage.trace.getCached(this.simId) as SimTrace;
+        if (trace) this.loading = false;
+        if (!trace) return;
+
+        const rangeStart = eventData['xaxis.range[0]'];
+        const rangeEnd = eventData['xaxis.range[1]'];
+
+        const start = floorDiv(rangeStart, this.dt);
+        const end = floorDiv(rangeEnd, this.dt);
+
+        const slice = trace.times.slice(start, end);
+
+        const samplingPeriod = this.getSamplingPeriod(slice.length);
+
+        const chartData = Object.keys(trace.values_by_observable).map((observable) => {
+          const filterPoint = (time) => floorDiv(time, this.dt) % samplingPeriod === 0;
+          return {
+            x: slice.filter(filterPoint),
+            y: trace.values_by_observable[observable]
+              .slice(start, end)
+              .filter((value, idx) => filterPoint(slice[idx])),
+            name: observable,
+            type: 'scattergl',
+            line: { shape: 'spline' },
+          };
+        });
+
+        await Plotly.react(this.$refs.chart, chartData, layout);
+
+        if (end >= trace.times.length) this.canExtendTraces = true;
+      },
+
+      getSamplingPeriod(length: number) {
+        if (length >= 1e6) return 10000;
+        if (length >= 1e5) return 1000;
+        if (length >= 1e4) return 100;
+        if (length >= 1e3) return 10;
+        return 1;
+      },
+
       downloadCsv() {
         const chartData = this.getChartData();
         const observableNames = chartData.map((data) => data.name);
@@ -148,13 +221,20 @@
       simulation(): Simulation | undefined {
         return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
       },
+      dt(): number {
+        return this.simulation.solverConf.dt;
+      },
     },
     watch: {
       simulation() {
-        if (this.simTraces && this.simTraces.length) this.draw();
+        if (this.simTraces && this.simTraces.length) this.extendTraces();
       },
     },
   });
+
+  function floorDiv(a: number, b: number) {
+    return Math.max(0, Math.floor(a / b));
+  }
 </script>
 
 <style lang="scss" scoped>
