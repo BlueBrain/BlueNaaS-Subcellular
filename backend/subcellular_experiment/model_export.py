@@ -2,9 +2,9 @@ import tempfile
 import os
 import json
 
+import shutil
 from pysb.importers import bngl
 from pysb.export import export
-import shutil
 
 from .bngl_extended_model import BnglExtModel
 
@@ -14,10 +14,11 @@ def get_exported_model(model_dict, model_format):
         return get_exported_bngl_model(model_dict)
     if model_format == "ebngl":
         return get_exported_ebngl_model(model_dict)
-    elif model_format == "pysb_flat":
+    if model_format == "pysb_flat":
         return get_exported_pysb_model(model_dict)
-    elif model_format == "sbml":
+    if model_format == "sbml":
         return get_exported_sbml_model(model_dict)
+    return ""
 
 
 def get_exported_bngl_model(model_dict):

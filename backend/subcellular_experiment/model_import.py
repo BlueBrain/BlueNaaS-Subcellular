@@ -6,7 +6,6 @@ import io
 import uuid
 
 import shutil
-
 import pandas as pd
 
 from .logger import get_logger
@@ -25,12 +24,14 @@ def from_sbml(sbml_str):
         sbml_file.write(sbml_str)
 
     translator_run = subprocess.run(
-        [SBML_TRANSLATOR_PATH, "-i", "model.xml", "-a", "-o", "model.bngl"], check=False, capture_output=True
+        [SBML_TRANSLATOR_PATH, "-i", "model.xml", "-a", "-o", "model.bngl"],
+        check=False,
+        capture_output=True,
     )
 
     bngl_str = (
         None
-        if (translator_run.returncode is not 0) or (not os.path.isfile("model.bngl"))
+        if (translator_run.returncode != 0) or (not os.path.isfile("model.bngl"))
         else open("model.bngl").read()
     )
 
@@ -77,10 +78,12 @@ def revision_from_excel(base64_encoded_xlsx_data):
 
     revision_data = {}
 
-    for sheet_name in REVISION_STRUCTURE.keys():
+    for sheet_name in REVISION_STRUCTURE:
         try:
             L.debug(f"reading {sheet_name} sheet")
-            sheet_data = pd.read_excel(table_io, sheet_name=sheet_name, keep_default_na=False).to_dict(orient="records")
+            sheet_data = pd.read_excel(
+                table_io, sheet_name=sheet_name, keep_default_na=False
+            ).to_dict(orient="records")
             L.debug(f"done reading {sheet_name} sheet")
 
             revision_data[sheet_name] = [
@@ -89,7 +92,7 @@ def revision_from_excel(base64_encoded_xlsx_data):
                     "entityId": str(uuid.uuid4()),
                 }
                 for entity in sheet_data
-                if entity["name"] is not ""
+                if entity["name"] == ""
             ]
         except Exception as error:
             revision_data[sheet_name] = []

@@ -5,18 +5,17 @@ import time
 import math
 from datetime import datetime
 
-import numpy as np
 
+import numpy as np
 import pysb
 from pysb.importers import bngl
-
 import sympy
-
 import steps.model as smodel
 import steps.geom as sgeom
 import steps.rng as srng
 import steps.solver as ssolver
 import steps.utilities.meshio as meshio
+from typing_extensions import Literal
 
 from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
 from .sim import (
@@ -35,9 +34,8 @@ L = get_logger(__name__)
 GEOMETRY_ROOT_PATH = "/data/geometries"
 
 
-class StructureType:
-    COMPARTMENT = "compartment"
-    MEMBRANE = "membrane"
+COMPARTMENT: Literal["compartment"] = "compartment"
+MEMBRANE: Literal["membrane"] = "membrane"
 
 
 PATCH_COMP_TYPE_DICT = {0: "i", 1: "s", 2: "o"}  # inner  # surface  # outer
@@ -67,10 +65,10 @@ class StepsSim:
         self.send_progress(SimStatus(SimStatus.INIT))
         self.log("init sim")
 
-        def simplify_string(st, compartments=True, bngl=False):
+        def simplify_string(st, compartments=True, is_bngl=False):
             st0 = str(st)
 
-            if bngl:
+            if is_bngl:
                 name = re.sub(" ", "", st0)
                 name = re.sub("=None", "", name)
                 name = re.sub("=", "~", name)
@@ -86,8 +84,8 @@ class StepsSim:
             if st0[0] == "(":
                 # find outer parens
                 outer = re.compile(r"\((.+)\)")
-                m = outer.search(st0)
-                st = m.group(1)
+                match = outer.search(st0)
+                st = match.group(1)
             else:
                 st = st0
 
@@ -102,23 +100,27 @@ class StepsSim:
 
         def get_geom_struct_by_model_struct_name(model_struct_name):
             geom_struct_name = next(
-                st["geometryStructureName"] for st in model_dict["structures"] if st["name"] == model_struct_name
+                st["geometryStructureName"]
+                for st in model_dict["structures"]
+                if st["name"] == model_struct_name
             )
 
-            return next(st for st in geometry["meta"]["structures"] if st["name"] == geom_struct_name)
+            return next(
+                st for st in geometry["meta"]["structures"] if st["name"] == geom_struct_name
+            )
 
         def get_comp_name_by_tet_idx(tet_idx):
             geom_comp_name = next(
                 st["name"]
                 for st in geometry["meta"]["structures"]
-                if st["type"] == StructureType.COMPARTMENT and tet_idx in st["tetIdxs"]
+                if st["type"] == COMPARTMENT and tet_idx in st["tetIdxs"]
             )
 
             comp_name = next(
                 (
                     st["name"]
                     for st in model_dict["structures"]
-                    if st["type"] == StructureType.COMPARTMENT and st["geometryStructureName"] == geom_comp_name
+                    if st["type"] == COMPARTMENT and st["geometryStructureName"] == geom_comp_name
                 ),
                 "",
             )
@@ -130,8 +132,11 @@ class StepsSim:
 
         self.log("extend model observables with molecule definitions from stimulation")
         stimuli = decompress_stimulation(self.sim_config["solverConf"]["stimulation"])
+
         # TODO: refactor weird use of simplify_string, remove stim_name
-        stim_name = lambda stim: "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
+        def stim_name(stim):
+            return "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
+
         model_stim_observable_dict = {
             stim_name(stim): {"name": stim_name(stim), "definition": stim["target"]}
             for stim in stimuli
@@ -139,11 +144,16 @@ class StepsSim:
         }
         model_dict["observables"].extend(model_stim_observable_dict.values())
 
-        spatial_sampling_enabled = "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]
+        spatial_sampling_enabled = (
+            "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]
+        )
         if spatial_sampling_enabled:
             self.log("extend model observables with molecule definitions for spatial sampling")
             spatial_sample_observables = [
-                {"name": f'{SPAT_PREFIX}{observable["name"]}', "definition": observable["definition"]}
+                {
+                    "name": f'{SPAT_PREFIX}{observable["name"]}',
+                    "definition": observable["definition"],
+                }
                 for observable in solver_config["spatialSampling"]["observables"]
             ]
             model_dict["observables"].extend(spatial_sample_observables)
@@ -166,7 +176,7 @@ class StepsSim:
         for pysb_spec in pysb_model.species:
             pysb_spec.name = simplify_string(pysb_spec, compartments=False)
             pysb_spec.full_name = simplify_string(pysb_spec, compartments=True)
-            pysb_spec.bngl_def = simplify_string(pysb_spec, compartments=False, bngl=True)
+            pysb_spec.bngl_def = simplify_string(pysb_spec, compartments=False, is_bngl=True)
             pysb_spec.comp_name = get_pysb_spec_comp_name(pysb_spec)
 
         steps_model = smodel.Model()
@@ -182,7 +192,9 @@ class StepsSim:
 
         def get_steps_spec_by_pysb_spec_idx(pysb_spec_idx):
             pysb_spec = pysb_model.species[pysb_spec_idx]
-            return next(steps_spec for steps_spec in steps_species if steps_spec.getID() == pysb_spec.name)
+            return next(
+                steps_spec for steps_spec in steps_species if steps_spec.getID() == pysb_spec.name
+            )
 
         geometry_id = self.sim_config["model"]["geometry"]["id"]
         geometry_path = os.path.join(GEOMETRY_ROOT_PATH, geometry_id)
@@ -208,21 +220,23 @@ class StepsSim:
             geometry.pop("structures", None)
             geometry.pop("freeDiffusionBoundaries", None)
 
-        geom_struct_dict = {structure["name"]: structure for structure in geometry["meta"]["structures"]}
+        geom_struct_dict = {
+            structure["name"]: structure for structure in geometry["meta"]["structures"]
+        }
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}
         for structure in model_dict["structures"]:
             name = structure["name"]
 
-            if structure["type"] == StructureType.COMPARTMENT:
+            if structure["type"] == COMPARTMENT:
                 log_struct_sys_type = "Volume"
             else:
                 log_struct_sys_type = "Surface"
 
             self.log(f"add STEPS {log_struct_sys_type} system for {name}")
 
-            if structure["type"] == StructureType.COMPARTMENT:
+            if structure["type"] == COMPARTMENT:
                 sys = smodel.Volsys(name, steps_model)
             else:
                 sys = smodel.Surfsys(name, steps_model)
@@ -232,7 +246,7 @@ class StepsSim:
         self.log("about to create STEPS compartments (TmComp)")
         tm_comp_dict = {}
         compartments = [
-            structure for structure in model_dict["structures"] if structure["type"] == StructureType.COMPARTMENT
+            structure for structure in model_dict["structures"] if structure["type"] == COMPARTMENT
         ]
         for compartment in compartments:
             name = compartment["name"]
@@ -246,12 +260,17 @@ class StepsSim:
             tm_comp_dict[name] = tm_comp
 
         def comp_type_by_name(comp_name):
-            return next(structure["type"] for structure in model_dict["structures"] if structure["name"] == comp_name)
+            return next(
+                structure["type"]
+                for structure in model_dict["structures"]
+                if structure["name"] == comp_name
+            )
 
         def get_pysb_reac_comp_names(pysb_reac):
             spec_idxs = list(pysb_reac["reactants"] + pysb_reac["products"])
             specs = [pysb_model.species[idx] for idx in spec_idxs]
-            comp_names = list(set([spec.comp_name for spec in specs]))
+            comp_names = list({spec.comp_name for spec in specs})
+
             return comp_names
 
         def get_patch_dict_by_comp_names(comp_names):
@@ -268,11 +287,15 @@ class StepsSim:
             if len(valid_patch_dicts) == 1:
                 return valid_patch_dicts[0]
 
-            raise NotImplementedError("Found multiple patches for compartments: {}".format(comp_names))
+            raise NotImplementedError(
+                "Found multiple patches for compartments: {}".format(comp_names)
+            )
 
         self.log("about to create STEPS membrane (TmPatch)")
         patch_dicts = []
-        membranes = [structure for structure in model_dict["structures"] if structure["type"] == StructureType.MEMBRANE]
+        membranes = [
+            structure for structure in model_dict["structures"] if structure["type"] == MEMBRANE
+        ]
         for membrane in membranes:
             name = membrane["name"]
             geom_struct_name = membrane["geometryStructureName"]
@@ -283,7 +306,9 @@ class StepsSim:
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in triIdxs]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
 
-            compartment_names = list(set([get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered]))
+            compartment_names = list(
+                {get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered}
+            )
 
             if "" in compartment_names:
                 # compartment name can be empty string if there is no model structure
@@ -298,17 +323,27 @@ class StepsSim:
             comp_names_directional.insert(1, name)
 
             icomp = tm_comp_dict[comp_names_directional[0]]
-            ocomp = tm_comp_dict[comp_names_directional[2]] if len(comp_names_directional) == 3 else None
+            ocomp = (
+                tm_comp_dict[comp_names_directional[2]]
+                if len(comp_names_directional) == 3
+                else None
+            )
 
             ocomp_name = ocomp.getID() if ocomp is not None else None
             self.log(f"inner compartment for {name} patch: {icomp.getID()}")
             self.log(f"outer compartment for {name} patch: {ocomp_name}")
 
-            tm_patch = sgeom.TmPatch(id=name, container=mesh, tris=triIdxs, icomp=icomp, ocomp=ocomp)
+            tm_patch = sgeom.TmPatch(
+                id=name, container=mesh, tris=triIdxs, icomp=icomp, ocomp=ocomp
+            )
 
             tm_patch.addSurfsys(name)
 
-            patch_dict = {"name": name, "comp_names_directional": comp_names_directional, "tm_patch": tm_patch}
+            patch_dict = {
+                "name": name,
+                "comp_names_directional": comp_names_directional,
+                "tm_patch": tm_patch,
+            }
             patch_dicts.append(patch_dict)
 
         def hs_to_str(hs):
@@ -320,12 +355,21 @@ class StepsSim:
         def create_sreac(reac_name, comp_names, pysb_reac):
             patch_dict = get_patch_dict_by_comp_names(comp_names)
             tm_patch = patch_dict["tm_patch"]
-            reac_param_dict = {"ilhs": [], "slhs": [], "olhs": [], "irhs": [], "srhs": [], "orhs": []}
+            reac_param_dict = {
+                "ilhs": [],
+                "slhs": [],
+                "olhs": [],
+                "irhs": [],
+                "srhs": [],
+                "orhs": [],
+            }
 
             def add_spec(spec_idx, param_key_base):
                 steps_spec = get_steps_spec_by_pysb_spec_idx(spec_idx)
                 comp_name = pysb_model.species[spec_idx].comp_name
-                param_key_prefix = PATCH_COMP_TYPE_DICT[patch_dict["comp_names_directional"].index(comp_name)]
+                param_key_prefix = PATCH_COMP_TYPE_DICT[
+                    patch_dict["comp_names_directional"].index(comp_name)
+                ]
                 param_key = "{}{}hs".format(param_key_prefix, param_key_base)
                 reac_param_dict[param_key].append(steps_spec)
 
@@ -420,7 +464,7 @@ class StepsSim:
             # refactor
             steps_reac = (
                 create_reac(reac_name, comp_names[0], pysb_reac)
-                if len(comp_names) == 1 and type(sys_dict[comp_names[0]]) is smodel.Volsys
+                if len(comp_names) == 1 and isinstance(sys_dict[comp_names[0]], smodel.Volsys)
                 else create_sreac(reac_name, comp_names, pysb_reac)
             )
             steps_reacs.append(steps_reac)
@@ -468,11 +512,15 @@ class StepsSim:
         self.log("about to create STEPS diffusion boundaries")
         diff_boundaries = []
         diff_boundary_spec_names_dict = {}
-        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry["meta"]["freeDiffusionBoundaries"]):
+        for diff_boundary_idx, diff_boundary_dict in enumerate(
+            geometry["meta"]["freeDiffusionBoundaries"]
+        ):
             tris = diff_boundary_dict["triIdxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in tris]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
-            comp_names = list(set([get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered]))
+            comp_names = list(
+                {get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered}
+            )
 
             if "" in comp_names:
                 # compartment name can be empty string if there is no model structure corresponding
@@ -480,9 +528,13 @@ class StepsSim:
                 # structures then the model itself
                 continue
 
-            self.log("creating diff boundary between {} and {}".format(comp_names[0], comp_names[1]))
+            self.log(
+                "creating diff boundary between {} and {}".format(comp_names[0], comp_names[1])
+            )
             if len(comp_names) != 2:
-                raise ValueError("Diff boundary idx: {} should border two compartments".format(diff_boundary_idx))
+                raise ValueError(
+                    "Diff boundary idx: {} should border two compartments".format(diff_boundary_idx)
+                )
             name = "diffb_{}_{}".format(comp_names[0], comp_names[1])
 
             diff_boundary = sgeom.DiffBoundary(name, mesh, tris)
@@ -512,7 +564,7 @@ class StepsSim:
         dt = solver_config["dt"]
         tend = solver_config["tEnd"]
 
-        stim_tpnt_set = set([stim["t"] for stim in stimuli])
+        stim_tpnt_set = {stim["t"] for stim in stimuli}
         sample_tpnt_set = set(np.arange(0, tend, dt))
         tpnts = np.unique(np.append(list(sample_tpnt_set), list(stim_tpnt_set)))
         tpnts.sort()
@@ -532,7 +584,7 @@ class StepsSim:
             # STEPS units:
             # * 2d - # of molecules
             # * 3d - mM/m^3
-            if comp_type == StructureType.COMPARTMENT:
+            if comp_type == COMPARTMENT:
                 self.log(f"set comp conc: @{comp_name}:{spec_name}, val: {value}")
                 sim.setCompConc(comp_name, spec_name, value)
             else:
@@ -541,7 +593,9 @@ class StepsSim:
 
         self.log("about to activate diffusion boundaries")
         for diff_boundary_name, spec_names in diff_boundary_spec_names_dict.items():
-            self.log("activate diff boundary {} for {}".format(diff_boundary_name, ", ".join(spec_names)))
+            self.log(
+                "activate diff boundary {} for {}".format(diff_boundary_name, ", ".join(spec_names))
+            )
             for spec_name in spec_names:
                 sim.setDiffBoundaryDiffusionActive(diff_boundary_name, spec_name, True)
 
@@ -554,12 +608,14 @@ class StepsSim:
         trace_values = np.zeros((len(tpnts), len(trace_observables)))
 
         spatial_observables = [
-            observable for observable in pysb_model.observables if re.match(rf"({SPAT_PREFIX})\w+", observable.name)
+            observable
+            for observable in pysb_model.observables
+            if re.match(rf"({SPAT_PREFIX})\w+", observable.name)
         ]
 
         # Send simulation meta
         structures = [{"name": structure["name"]} for structure in model_dict["structures"]]
-        species = [{"name": simplify_string(spec, bngl=True)} for spec in pysb_model.species]
+        species = [{"name": simplify_string(spec, is_bngl=True)} for spec in pysb_model.species]
 
         def apply_stimulus(stim):
             if stim["type"] == StimulusType.SET_PARAM:
@@ -570,51 +626,68 @@ class StepsSim:
 
                 for reac_idx, steps_reac in enumerate(steps_reacs):
                     rate_val = calculate_reac_rate(pysb_model.reactions[reac_idx])
-                    if type(steps_reac) == smodel.Reac:
-                        curr_comp_reac_k = sim.getCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID())
+                    if isinstance(steps_reac, smodel.Reac):
+                        curr_comp_reac_k = sim.getCompReacK(
+                            steps_reac.getVolsys().getID(), steps_reac.getID()
+                        )
                         if curr_comp_reac_k != rate_val:
                             self.log(
                                 f"stimulation: update comp reacK for {steps_reac.getID()} "
                                 f"from {curr_comp_reac_k} to {rate_val}"
                             )
-                        sim.setCompReacK(steps_reac.getVolsys().getID(), steps_reac.getID(), rate_val)
+                        sim.setCompReacK(
+                            steps_reac.getVolsys().getID(), steps_reac.getID(), rate_val
+                        )
                     else:
-                        curr_patch_reac_k = sim.getPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID())
+                        curr_patch_reac_k = sim.getPatchSReacK(
+                            steps_reac.getSurfsys().getID(), steps_reac.getID()
+                        )
                         if curr_patch_reac_k != rate_val:
                             self.log(
                                 f"stim: update surf reacK for {steps_reac.getID()} "
                                 f"from {curr_patch_reac_k} to {rate_val}"
                             )
-                        sim.setPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val)
+                        sim.setPatchSReacK(
+                            steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val
+                        )
 
             elif stim["type"] == StimulusType.SET_CONC:
                 observable = next(
                     observable
                     for observable in pysb_model.observables
-                    if observable.name == "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
+                    if observable.name
+                    == "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
                 )
                 pysb_specs = [pysb_model.species[spec_idx] for spec_idx in observable.species]
                 if len(pysb_specs) > 1:
-                    raise ValueError("setConc can be used only with one species: {} detected".format(len(pysb_specs)))
+                    raise ValueError(
+                        "setConc can be used only with one species: {} detected".format(
+                            len(pysb_specs)
+                        )
+                    )
                 pysb_spec = pysb_specs[0]
                 comp_type = comp_type_by_name(pysb_spec.comp_name)
                 # TODO: check if species are present in particular compartments
 
-                target_str = "comp conc" if comp_type == StructureType.COMPARTMENT else "patch count"
-                self.log(f"set {target_str} for @{pysb_spec.comp_name}:{pysb_spec.name} " f'to {stim["value"]}')
+                target_str = "comp conc" if comp_type == COMPARTMENT else "patch count"
+                self.log(
+                    f"set {target_str} for @{pysb_spec.comp_name}:{pysb_spec.name} "
+                    f'to {stim["value"]}'
+                )
 
-                if comp_type == StructureType.COMPARTMENT:
+                if comp_type == COMPARTMENT:
                     sim.setCompConc(pysb_spec.comp_name, pysb_spec.name, stim["value"])
                 else:
                     sim.setPatchCount(pysb_spec.comp_name, pysb_spec.name, stim["value"])
 
             elif stim["type"] == StimulusType.CLAMP_CONC:
                 # TODO: DRY
-                clamp = True if stim["value"] == 1 else False
+                clamp = stim["value"] == 1
                 observable = next(
                     observable
                     for observable in pysb_model.observables
-                    if observable.name == "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
+                    if observable.name
+                    == "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
                 )
                 pysb_specs = [pysb_model.species[spec_idx] for spec_idx in observable.species]
                 for pysb_spec in pysb_specs:
@@ -622,7 +695,7 @@ class StepsSim:
                     comp_type = comp_type_by_name(comp_name)
                     # TODO: check if species are present in particular compartments
                     self.log(f"set @{comp_name}:{pysb_spec.name} clamped to {clamp}")
-                    if comp_type == StructureType.COMPARTMENT:
+                    if comp_type == COMPARTMENT:
                         sim.setCompClamped(comp_name, pysb_spec.name, clamp)
                     else:
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
@@ -649,23 +722,31 @@ class StepsSim:
                         spec_name = pysb_spec.name
                         comp_name = pysb_spec.comp_name
                         comp_type = comp_type_by_name(comp_name)
-                        if comp_type == StructureType.COMPARTMENT:
+                        if comp_type == COMPARTMENT:
                             spec_count = sim.getCompCount(comp_name, pysb_spec.name)
                         else:
                             spec_count = sim.getPatchCount(comp_name, pysb_spec.name)
                         mol_count += spec_count
-                    trace_values[tidx, observable_idx] = mol_count  # Ndarray of (nPoints, nObservables)
+                    trace_values[
+                        tidx, observable_idx
+                    ] = mol_count  # Ndarray of (nPoints, nObservables)
 
                 values_by_observable = {
-                    observable: [value] for observable, value in zip(trace_observable_names, trace_values[tidx])
+                    observable: [value]
+                    for observable, value in zip(trace_observable_names, trace_values[tidx])
                 }
 
-                sim_trace = SimTrace(index=tpnt, times=[tpnt], values_by_observable=values_by_observable)
+                sim_trace = SimTrace(
+                    index=tpnt, times=[tpnt], values_by_observable=values_by_observable
+                )
 
                 self.send_progress(sim_trace)
 
                 # sample spatial molecule amounts if requested by user
-                if "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]:
+                if (
+                    "spatialSampling" in solver_config
+                    and solver_config["spatialSampling"]["enabled"]
+                ):
 
                     # make a small pause not to flood a client in case of fast simulation
                     # TODO: implement subscriptions and send spatial step traces only when
@@ -678,7 +759,9 @@ class StepsSim:
                         spatial_trace_data_dict[structure_name] = {}
                         struct_empty = True
                         geom_struct = get_geom_struct_by_model_struct_name(structure_name)
-                        geom_idxs_key = "tetIdxs" if geom_struct["type"] == StructureType.COMPARTMENT else "triIdxs"
+                        geom_idxs_key = (
+                            "tetIdxs" if geom_struct["type"] == COMPARTMENT else "triIdxs"
+                        )
                         geom_idxs_np = np.array(geom_struct[geom_idxs_key], dtype=np.uintc)
                         for spatial_observable in spatial_observables:
                             mol_name = spatial_observable.name.replace(SPAT_PREFIX, "")
@@ -693,7 +776,7 @@ class StepsSim:
                                 spec_name = pysb_spec.name
                                 spec_counts = np.zeros(len(geom_idxs_np))
 
-                                if geom_struct["type"] == StructureType.COMPARTMENT:
+                                if geom_struct["type"] == COMPARTMENT:
                                     sim.getBatchTetCountsNP(geom_idxs_np, spec_name, spec_counts)
                                 else:
                                     sim.getBatchTriCountsNP(geom_idxs_np, spec_name, spec_counts)
@@ -734,7 +817,8 @@ class StepsSim:
             values_chunk = trace_values[i : i + elements_per_chunk].T
 
             values_by_observable = {
-                trace_observable_names[i]: values_chunk[i].tolist() for i in range(len(trace_observable_names))
+                trace_observable_names[i]: values_chunk[i].tolist()
+                for i in range(len(trace_observable_names))
             }
             self.send_progress(
                 SimTrace(

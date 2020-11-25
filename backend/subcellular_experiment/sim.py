@@ -1,10 +1,10 @@
-from pydantic import BaseModel
-from typing import Dict, List, ClassVar
-from typing_extensions import Literal
-
 import os
 import tempfile
 import shutil
+from typing import Dict, List, ClassVar
+
+from typing_extensions import Literal
+from pydantic import BaseModel
 
 
 STIMULUS_TYPE_BY_CODE = {
@@ -87,11 +87,16 @@ class SimStepTrace:
         self.observables = observables
 
     def to_dict(self):
-        return {"t": self.t, "stepIdx": self.step_idx, "observables": self.observables, "values": self.values}
+        return {
+            "t": self.t,
+            "stepIdx": self.step_idx,
+            "observables": self.observables,
+            "values": self.values,
+        }
 
 
 class SimTrace(BaseModel):
-    """Simulation trace for a given observable
+    """Simulation trace for a given observable.
 
     Attributes:
         times: List of time points

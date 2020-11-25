@@ -1,16 +1,25 @@
+# pylint: disable=dangerous-default-value
 import signal
 
 import tornado
 
 from .enums import SimWorkerStatus
-from .sim import SimProgress, SimStatus, SimTrace, SimStepTrace, SimLogMessage, SimSpatialStepTrace, SimLog
+from .sim import (
+    SimProgress,
+    SimStatus,
+    SimTrace,
+    SimStepTrace,
+    SimLogMessage,
+    SimSpatialStepTrace,
+    SimLog,
+)
 from .logger import get_logger
 
 
 L = get_logger(__name__)
 
 
-def on_terminate(signal, frame):
+def on_terminate():
     L.debug("received shutdown signal")
     tornado.ioloop.IOLoop.current().stop()
 
@@ -89,11 +98,21 @@ class SimManager:
             self.process_sim_spatial_step_trace(worker.sim_conf, data)
         elif msg == "tmp_sim_log":
             # TODO: refactor
-            tmp_sim_log = {"log": data, "userId": worker.sim_conf["userId"], "simId": worker.sim_conf["id"]}
+            tmp_sim_log = {
+                "log": data,
+                "userId": worker.sim_conf["userId"],
+                "simId": worker.sim_conf["id"],
+            }
             self.send_message(worker.sim_conf["userId"], "tmp_sim_log", tmp_sim_log, cmdid=cmdid)
         elif msg == "tmp_sim_trace":
-            tmp_sim_trace = {**data, "userId": worker.sim_conf["userId"], "simId": worker.sim_conf["id"]}
-            self.send_message(worker.sim_conf["userId"], "tmp_sim_trace", tmp_sim_trace, cmdid=cmdid)
+            tmp_sim_trace = {
+                **data,
+                "userId": worker.sim_conf["userId"],
+                "simId": worker.sim_conf["id"],
+            }
+            self.send_message(
+                worker.sim_conf["userId"], "tmp_sim_trace", tmp_sim_trace, cmdid=cmdid
+            )
 
     def schedule_sim(self, sim_conf):
         L.debug("scheduling a simulation")
@@ -102,10 +121,21 @@ class SimManager:
         self.run_available()
 
     def get_running_sim_ids(self):
-        return [worker.sim_conf["id"] for worker in self.workers if worker.status == SimWorkerStatus.BUSY]
+        return [
+            worker.sim_conf["id"]
+            for worker in self.workers
+            if worker.status == SimWorkerStatus.BUSY
+        ]
 
     def request_tmp_sim_log(self, sim_id, cmdid):
-        worker = next((worker for worker in self.workers if worker.sim_conf and worker.sim_conf["id"] == sim_id), None)
+        worker = next(
+            (
+                worker
+                for worker in self.workers
+                if worker.sim_conf and worker.sim_conf["id"] == sim_id
+            ),
+            None,
+        )
 
         if worker:
             worker.ws.send_message("get_tmp_sim_log", cmdid=cmdid)
@@ -119,7 +149,12 @@ class SimManager:
     def cancel_sim(self, sim_conf):
         sim_id = sim_conf["id"]
         queue_idx = next(
-            (index for (index, sim_conf) in enumerate(self.sim_conf_queue) if sim_conf["id"] == sim_id), None
+            (
+                index
+                for (index, sim_conf) in enumerate(self.sim_conf_queue)
+                if sim_conf["id"] == sim_id
+            ),
+            None,
         )
 
         self.process_sim_status(sim_conf, SimStatus.CANCELLED)
@@ -129,7 +164,14 @@ class SimManager:
             self.sim_conf_queue.pop(queue_idx)
             return
 
-        worker = next((worker for worker in self.workers if worker.sim_conf and worker.sim_conf["id"] == sim_id), None)
+        worker = next(
+            (
+                worker
+                for worker in self.workers
+                if worker.sim_conf and worker.sim_conf["id"] == sim_id
+            ),
+            None,
+        )
 
         if not worker:
             L.debug("sim to cancel is not in the queue")
@@ -148,12 +190,18 @@ class SimManager:
     def process_sim_progress(self, sim_conf, progress, context={}):
         user_id = sim_conf["userId"]
         sim_id = sim_conf["id"]
-        self.db.update_simulation({**context, "id": sim_id, "userId": user_id, "progress": progress})
+        self.db.update_simulation(
+            {**context, "id": sim_id, "userId": user_id, "progress": progress}
+        )
 
-        self.send_message(user_id, SimProgress.TYPE, {**context, "simId": sim_conf["id"], "progress": progress})
+        self.send_message(
+            user_id, SimProgress.TYPE, {**context, "simId": sim_conf["id"], "progress": progress}
+        )
 
     def process_sim_log_msg(self, sim_conf, log_msg):
-        self.send_message(sim_conf["userId"], SimLogMessage.TYPE, {**log_msg, "simId": sim_conf["id"]})
+        self.send_message(
+            sim_conf["userId"], SimLogMessage.TYPE, {**log_msg, "simId": sim_conf["id"]}
+        )
 
     def process_sim_log(self, sim_conf, sim_log):
         user_id = sim_conf["userId"]
@@ -168,9 +216,15 @@ class SimManager:
     def process_sim_spatial_step_trace(self, sim_conf, spatial_step_trace):
         user_id = sim_conf["userId"]
 
-        self.db.create_sim_spatial_step_trace({**spatial_step_trace, "userId": user_id, "simId": sim_conf["id"]})
+        self.db.create_sim_spatial_step_trace(
+            {**spatial_step_trace, "userId": user_id, "simId": sim_conf["id"]}
+        )
 
-        self.send_message(sim_conf["userId"], SimSpatialStepTrace.TYPE, {**spatial_step_trace, "simId": sim_conf["id"]})
+        self.send_message(
+            sim_conf["userId"],
+            SimSpatialStepTrace.TYPE,
+            {**spatial_step_trace, "simId": sim_conf["id"]},
+        )
 
     def process_sim_step_trace(self, sim_conf, step_trace):
         msg = {**step_trace, "simId": sim_conf["id"]}
@@ -196,7 +250,11 @@ class SimManager:
             self.send_message(user_id, SimTrace.TYPE, status_message)
 
     def send_sim_status(self, sim_conf, status, context={}):
-        self.send_message(sim_conf["userId"], SimStatus.TYPE, {**context, "simId": sim_conf["id"], "status": status})
+        self.send_message(
+            sim_conf["userId"],
+            SimStatus.TYPE,
+            {**context, "simId": sim_conf["id"], "status": status},
+        )
 
     def send_message(self, user_id, name, message, cmdid=None):
         if user_id not in self.clients:

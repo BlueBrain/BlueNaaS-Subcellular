@@ -7,5 +7,5 @@ enable_pretty_logging()
 
 def get_logger(module_name):
     logger = logging.getLogger(module_name)
-    logger.setLevel(logging.DEBUG if os.getenv("DEBUG", False) else logging.INFO)
+    logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "") else logging.INFO)
     return logger

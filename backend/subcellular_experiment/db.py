@@ -7,6 +7,7 @@ from pymongo.errors import ConfigurationError
 
 from .bngl_extended_model import EntityType, entity_coll_name_map
 from .logger import get_logger
+from .envvars import MONGO_URI
 
 L = get_logger(__name__)
 
@@ -27,7 +28,7 @@ def get_expr_entities(expr, entity_dict):
 
     current_entities = [entity_dict[token] for token in tokens if token in entity_dict]
 
-    entity_id_set = set([e["_id"] for e in current_entities])
+    entity_id_set = {e["_id"] for e in current_entities}
 
     for entity in current_entities:
         if entity["entityType"] == "observable":
@@ -54,7 +55,11 @@ def get_def_molecule_ids(definition, db_entities):
 
     molecules = [entity for entity in db_entities if entity["entityType"] == EntityType.MOLECULE]
 
-    spec_mol_ids = [mol["_id"] for mol in molecules if mol_def_r.search(mol["definition"]).groups()[0] in mol_def_set]
+    spec_mol_ids = [
+        mol["_id"]
+        for mol in molecules
+        if mol_def_r.search(mol["definition"]).groups()[0] in mol_def_set
+    ]
 
     return spec_mol_ids
 
@@ -62,7 +67,9 @@ def get_def_molecule_ids(definition, db_entities):
 def revision_data_from_entity_list(entity_list):
     revision_data = {}
     for entityType, coll_name in entity_coll_name_map.items():
-        revision_data[coll_name] = [entity for entity in entity_list if entity["entityType"] == entityType]
+        revision_data[coll_name] = [
+            entity for entity in entity_list if entity["entityType"] == entityType
+        ]
     return revision_data
 
 
@@ -71,11 +78,10 @@ class Db:
         self.mongo_client = MongoClient("mongodb://{}:27017/".format(DB_HOST))
         L.debug("connected to db")
 
-        mongo_uri = os.getenv("MONGO_URI")
-        if mongo_uri is None:
+        if MONGO_URI is None:
             raise ConfigurationError(message="MONGO_URI envar not set")
 
-        self.db = self.mongo_client[mongo_uri]
+        self.db = self.mongo_client[MONGO_URI]
         self.db.simulations.create_index(
             [
                 ("id", pymongo.ASCENDING),
@@ -97,7 +103,9 @@ class Db:
         )
 
         self.db.simTraces.create_index(
-            [("simId", pymongo.ASCENDING), ("index", pymongo.ASCENDING)], unique=True, background=True
+            [("simId", pymongo.ASCENDING), ("index", pymongo.ASCENDING)],
+            unique=True,
+            background=True,
         )
 
         self.db.simLogs.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
@@ -132,11 +140,14 @@ class Db:
         self.db.simulations.insert_one(simulation)
 
     def get_simulations(self, user_id, model_id):
-        return list(self.db.simulations.find({"userId": user_id, "modelId": model_id, "deleted": False}))
+        return list(
+            self.db.simulations.find({"userId": user_id, "modelId": model_id, "deleted": False})
+        )
 
     def update_simulation(self, simulation):
         self.db.simulations.update_one(
-            {"id": simulation["id"], "userId": simulation["userId"], "deleted": False}, {"$set": simulation}
+            {"id": simulation["id"], "userId": simulation["userId"], "deleted": False},
+            {"$set": simulation},
         )
 
     def create_sim_spatial_step_trace(self, spatial_step_trace):
@@ -170,7 +181,10 @@ class Db:
 
     def get_last_spatial_step_trace_idx(self, sim_id):
         spatial_step_traces = self.db.simSpatialStepTraces.find(
-            {"simId": sim_id}, projection=["stepIdx"], sort=[("stepIdx", pymongo.DESCENDING)], limit=1
+            {"simId": sim_id},
+            projection=["stepIdx"],
+            sort=[("stepIdx", pymongo.DESCENDING)],
+            limit=1,
         )
 
         try:
@@ -203,7 +217,9 @@ class Db:
         entity_q_type_set = set(query_dict["entityTypes"])
 
         mol_q_tokens = [token.strip() for token in mol_q_str.split("\n") if token.strip() != ""]
-        struct_q_tokens = [token.strip() for token in struct_q_str.split("\n") if token.strip() != ""]
+        struct_q_tokens = [
+            token.strip() for token in struct_q_str.split("\n") if token.strip() != ""
+        ]
 
         found_entities = []
 
@@ -214,7 +230,11 @@ class Db:
         for version in versions:
             branch = version["branch"]
             rev = version["revision"]
-            query_rev = rev if rev != "latest" else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+            query_rev = (
+                rev
+                if rev != "latest"
+                else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+            )
             rev_q.append({"branch": branch, "rev": query_rev})
 
         structure_q["$and"].append({"$or": rev_q})
@@ -280,10 +300,14 @@ class Db:
 
         # Filter out structures without species
         spec_structure_ids = [
-            entity_id for spec in species for entity_id in get_def_structure_ids(spec["definition"], structures)
+            entity_id
+            for spec in species
+            for entity_id in get_def_structure_ids(spec["definition"], structures)
         ]
 
-        structures_with_species = [structure for structure in structures if structure["_id"] in spec_structure_ids]
+        structures_with_species = [
+            structure for structure in structures if structure["_id"] in spec_structure_ids
+        ]
 
         found_entities += structures_with_species
 
@@ -303,7 +327,9 @@ class Db:
         tmp_entities = list(self.db.repo.find(q))
         found_entities += tmp_entities
 
-        parameters = [param for param in tmp_entities if param["entityType"] == EntityType.PARAMETER]
+        parameters = [
+            param for param in tmp_entities if param["entityType"] == EntityType.PARAMETER
+        ]
         functions = [func for func in tmp_entities if func["entityType"] == EntityType.FUNCTION]
         observables = [o for o in tmp_entities if o["entityType"] == EntityType.OBSERVABLE]
 
@@ -312,11 +338,15 @@ class Db:
         return revision_data_from_entity_list(filtered_entities)
 
     def get_revision(self, branch, rev):
-        query_rev = rev if rev != "latest" else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+        query_rev = (
+            rev if rev != "latest" else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+        )
         all_entities = list(self.db.repo.find({"branch": branch, "rev": query_rev}))
         revision_data = {}
         for entityType, coll_name in entity_coll_name_map.items():
-            revision_data[coll_name] = [entity for entity in all_entities if entity["entityType"] == entityType]
+            revision_data[coll_name] = [
+                entity for entity in all_entities if entity["entityType"] == entityType
+            ]
         return revision_data
 
     def get_user_branches(self, user_id):
@@ -345,7 +375,13 @@ class Db:
         for entity_type in entity_types_wo_refs:
             coll_name = entity_coll_name_map[entity_type]
             for entity in revision_data[coll_name]:
-                db_entry = {**entity, "rev": rev, "branch": branch, "entityType": entity_type, "userId": user_id}
+                db_entry = {
+                    **entity,
+                    "rev": rev,
+                    "branch": branch,
+                    "entityType": entity_type,
+                    "userId": user_id,
+                }
                 db_entry.pop("_id", None)
                 L.debug("saving: {}".format(db_entry))
                 saved_id = self.db.repo.insert_one(db_entry).inserted_id

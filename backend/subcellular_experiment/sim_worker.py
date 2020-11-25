@@ -44,7 +44,12 @@ class SimTmpDataStore:
         return self.log
 
     def get_trace(self):
-        return {"nSteps": self.n_steps, "observables": self.observables, "times": self.times, "values": self.values}
+        return {
+            "nSteps": self.n_steps,
+            "observables": self.observables,
+            "times": self.times,
+            "values": self.values,
+        }
 
     def _add_log(self, sim_log_msg: SimLogMessage):
         source = sim_log_msg.source
@@ -78,6 +83,8 @@ class SimWorker:
         self.sim_queue = Queue(10)
         self.terminating = False
         self.status = SimWorkerStatus.READY
+        self.socket = None
+        self.sim_tmp_data_store = None
 
     def init(self):
         MASTER_HOST = os.environ["MASTER_HOST"]
@@ -89,7 +96,7 @@ class SimWorker:
             on_close=self.on_close,
         )
 
-        def on_terminate(signal, frame):
+        def on_terminate(signum, frame):  # pylint: disable=unused-argument
             L.debug("received main process shutdown signal")
             self.socket.keep_running = False
             if not self.sim_proc and not self.sim_thread:
@@ -102,7 +109,9 @@ class SimWorker:
         # TODO: SIGINT handler?
         signal.signal(signal.SIGTERM, on_terminate)
 
-        self.socket.run_forever(sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), ping_interval=30)
+        self.socket.run_forever(
+            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),), ping_interval=30
+        )
 
     def teardown(self):
         self.socket.close()
@@ -117,7 +126,7 @@ class SimWorker:
         sim_config = message["data"]
         msg = message["cmd"]
         cmdid = message["cmdid"]
-        L.debug("got {} from the backend".format(msg))
+        L.debug(f"got {msg} from the backend")
 
         if msg == "run_sim":
             self.on_run_sim_msg(sim_config)
@@ -153,7 +162,6 @@ class SimWorker:
                 is_sim_trace = isinstance(sim_data, SimTrace)
 
                 if is_sim_trace:
-
                     data = sim_data.dict()
                 else:
                     self.sim_tmp_data_store.add(sim_data)
@@ -168,8 +176,6 @@ class SimWorker:
             self.sim_proc = None
 
             self.send_message("simLog", self.sim_tmp_data_store.get_log())
-            # self.send_message("simTrace", self.sim_tmp_data_store.get_trace())
-
             self.sim_tmp_data_store = None
 
             if self.terminating:
@@ -185,7 +191,7 @@ class SimWorker:
 
     def on_error(self, error):
         if error != 0:
-            L.debug("ws: error {}".format(error))
+            L.debug(f"ws: error {error}".format(error))
 
     def on_close(self):
         L.debug("ws connection closed, trying to connect in 2 s")
@@ -193,13 +199,15 @@ class SimWorker:
         self.init()
 
     def send_message(self, message, data, cmdid=None):
-        payload = json.dumps({"message": message, "data": data, "cmdid": cmdid}, cls=ExtendedJSONEncoder)
+        payload = json.dumps(
+            {"message": message, "data": data, "cmdid": cmdid}, cls=ExtendedJSONEncoder
+        )
 
         self.socket.send(payload)
 
 
 def run_sim_proc(result_queue, sim_config):
-    def on_sigterm(signal, frame):
+    def on_sigterm(sig_num, frame):  # pylint: disable=unused-argument
         L.debug("got SIGTERM on simulation process")
         result_queue.put(SimLogMessage("STOP"))
         result_queue.put(None)

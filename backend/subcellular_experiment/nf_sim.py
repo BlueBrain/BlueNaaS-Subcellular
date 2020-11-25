@@ -57,7 +57,18 @@ class NfSim(Sim):
                 rnf_actions.append("  update")
             t = action_t
 
-        rnf = "\n".join(["-xml model.xml", "-v", "-utl 3", "-o model.gdat", "", "begin", "\n".join(rnf_actions), "end"])
+        rnf = "\n".join(
+            [
+                "-xml model.xml",
+                "-v",
+                "-utl 3",
+                "-o model.gdat",
+                "",
+                "begin",
+                "\n".join(rnf_actions),
+                "end",
+            ]
+        )
 
         return rnf
 
@@ -78,7 +89,10 @@ class NfSim(Sim):
         L.debug("starting BNG xml model export")
         try:
             bng_run = subprocess.run(
-                [BNG_PATH, "model.bngl"], check=False, capture_output=True, timeout=BNG_MODEL_EXPORT_TIMEOUT
+                [BNG_PATH, "model.bngl"],
+                check=False,
+                capture_output=True,
+                timeout=BNG_MODEL_EXPORT_TIMEOUT,
             )
         except subprocess.TimeoutExpired:
             self.log("BNGL was not been able to convert a model into xml within 5 seconds")
@@ -93,7 +107,9 @@ class NfSim(Sim):
         L.debug("BNG xml model export has been finished")
 
         L.debug("starting NFsim")
-        nfsim_run = subprocess.run([NFSIM_PATH, "-csv", "-logo", "-rnf", "model.rnf"], check=False, capture_output=True)
+        nfsim_run = subprocess.run(
+            [NFSIM_PATH, "-csv", "-logo", "-rnf", "model.rnf"], check=False, capture_output=True
+        )
         self.log(nfsim_run.stdout.decode("utf-8"), "nfsim_stdout")
         self.log(nfsim_run.stderr.decode("utf-8"), "nfsim_stderr")
 
@@ -108,7 +124,7 @@ class NfSim(Sim):
             return
 
         sim_traces = pd.read_csv("model.gdat")
-        observables = [col for col in sim_traces.columns.tolist()[1:]]
+        observables = list(sim_traces.columns.tolist()[1:])
 
         times = np.array(sim_traces.values.tolist())[:, 0]
         values = np.array(sim_traces.values.tolist())[:, 1:]
@@ -126,9 +142,16 @@ class NfSim(Sim):
             times_chunk = times[i : i + elements_per_chunk]
             values_chunk = values[i : i + elements_per_chunk].T
 
-            values_by_observable = {observables[i]: values_chunk[i].tolist() for i in range(len(observables))}
+            values_by_observable = {
+                observables[i]: values_chunk[i].tolist() for i in range(len(observables))
+            }
             self.send_progress(
-                SimTrace(index=i, times=times_chunk.tolist(), values_by_observable=values_by_observable, persist=True)
+                SimTrace(
+                    index=i,
+                    times=times_chunk.tolist(),
+                    values_by_observable=values_by_observable,
+                    persist=True,
+                )
             )
 
         self.send_progress(SimStatus(SimStatus.FINISHED))

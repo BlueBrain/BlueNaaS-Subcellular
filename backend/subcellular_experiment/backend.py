@@ -1,7 +1,6 @@
 import os
 import json
 
-import pymongo
 import tornado.ioloop
 import tornado.websocket
 import tornado.web
@@ -21,7 +20,12 @@ db = Db()
 sim_manager = SimManager(db)
 
 
-SEC_SHORT_TYPE_DICT = {"soma": "soma", "basal_dendrite": "dend", "apical_dendrite": "apic", "axon": "axon"}
+SEC_SHORT_TYPE_DICT = {
+    "soma": "soma",
+    "basal_dendrite": "dend",
+    "apical_dendrite": "apic",
+    "axon": "axon",
+}
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -36,7 +40,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             return
         sim_manager.add_client(self.user_id, self)
 
-    def check_origin(self, origin):
+    def check_origin(self, origin):  # pylint: disable=unused-argument
         return True
 
     def on_message(self, msg):
@@ -94,7 +98,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             geometry = Geometry(geometry_config)
             structure_size_dict = {st["name"]: st["size"] for st in geometry.structures}
             L.debug(f"new geometry {str(geometry.id)} has been created")
-            self.send_message("geometry", {"id": geometry.id, "structureSize": structure_size_dict}, cmdid=cmdid)
+            self.send_message(
+                "geometry", {"id": geometry.id, "structureSize": structure_size_dict}, cmdid=cmdid
+            )
 
         if cmd == "get_exported_model":
             model_format = msg["data"]["format"]
@@ -104,8 +110,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             try:
                 model_str = get_exported_model(model_dict, model_format)
             except Exception as error:
-                error_msg = error.message
-            self.send_message("exported_model", {"fileContent": model_str, "error": error_msg}, cmdid=cmdid)
+                self.send_message(
+                    "exported_model", {"fileContent": model_str, "error": str(error)}, cmdid=cmdid
+                )
 
         if cmd == "convert_from_sbml":
             sbml_str = msg["data"]["sbml"]
@@ -168,7 +175,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def send_message(self, cmd, data=None, cmdid=None):
         if not self.closed:
-            payload = json.dumps({"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder)
+            payload = json.dumps(
+                {"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder
+            )
             try:
                 self.write_message(payload)
             except Exception as e:
@@ -179,7 +188,7 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
     closed = False
     sim_worker = None
 
-    def check_origin(self, origin):
+    def check_origin(self, origin):  # pylint: disable=unused-argument
         L.debug("sim runner websocket client has been connected")
         return True
 
@@ -202,7 +211,9 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
 
     def send_message(self, cmd, data=None, cmdid=None):
         if not self.closed:
-            payload = json.dumps({"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder)
+            payload = json.dumps(
+                {"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder
+            )
             try:
                 self.write_message(payload)
             except Exception:
@@ -216,7 +227,7 @@ class HealthHandler(tornado.web.RequestHandler):
 
 app = tornado.web.Application(
     [(r"/ws", WSHandler), (r"/sim", SimRunnerWSHandler), (r"/health", HealthHandler)],
-    debug=os.getenv("DEBUG", False),
+    debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=30000000,
 )
 

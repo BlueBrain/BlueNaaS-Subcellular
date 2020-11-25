@@ -1,4 +1,3 @@
-import json
 import re
 
 
@@ -38,17 +37,53 @@ entity_coll_name_map = {
 }
 
 entity_helper_dict = {
-    "parameter": {"modelProp": "parameters", "blockStart": "begin parameters", "blockEnd": "end parameters"},
-    "structure": {"modelProp": "structures", "blockStart": "begin compartments", "blockEnd": "end compartments"},
-    "molecule": {"modelProp": "molecules", "blockStart": "begin molecule types", "blockEnd": "end molecule types"},
+    "parameter": {
+        "modelProp": "parameters",
+        "blockStart": "begin parameters",
+        "blockEnd": "end parameters",
+    },
+    "structure": {
+        "modelProp": "structures",
+        "blockStart": "begin compartments",
+        "blockEnd": "end compartments",
+    },
+    "molecule": {
+        "modelProp": "molecules",
+        "blockStart": "begin molecule types",
+        "blockEnd": "end molecule types",
+    },
     "species": {"modelProp": "species", "blockStart": "begin species", "blockEnd": "end species"},
-    "observable": {"modelProp": "observables", "blockStart": "begin observables", "blockEnd": "end observables"},
-    "function": {"modelProp": "functions", "blockStart": "begin functions", "blockEnd": "end functions"},
-    "diffusion": {"modelProp": "diffusions", "blockStart": "begin diffusions", "blockEnd": "end diffusions"},
-    "reaction": {"modelProp": "reactions", "blockStart": "begin reaction rules", "blockEnd": "end reaction rules"},
+    "observable": {
+        "modelProp": "observables",
+        "blockStart": "begin observables",
+        "blockEnd": "end observables",
+    },
+    "function": {
+        "modelProp": "functions",
+        "blockStart": "begin functions",
+        "blockEnd": "end functions",
+    },
+    "diffusion": {
+        "modelProp": "diffusions",
+        "blockStart": "begin diffusions",
+        "blockEnd": "end diffusions",
+    },
+    "reaction": {
+        "modelProp": "reactions",
+        "blockStart": "begin reaction rules",
+        "blockEnd": "end reaction rules",
+    },
 }
 
-bngl_standard_entity_types = ["parameter", "structure", "molecule", "species", "observable", "function", "reaction"]
+bngl_standard_entity_types = [
+    "parameter",
+    "structure",
+    "molecule",
+    "species",
+    "observable",
+    "function",
+    "reaction",
+]
 
 
 class BnglExtModel:
@@ -93,17 +128,22 @@ class BnglExtModel:
         if not self.unit_conversion:
             return "  {} {}".format(spec_def, spec["concentration"])
 
-        struct_name = re.match("@(\w*)", spec_def).groups()[0]
-        struct_size = next(struct["size"] for struct in self.model_dict["structures"] if struct["name"] == struct_name)
+        struct_name = re.match(r"@(\w*)", spec_def).groups()[0]
+        struct_size = next(
+            struct["size"]
+            for struct in self.model_dict["structures"]
+            if struct["name"] == struct_name
+        )
         conv_k = "{} * 10e3 * {}".format(NA, struct_size)
         conc = spec["concentration"]
         amount = "  {} ({}) * {}".format(spec_def, conc, conv_k)
+        return ""
 
     def reaction_to_str(self, reac):
         name = reac["name"]
 
         return "  {}{} {}{}".format(
-            "{}: ".format(name) if name is not "-" else "",
+            "{}: ".format(name) if name != "-" else "",
             reac["definition"],
             reac["kf"],
             ", {}".format(reac["kr"]) if "<->" in reac["definition"] else "",
@@ -112,7 +152,14 @@ class BnglExtModel:
     def generate_artificial_structures(self):
         root_structure_name = "ext_comp___"
         real_structures = self.model_dict["structures"].copy()
-        structures = [{"name": root_structure_name, "type": StructureType.COMPARTMENT, "parentName": "-", "size": 1.0}]
+        structures = [
+            {
+                "name": root_structure_name,
+                "type": StructureType.COMPARTMENT,
+                "parentName": "-",
+                "size": 1.0,
+            }
+        ]
 
         for structure in real_structures:
             parent_structure_name = "{}_enc_memb___".format(structure["name"])
@@ -135,7 +182,11 @@ class BnglExtModel:
         return structures
 
     def to_bngl(
-        self, write_xml_op=False, unit_conversion=False, artificial_structures=False, add_diff_observables=False
+        self,
+        write_xml_op=False,
+        unit_conversion=False,
+        artificial_structures=False,
+        add_diff_observables=False,
     ):
 
         self.unit_conversion = unit_conversion
