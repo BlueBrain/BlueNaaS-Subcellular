@@ -29,7 +29,6 @@
       autorange: true,
     },
     hovermode: 'closest',
-    uirevision: 'true',
   };
 
   const downloadCsvBtn = {
@@ -75,13 +74,12 @@
       return {
         loading: true,
         chartPointN: 0,
-        canExtendTraces: true,
+        canExtendTraces: false,
       };
     },
 
     created() {
       this.extendTraces = throttle(this.extendTraces, 3000);
-      this.renrenderChart = debounce(this.rerenderChart, 500);
     },
 
     async mounted() {
@@ -100,31 +98,60 @@
         layout,
       );
 
-      graphDiv.on('plotly_relayout', (eventData) => {
-        if (!eventData['xaxis.range[0]']) return;
+      graphDiv.on('plotly_relayout', async (eventData) => {
+        let start = eventData['xaxis.range[0]'];
+        let end = eventData['xaxis.range[1]'];
+
+        // When user hits reset axis an event with these properties is emitted
+        // This rerenders the whole chart
+        if (
+          eventData['xaxis.autorange'] &&
+          eventData['yaxis.autorange'] &&
+          eventData['xaxis.showspikes'] === false &&
+          eventData['yaxis.showspikes'] === false
+        ) {
+          start = 0;
+          end = this.simulation.solverConf.tEnd;
+        }
+        if (start === undefined || end === undefined) return;
+
+        // If zooming in don't append new data points to the end
         this.canExtendTraces = false;
-        this.rerenderChart(eventData);
+        await this.rerenderChart(start, end);
+
+        // Can extend traces again if the last point is visible
+        if (this.trace && end > this.trace.times[this.trace.times.length - 1]) {
+          this.chartPointN = this.trace.times.length;
+          this.canExtendTraces = true;
+        }
       });
 
       simDataStorage.trace.subscribe(this.simId, this.extendTraces);
-      const trace = simDataStorage.trace.getCached(this.simId);
-      if (!trace) socket.request('get_trace', this.simId);
-      if (trace) await this.extendTraces();
       downloadCsvBtn.click = () => this.downloadCsv();
+
+      // If there is no data when mounting for this chart request it
+      if (!this.trace) {
+        this.canExtendTraces = true;
+        socket.request('get_trace', this.simId);
+        return;
+      }
+
+      await this.rerenderChart(0, this.simulation.solverConf.tEnd);
+      this.chartPointN = this.trace.times.length;
+      this.canExtendTraces = true;
     },
-    beforeDestroy() {
+    async beforeDestroy() {
       this.extendTraces.cancel();
       simDataStorage.trace.unsubscribe(this.simId);
-      Plotly.purge(this.$refs.chart);
+      await Plotly.purge(this.$refs.chart);
     },
     methods: {
       async extendTraces() {
         if (!this.canExtendTraces) return;
+
         const data = this.getChartData(this.chartPointN) as ChartData[];
-
         if (!data) return;
-
-        this.chartPointN = simDataStorage.trace?.getCached(this.simId).times.length || 0;
+        this.chartPointN = simDataStorage.trace.getCached(this.simId).times.length;
 
         const traceExtension = {
           x: data.map((line) => line.x),
@@ -154,28 +181,22 @@
         });
       },
 
-      async rerenderChart(eventData) {
-        if (!eventData['xaxis.range[0]']) return;
+      async rerenderChart(xstart: number, xend: number) {
+        if (this.trace) this.loading = false;
+        if (!this.trace) return;
 
-        const trace = simDataStorage.trace.getCached(this.simId) as SimTrace;
-        if (trace) this.loading = false;
-        if (!trace) return;
+        const start = floorDiv(xstart, this.dt);
+        const end = floorDiv(xend, this.dt);
 
-        const rangeStart = eventData['xaxis.range[0]'];
-        const rangeEnd = eventData['xaxis.range[1]'];
-
-        const start = floorDiv(rangeStart, this.dt);
-        const end = floorDiv(rangeEnd, this.dt);
-
-        const slice = trace.times.slice(start, end);
+        const slice = this.trace.times.slice(start, end);
 
         const samplingPeriod = this.getSamplingPeriod(slice.length);
 
-        const chartData = Object.keys(trace.values_by_observable).map((observable) => {
+        const chartData = Object.keys(this.trace.values_by_observable).map((observable) => {
           const filterPoint = (time) => floorDiv(time, this.dt) % samplingPeriod === 0;
           return {
             x: slice.filter(filterPoint),
-            y: trace.values_by_observable[observable]
+            y: this.trace.values_by_observable[observable]
               .slice(start, end)
               .filter((value, idx) => filterPoint(slice[idx])),
             name: observable,
@@ -184,9 +205,10 @@
           };
         });
 
+        // We need to set autorange back to true as Plotly will mutate layout
+        layout.xaxis.autorange = true;
+        layout.yaxis.autorange = true;
         await Plotly.react(this.$refs.chart, chartData, layout);
-
-        if (end >= trace.times.length) this.canExtendTraces = true;
       },
 
       getSamplingPeriod(length: number) {
@@ -223,6 +245,9 @@
       },
       dt(): number {
         return this.simulation.solverConf.dt;
+      },
+      trace(): SimTrace | undefined {
+        return simDataStorage.trace.getCached(this.simId);
       },
     },
     watch: {
