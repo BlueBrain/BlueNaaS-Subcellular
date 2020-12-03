@@ -26,4 +26,5 @@ RUN git clone https://github.com/pgetta/atomizer.git && \
 
 ADD . /code
 WORKDIR /code
+RUN python setup.py sdist
 RUN tox

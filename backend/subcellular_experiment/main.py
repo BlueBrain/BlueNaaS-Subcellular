@@ -1,7 +1,4 @@
 # pylint: disable-all
-if __package__ is None:
-    __package__ = "subcellular_experiment"
-
 import os
 from .sim_worker import SimWorker
 

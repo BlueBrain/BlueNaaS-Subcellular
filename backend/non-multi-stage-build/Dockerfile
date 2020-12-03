@@ -12,6 +12,7 @@ WORKDIR /app
 COPY entrypoint.sh .
 COPY ./build/python-deps /usr/local/lib/python3.7/site-packages
 COPY ./build/sbmlTranslator sbmlTranslator
+COPY ./build/dist dist
 
 RUN apt-get update && \
     apt-get install -y perl rsync wget wait-for-it libopenblas-base mpich && \
@@ -24,7 +25,11 @@ RUN wget -O bionetgen.tgz https://github.com/RuleWorld/bionetgen/releases/downlo
     rm -r BioNetGen/Models2 && \
     rm -r BioNetGen/Validate
 
+RUN pip install \
+  --no-cache-dir \
+  -i https://bbpteam.epfl.ch/repository/devpi/simple \
+  $(ls -t $PWD/dist/*.* | head -n 1)
+
 EXPOSE 8000
-ADD ./subcellular_experiment /app
 
 ENTRYPOINT [ "./entrypoint.sh" ]
