@@ -13,13 +13,12 @@ BIONETGEN_SRC_URL?=https://github.com/RuleWorld/bionetgen/releases/download/BioN
 define HELPTEXT
 Makefile usage
   Targets:
-    run_dev                       Run development setup which includes backend, sim_worker and mongo_db, requires:
-                                   docker engine and /gpfs mounted volume.
-    docker_build_version          Build backend local docker image with the version tag.
-    docker_build_latest           Build backend local docker image with the latest tag.
-    docker_push_version           Tag docker image with version and push to OpenShift registry.
-    docker_push_latest            Tag docker image with the latest and push to OpenShift registry.
-                                    This will result in the updated backend running in OpenShift.
+    run_dev                 Run development setup which includes backend, sim_worker and mongo_db, requires:
+                                docker engine.
+    docker_build_latest     Build backend local docker image with the latest tag.
+    push_dev                Tag docker image as dev and push to OpenShift registry.
+    push_prod               Tag docker image as latest and push to OpenShift registry.
+                                This will result in the updated backend running in OpenShift.
 endef
 export HELPTEXT
 

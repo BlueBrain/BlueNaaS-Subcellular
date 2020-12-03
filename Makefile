@@ -11,16 +11,19 @@ DOCKER_REGISTRY_HOST?=docker-registry-default.ocp.bbp.epfl.ch
 define HELPTEXT
 Makefile usage
  Targets:
-    run_dev               Run backend and frontend in dev mode
-    run_dev_backend       Run development instance of the backend.
-    run_dev_frontend      Run development instance of the frontend.
-    test                  Test and compile packages, rebuild docker images locally(latest tag).
-    create_oo_deployment  Create OpenShift deployment. Docker images should be present
-                            in the registry when executing  this task.
-    build                 Same as test. If VERSION has not been previously git tagged:
-                            git tag it and push this version to docker registry.
-    release               Same as build. Push the latest tag to the docker registy.
-                            This will result in updated app in prod.
+    run_dev                     Run backend and frontend in dev mode
+    run_dev_backend             Run development instance of the backend.
+    run_dev_frontend            Run development instance of the frontend.
+    build                       Build backend and frontend docker images.
+    push_dev                    Tag and push the latest docker images (frontend and backend)
+                                    to the registry (dev).
+    push_prod                   Tag and push the latest docker images (frontend and backend)
+                                    to the registry (production).
+
+    create_oo_deployment        Create OpenShift deployment. Docker images should be present
+                                    in the registry when executing  this task.
+    create_oo_dev_deployment    Create OpenShift deployment in the dev environment.
+                                    Docker images should be present in the registry when executing  this task.
 endef
 export HELPTEXT
 

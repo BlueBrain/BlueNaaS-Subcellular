@@ -14,13 +14,12 @@ SENTRY_DSN?=https://957bc91f672d4e8a83f09af8ad015a6e@sentry.io/1374434
 define HELPTEXT
 Makefile usage
  Targets:
-    run_dev               Run development web server.
-    build                 Build web app into dist folder.
-    docker_build_version  Build frontend local docker image with the version tag.
-    docker_build_latest   Build frontend local docker image with the latest tag.
-    docker_push_version   Tag docker image with version and push to OpenShift registy.
-    docker_push_latest    Tag docker image with latest and push to OpenShift registy
-                            This will result in the updated frontend running in OpenShift.
+    run_dev                 Run development web server.
+    build                   Build web app into dist folder.
+    docker_build_latest     Build frontend local docker image with the latest tag.
+    push_dev                Tag docker image as dev and push to OpenShift registy.
+    push_latest             Tag docker image as latest and push to OpenShift registy
+                                This will result in the updated frontend running in OpenShift.
 endef
 export HELPTEXT
 

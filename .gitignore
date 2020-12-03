@@ -240,3 +240,4 @@ tags
 # End of https://www.gitignore.io/api/vim,node,macos,python,sublimetext,visualstudiocode
 
 backend/tmp
+**/.logs
