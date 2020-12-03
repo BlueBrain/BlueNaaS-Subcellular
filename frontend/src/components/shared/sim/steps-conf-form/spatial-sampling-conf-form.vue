@@ -77,7 +77,7 @@
   export default {
     name: 'spatial-sampling-conf',
     components: {
-      'bngl-text': BnglText,
+      'bngl-text': BnglText, //eslint-disable-line
     },
     props: ['value'],
     data() {

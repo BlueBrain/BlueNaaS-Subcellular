@@ -280,7 +280,7 @@ class ModelGeometry {
   }
 
   get hasSurfaceMesh() {
-    Object.keys(this.mesh.surface).length;
+    return Object.keys(this.mesh.surface).length;
   }
 
   async init({ removeRawMesh } = { removeRawMesh: true }) {
@@ -318,6 +318,7 @@ class ModelGeometry {
 
     this.meta.structures.forEach((structure) => {
       surfGenPromises.push(
+        //eslint-disable-next-line
         new Promise(async (done) => {
           const genMeshFunc =
             structure.type === 'compartment'
@@ -354,7 +355,7 @@ class ModelGeometry {
       writeArray([x, y, z], nodes, nodeIdx * 3);
     });
     this.mesh.volume.nodes = nodes;
-
+    // eslint-disable-next-line
     const parseFaces = new Promise(async (done) => {
       const facesRaw = await parseTetGenFile(this.mesh.volume.raw.faces);
       const faces = new Uint32Array(facesRaw.length * 3);
@@ -366,12 +367,13 @@ class ModelGeometry {
       done();
     });
 
+    // eslint-disable-next-line
     const parseElements = new Promise(async (done) => {
       const elementsRaw = await parseTetGenFile(this.mesh.volume.raw.elements);
       const elements = new Uint32Array(elementsRaw.length * 4);
       elementsRaw.map((rawElement, elementIdx) => {
         const element = rawElement.splice(1, 4).map((nodeNum) => nodeIdxMap.get(nodeNum));
-        writeArray(element, elements, elementIdx * 4);
+        return writeArray(element, elements, elementIdx * 4);
       });
       this.mesh.volume.elements = elements;
       done();

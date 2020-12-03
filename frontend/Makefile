@@ -28,43 +28,25 @@ help:
 	@echo "$$HELPTEXT"
 
 $(NODE_MODULES):
-	npm install
+	yarn
 
 run_dev: | $(NODE_MODULES)
-	npm run serve
+	yarn serve
+
+lint: | $(NODE_MODULES)
+	yarn lint
 
 build: | $(NODE_MODULES)
 	VUE_APP_SENTRY_DSN=$(SENTRY_DSN) \
-	npm run build
+	yarn
 
-docker_build_version: build
-	docker build -t sc:$(VERSION) \
-		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
-		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
-		.
 
-docker_build_latest: build
-	docker build -t sc:latest \
-		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
-		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
-		.
+docker_build_latest:
+	VUE_APP_SENTRY_DSN=$(SENTRY_DSN) \
+	./build.sh sc:latest
 
-docker_build_dev: build
-	docker build -t sc:dev \
-		--build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
-		--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
-		.
 
-docker_push_version: docker_build_version
-	docker tag \
-		$(APP_NAME_PREFIX):$(VERSION) \
-		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):$(VERSION)
-
-	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):$(VERSION)
-
-	@echo 'frontend version($(VERSION)) pushed to OpenShift registy'
-
-docker_push_latest: docker_build_latest
+push_prod: docker_build_latest
 	docker tag \
 		$(APP_NAME_PREFIX):latest \
 		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):latest
@@ -75,9 +57,9 @@ docker_push_latest: docker_build_latest
 	@echo 'frontend release done'
 
 
-docker_push_dev:
+push_dev:
 	docker tag \
-		$(APP_NAME_PREFIX):dev \
+		$(APP_NAME_PREFIX):latest \
 		$(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):dev
 
 	docker push $(DOCKER_REGISTRY_HOST)/$(OO_PROJECT)/$(APP_NAME_PREFIX):dev

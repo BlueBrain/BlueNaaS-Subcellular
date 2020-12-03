@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
-    "lint": "npx prettier --write src; vue-cli-service lint --no-fix"
+    "lint": "npx prettier --check src && vue-cli-service lint --no-fix && npx tsc --noEmit"
   },
   "dependencies": {
     "@msgpack/msgpack": "^1.11.0",
@@ -79,9 +79,18 @@
       "@vue/typescript"
     ],
     "rules": {
+      "max-classes-per-file": "off",
+      "spaced-comment": "off",
       "no-underscore-dangle": "off",
       "no-param-reassign": "off",
       "no-trailing-spaces": "error",
+      "consistent-return": "off",
+      "no-plusplus": "off",
+      "import/no-cycle": "off",
+      "lines-between-class-members": "off",
+      "no-console": "off",
+      "no-shadow": "off",
+      "prefer-destructuring": "off",
       "import/extensions": [
         "error",
         "ignorePackages",

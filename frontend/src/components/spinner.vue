@@ -1,3 +1,4 @@
+<!-- eslint-disable-next-line -->
 <template></template>
 
 <script>

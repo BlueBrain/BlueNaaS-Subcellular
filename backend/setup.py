@@ -25,7 +25,6 @@ setup(
         "xlrd==1.2.0",
         "pydantic==1.6.1",
         "typing-extensions==3.7.4.3",
-        "tox==3.20.1",
     ],
     tests_require=["pytest", "pytest-cov"],
     packages=find_packages(exclude=[]),

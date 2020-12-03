@@ -43,8 +43,8 @@
   import get from 'lodash/get';
 
   import constants from '@/constants';
-  import TemporalResultViewer from './result-viewer/temporal-result-viewer';
-  import SpatialResultViewer from './result-viewer/spatial-result-viewer';
+  import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue';
+  import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue';
 
   const { SimSolver } = constants;
 

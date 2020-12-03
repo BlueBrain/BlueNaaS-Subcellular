@@ -8,13 +8,12 @@
   import Vue from 'vue';
   import noop from 'lodash/noop';
   import throttle from 'lodash/throttle';
-  import debounce from 'lodash/debounce';
-  import Plotly, { layoutAttributes } from 'plotly.js-basic-dist';
+  import Plotly from 'plotly.js-basic-dist';
   import { saveAs } from 'file-saver';
-  import unzip from 'lodash/unzip';
 
   import simDataStorage from '@/services/sim-data-storage';
   import socket from '@/services/websocket';
+  // eslint-disable-next-line
   import { SimTrace, Simulation } from '@/types';
 
   const layout = {
@@ -67,6 +66,10 @@
     y: number[];
   };
 
+  function floorDiv(a: number, b: number) {
+    return Math.max(0, Math.floor(a / b));
+  }
+
   export default Vue.extend({
     name: 'temporal-result-viewer',
     props: ['simId'],
@@ -96,6 +99,7 @@
           y: [],
         })),
         layout,
+        config,
       );
 
       graphDiv.on('plotly_relayout', async (eventData) => {
@@ -208,7 +212,7 @@
         // We need to set autorange back to true as Plotly will mutate layout
         layout.xaxis.autorange = true;
         layout.yaxis.autorange = true;
-        await Plotly.react(this.$refs.chart, chartData, layout);
+        await Plotly.react(this.$refs.chart, chartData, layout, config);
       },
 
       getSamplingPeriod(length: number) {
@@ -256,10 +260,6 @@
       },
     },
   });
-
-  function floorDiv(a: number, b: number) {
-    return Math.max(0, Math.floor(a / b));
-  }
 </script>
 
 <style lang="scss" scoped>

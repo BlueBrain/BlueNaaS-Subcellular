@@ -29,6 +29,20 @@ function removeStore(simId) {
   store.dropInstance();
 }
 
+function getSpatialStepTrace(simId, stepIdx) {
+  get(cache, `${simId}.spatialTrace.${stepIdx}`);
+}
+
+function setSpatialStepTrace(spatialStepTrace) {
+  const { simId, stepIdx } = spatialStepTrace;
+  set(cache, `${simId}.spatialTrace.${stepIdx}`, spatialStepTrace);
+
+  const idxToDelete = stepIdx - MAX_INMEM_SPATIAL_STEP_TRACES;
+  if (idxToDelete >= 0 && getSpatialStepTrace(simId, stepIdx)) {
+    delete cache[simId].spatialTrace[stepIdx];
+  }
+}
+
 bus.$on('ws:simLogMessage', (logMsg) => {
   if (!get(cache, `${logMsg.simId}.log.${logMsg.source}`)) {
     set(cache, `${logMsg.simId}.log.${logMsg.source}`, [logMsg.message]);
@@ -44,6 +58,7 @@ bus.$on('ws:simTrace', (trace: SimTrace) => {
   if (!get(cache, `${trace.simId}.trace`)) {
     set(cache, `${trace.simId}.trace`, trace);
   } else {
+    // eslint-disable-next-line
     for (const [observable, values] of Object.entries(trace.values_by_observable)) {
       const existingValues = cache[trace.simId].trace.values_by_observable[observable];
       if (existingValues) cache[trace.simId].trace.values_by_observable[observable].push(...values);
@@ -76,7 +91,7 @@ bus.$on('ws:simStepTrace', (stepTrace) => {
 
 bus.$on('ws:simSpatialStepTrace', (spatialStepTrace) => {
   const { simId } = spatialStepTrace;
-  _setSpatialStepTrace(spatialStepTrace);
+  setSpatialStepTrace(spatialStepTrace);
 
   const store = getSimStore(simId);
   store.setItem(String(spatialStepTrace.stepIdx), spatialStepTrace);
@@ -99,7 +114,7 @@ async function getLog(simId) {
   const logRes = await socket.request('get_log', simId);
   const { log } = logRes;
 
-  _setLog(simId, log);
+  set(cache, `${simId}.log`, log);
 
   return log;
 }
@@ -117,39 +132,13 @@ function unsubscribeTraceChange(simId) {
 async function getTrace(simId) {
   const trace = await socket.request('get_trace', simId);
 
-  _setTrace(simId, trace);
+  set(cache, `${simId}.trace`, trace);
 
   return trace;
 }
 
 function _getTrace(simId) {
   return get(cache, `${simId}.trace`);
-}
-
-function _setTrace(simId, trace) {
-  return set(cache, `${simId}.trace`, trace);
-}
-
-function _getLog(simId) {
-  get(cache, `${simId}.log`);
-}
-
-function _setLog(simId, log) {
-  set(cache, `${simId}.log`, log);
-}
-
-function _getSpatialStepTrace(simId, stepIdx) {
-  get(cache, `${simId}.spatialTrace.${stepIdx}`);
-}
-
-function _setSpatialStepTrace(spatialStepTrace) {
-  const { simId, stepIdx } = spatialStepTrace;
-  set(cache, `${simId}.spatialTrace.${stepIdx}`, spatialStepTrace);
-
-  const idxToDelete = stepIdx - MAX_INMEM_SPATIAL_STEP_TRACES;
-  if (idxToDelete >= 0 && _getSpatialStepTrace(simId, stepIdx)) {
-    delete cache[simId].spatialTrace[stepIdx];
-  }
 }
 
 function subscribeSpatialTraceChange(simId, cb) {
@@ -166,13 +155,13 @@ async function getSpatialTrace(simId) {
 }
 
 async function getSpatialStepTraceByIdx(simId, stepIdx) {
-  const inMemoryStepTrace = _getSpatialStepTrace(simId, stepIdx);
+  const inMemoryStepTrace = getSpatialStepTrace(simId, stepIdx);
   if (inMemoryStepTrace) return inMemoryStepTrace;
 
   const store = getSimStore(simId);
   const storeStepTrace = await store.getItem(String(stepIdx));
   if (storeStepTrace) {
-    _setSpatialStepTrace(stepIdx, storeStepTrace);
+    setSpatialStepTrace(stepIdx, storeStepTrace);
     return storeStepTrace;
   }
 
@@ -182,13 +171,13 @@ async function getSpatialStepTraceByIdx(simId, stepIdx) {
   });
   if (backendStepTrace) {
     store.setItem(String(stepIdx), backendStepTrace);
-    _setSpatialStepTrace(backendStepTrace);
+    setSpatialStepTrace(backendStepTrace);
     return backendStepTrace;
   }
 }
 
 async function getLastSpatialStepIdx(simId) {
-  return await socket.request('get_last_spatial_step_trace_idx', { simId });
+  return socket.request('get_last_spatial_step_trace_idx', { simId });
 }
 
 function unsubscribeAll(simId) {

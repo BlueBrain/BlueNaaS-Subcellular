@@ -304,7 +304,7 @@
       onProgressInput(stepIdx) {
         if (this.progressCtrl.stepIdx === stepIdx) return;
         this.progressCtrl.live = false;
-        renderMoleculesByStepIdx(stepIdx);
+        this.renderMoleculesByStepIdx(stepIdx);
       },
       onProgressChange(stepIdx) {
         this.progressCtrl.live = false;

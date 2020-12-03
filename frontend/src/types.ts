@@ -29,5 +29,5 @@ export interface SimTrace {
   simId: string;
   index: number;
   times: number[];
-  values_by_observable: { [observable: string]: number[] };
+  values_by_observable: { [observable: string]: number[] }; //eslint-disable-line
 }

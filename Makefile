@@ -37,38 +37,18 @@ run_dev_frontend:
 	$(MAKE) -C frontend run_dev
 
 build:
-	@echo "building $(VERSION)"
-ifdef $(JENKINS_HOME)
-	git config user.email bbprelman@epfl.ch
-endif
-	! git rev-parse $(VERSION) >/dev/null 2>&1; \
-		if [ $$? -eq 0 ]; \
-		then \
-			echo "tagging $(VERSION)" && \
-			echo "VERSION = '$(VERSION)'" > backend/subcellular_experiment/version.py && \
-			sed -i 's/"version": "\([0-9.]\+\)"/"version": "$(VERSION)"/' frontend/package.json && \
-				$(MAKE) -C backend docker_push_version && \
-				$(MAKE) -C frontend docker_push_version && \
-			git add backend/subcellular_experiment/version.py frontend/package.json && \
-			git commit -m "release $(VERSION)" && \
-			git tag -a $(VERSION) -m $(VERSION) && \
-			git push origin HEAD:$$GERRIT_BRANCH && \
-			git push --tags; \
-		fi
+	docker version
+	node --version
+	$(MAKE) -C backend docker_build_latest
+	$(MAKE) -C frontend docker_build_latest
 
-release: build docker_push_latest
+push_dev:
+	${MAKE} -C backend push_dev
+	${MAKE} -C frontend push_dev
 
-deploy: docker_push_latest
-
-docker_push_latest:
-	@echo "pushing docker images for version $(VERSION)"
-		$(MAKE) -C backend docker_push_latest
-		$(MAKE) -C frontend docker_push_latest
-
-docker_push_dev:
-	@echo "pushing docker images for version $(VERSION)"
-		$(MAKE) -C backend docker_push_dev
-		$(MAKE) -C frontend docker_push_dev
+push_prod:
+	${MAKE} -C backend push_prod
+	${MAKE} -C frontend push_prod
 
 create_oo_deployment:
 	oc project $(OO_PROJECT)

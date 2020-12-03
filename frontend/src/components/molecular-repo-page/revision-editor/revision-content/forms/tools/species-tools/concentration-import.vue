@@ -283,7 +283,7 @@
           this.config.concSource = this.concSources[0];
         }
       },
-      onFileRead({ name, content }) {
+      onFileRead({ content }) {
         const parseOpts = {
           header: true,
           complete: this.onParseFinish.bind(this),

@@ -1,4 +1,5 @@
-//@ts-nocheck
+/* eslint-disable */
+// @ts-nocheck
 /**
  * @description Trackball controls with fixed rotation axis
  *

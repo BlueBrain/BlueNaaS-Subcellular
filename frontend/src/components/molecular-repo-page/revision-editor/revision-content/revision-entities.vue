@@ -75,8 +75,6 @@
 
   import SpeciesTools from './forms/tools/species-tools.vue';
 
-  const { validationMessageType: msgType } = constants;
-
   const { EntityType, entityTypeCollectionMap, formMode } = constants;
 
   const formByEntityType = {

@@ -26,13 +26,11 @@
 </template>
 
 <script>
-  import get from 'lodash/get';
-
   import constants from '@/constants';
   import objStrSearchFilter from '@/tools/obj-str-search-filter';
   import contentConfig from '../../revision-editor/revision-content/content-config';
 
-  import SpeciesTools from './search-entities/tools/species-tools';
+  import SpeciesTools from './search-entities/tools/species-tools.vue';
 
   const { entityTypeCollectionMap, EntityType } = constants;
 

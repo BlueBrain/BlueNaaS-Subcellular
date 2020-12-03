@@ -1,5 +1,8 @@
-import os
+# pylint: disable-all
+if __package__ is None:
+    __package__ = "subcellular_experiment"
 
+import os
 from .sim_worker import SimWorker
 
 if __name__ == "__main__":
@@ -7,4 +10,4 @@ if __name__ == "__main__":
         sim_worker = SimWorker()
         sim_worker.init()
     else:
-        import subcellular_experiment.backend  # pylint: disable=unused-import
+        import subcellular_experiment.backend

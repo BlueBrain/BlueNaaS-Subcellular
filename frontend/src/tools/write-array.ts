@@ -1,16 +1,16 @@
 /**
  * Writes elements from source to destination array
  *
- * @param {Array} sourceArray
- * @param {Array} destinationArray
- * @param {Number} destinationIdx
- * @param {Number} length optional
+ * @param sourceArray
+ * @param destinationArray
+ * @param destinationIdx
+ * @param length
  */
 function writeArray(
   sourceArray: any[],
   destinationArray: any[],
   destinationIdx = 0,
-  length: number,
+  length?: number,
 ) {
   const elementsToWrite = length || sourceArray.length;
 

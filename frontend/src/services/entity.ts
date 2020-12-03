@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 import uuidv4 from 'uuid/v4';
 
 class RevisionEntity {
