@@ -154,6 +154,7 @@
         if (!this.canExtendTraces) return;
 
         const data = this.getChartData(this.chartPointN) as ChartData[];
+
         if (!data) return;
         this.chartPointN = simDataStorage.trace.getCached(this.simId).times.length;
 
@@ -165,7 +166,7 @@
         await Plotly.extendTraces(this.$refs.chart, traceExtension, [...Array(data.length).keys()]);
       },
 
-      getChartData(start = 0, end = -1) {
+      getChartData(start = 0, end) {
         const trace = simDataStorage.trace.getCached(this.simId) as SimTrace;
 
         if (trace) this.loading = false;

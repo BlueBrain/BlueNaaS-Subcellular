@@ -9,7 +9,7 @@ services:
   backend:
     image: sc-svc
     volumes:
-      - ./subcellular_experiment:/app
+      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
       - ./tmp/geometries:/data/geometries
     ports:
       - "8888:8000"
@@ -27,7 +27,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./subcellular_experiment:/app
+      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
       - ./tmp/geometries:/data/geometries
     environment:
       - MASTER_HOST=backend
