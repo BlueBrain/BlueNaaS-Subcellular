@@ -8,8 +8,7 @@ set -eu
 
 IMAGE="${1}"
 
-mkdir -p ./build/arcv2_platform/static/assets
-rm -rf ./build/arcv2_platform/static/assets/*
+mkdir -p ./build
 
 # env
 echo "Build script started (non multi-stage)"
@@ -28,14 +27,13 @@ docker build \
 docker create --name subcellular-app-container subcellular-app-assets
 docker cp subcellular-app-container:/usr/local/lib/python3.7/site-packages ./build/python-deps
 docker cp subcellular-app-container:/build/atomizer/bin/sbmlTranslator ./build/sbmlTranslator
-docker cp subcellular-app-container:/code/dist ./build/dist
+docker cp subcellular-app-container:/build/BioNetGen ./build/BioNetGen
 docker rm -f subcellular-app-container
 
 echo "Building main image..."
 docker build \
     --build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 	--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
-    --no-cache \
     -t $IMAGE \
     -f ./non-multi-stage-build/Dockerfile \
     .

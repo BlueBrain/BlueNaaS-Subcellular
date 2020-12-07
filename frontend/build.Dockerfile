@@ -1,4 +1,7 @@
 FROM node
 WORKDIR /subcellular-app
-COPY . /subcellular-app
-RUN yarn && yarn lint && yarn build
+COPY package.json .
+COPY yarn.lock .
+RUN yarn
+COPY . .
+RUN yarn lint && yarn build
