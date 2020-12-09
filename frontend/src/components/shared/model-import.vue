@@ -68,9 +68,6 @@
         // prevent default action to upload data to remote api
         return false;
       },
-      disableLoadingState() {
-        this.loading = false;
-      },
       onImportSuccess() {
         this.$Notice.success({
           title: 'Import success',
@@ -94,7 +91,9 @@
           .dispatch('importModel', importModelPayload)
           .then(() => this.onImportSuccess())
           .catch((err) => this.onImportError(err))
-          .finally(() => this.disableLoadingState());
+          .finally(() => {
+            this.loading = false;
+          });
       },
     },
   };

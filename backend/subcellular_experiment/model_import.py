@@ -9,11 +9,10 @@ import shutil
 import pandas as pd
 
 from .logger import get_logger
+from .settings import SBML_TRANSLATOR_PATH
 
 
 L = get_logger(__name__)
-
-SBML_TRANSLATOR_PATH = "/opt/subcellular-experiment/sbmlTranslator"
 
 
 def from_sbml(sbml_str):

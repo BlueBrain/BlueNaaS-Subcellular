@@ -53,7 +53,6 @@ RUN python setup.py sdist
 # Install python package and dependencies
 RUN pip install \
     --no-cache-dir \
-    -i https://bbpteam.epfl.ch/repository/devpi/simple \
     $(ls -t $PWD/dist/*.* | head -n 1)
 
 # Lint code

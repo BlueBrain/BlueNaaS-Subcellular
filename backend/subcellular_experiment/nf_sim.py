@@ -7,13 +7,12 @@ import pandas as pd
 
 from .sim import SimStatus, SimTrace, SimLogMessage, Sim, StimulusType, decompress_stimulation
 from .bngl_extended_model import BnglExtModel
+from .settings import BNG_PATH, NFSIM_PATH
 from .logger import get_logger
 
 L = get_logger(__name__)
 
 BNG_MODEL_EXPORT_TIMEOUT = 5
-BNG_PATH = "/opt/subcellular-experiment/BioNetGen/BNG2.pl"
-NFSIM_PATH = "/opt/subcellular-experiment/BioNetGen/bin/NFsim"
 
 
 class NfSim(Sim):
