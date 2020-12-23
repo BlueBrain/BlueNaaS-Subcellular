@@ -27,7 +27,7 @@ help:
 	@echo "$$HELPTEXT"
 
 run_dev:
-	docker-compose up --scale sim_worker=1
+	docker-compose up --scale sim_worker=2
 
 docker_build_latest:
 	non-multi-stage-build/build.sh sc-svc:latest

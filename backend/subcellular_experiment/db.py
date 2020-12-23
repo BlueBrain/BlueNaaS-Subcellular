@@ -1,9 +1,11 @@
 import os
 import re
+import asyncio
 
 import pymongo
-from pymongo import MongoClient
-from pymongo.errors import ConfigurationError
+import wrapt
+from pymongo.errors import ConfigurationError, AutoReconnect
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from .bngl_extended_model import EntityType, entity_coll_name_map
 from .logger import get_logger
@@ -73,16 +75,33 @@ def revision_data_from_entity_list(entity_list):
     return revision_data
 
 
+@wrapt.decorator
+async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disable=unused-argument
+    for i in range(2, 6):
+        try:
+            return await wrapped(*args, **kwargs)
+        except AutoReconnect:
+            L.info("Mongodb retrying")
+            await asyncio.sleep(2 ** i)
+    L.error("Can't connect to mongodb")
+
+
 class Db:
     def __init__(self):
-        self.mongo_client = MongoClient("mongodb://{}:27017/".format(DB_HOST))
+        self.mongo_client = AsyncIOMotorClient("mongodb://{}:27017/".format(DB_HOST))
         L.debug("connected to db")
 
         if MONGO_URI is None:
             raise ConfigurationError(message="MONGO_URI envar not set")
 
         self.db = self.mongo_client[MONGO_URI]
-        self.db.simulations.create_index(
+
+    def create_indexes(self):
+        if asyncio.get_event_loop():
+            asyncio.create_task(self._create_indexes())
+
+    async def _create_indexes(self):
+        await self.db.simulations.create_index(
             [
                 ("id", pymongo.ASCENDING),
                 ("userId", pymongo.ASCENDING),
@@ -93,7 +112,7 @@ class Db:
             background=True,
         )
 
-        self.db.simSpatialStepTraces.create_index(
+        await self.db.simSpatialStepTraces.create_index(
             [
                 ("simId", pymongo.ASCENDING),
                 ("stepIdx", pymongo.ASCENDING),
@@ -102,113 +121,138 @@ class Db:
             background=True,
         )
 
-        self.db.simTraces.create_index(
+        await self.db.simTraces.create_index(
             [("simId", pymongo.ASCENDING), ("index", pymongo.ASCENDING)],
             unique=True,
             background=True,
         )
 
-        self.db.simLogs.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
+        await self.db.simLogs.create_index(
+            [("simId", pymongo.ASCENDING)], unique=True, background=True
+        )
 
-    def create_geometry(self, geometry_config):
+        L.debug("Created db indexes")
+
+    @mongo_autoreconnect
+    async def create_geometry(self, geometry_config):
         db_geometry = {
             "name": geometry_config["name"],
             "description": geometry_config["description"],
             "meta": geometry_config["meta"],
             "deleted": False,
         }
-        return self.db.geometries.insert_one(db_geometry)
+        return await self.db.geometries.insert_one(db_geometry)
 
-    def get_geometry(self, geometry_id):
-        return self.db.find_one({"id": geometry_id})
+    @mongo_autoreconnect
+    async def get_geometry(self, geometry_id):
+        return await self.db.find_one({"id": geometry_id})
 
-    def get_geometries(self, user_id):
-        return list(self.db.geometries.find({"userId": user_id, "deleted": False}))
+    @mongo_autoreconnect
+    async def get_geometries(self, user_id):
+        return await self.db.geometries.find({"userId": user_id, "deleted": False}).to_list(None)
 
-    def create_model(self, model):
+    @mongo_autoreconnect
+    async def create_model(self, model):
         model["deleted"] = False
-        self.db.models.insert_one(model)
+        await self.db.models.insert_one(model)
 
-    def get_user_models(self, user_id):
-        return list(self.db.models.find({"userId": user_id}))
+    @mongo_autoreconnect
+    async def get_user_models(self, user_id):
+        return await self.db.models.find({"userId": user_id}).to_list(None)
 
-    def get_public_models(self):
-        return list(self.db.models.find({"public": True}))
+    @mongo_autoreconnect
+    async def get_public_models(self):
+        return await self.db.models.find({"public": True}).to_list(None)
 
-    def create_simulation(self, simulation):
+    @mongo_autoreconnect
+    async def create_simulation(self, simulation):
         simulation["deleted"] = False
-        self.db.simulations.insert_one(simulation)
+        await self.db.simulations.insert_one(simulation)
 
-    def get_simulations(self, user_id, model_id):
-        return list(
-            self.db.simulations.find({"userId": user_id, "modelId": model_id, "deleted": False})
-        )
+    @mongo_autoreconnect
+    async def get_simulations(self, user_id, model_id):
+        return await self.db.simulations.find(
+            {"userId": user_id, "modelId": model_id, "deleted": False}
+        ).to_list(None)
 
-    def update_simulation(self, simulation):
-        self.db.simulations.update_one(
+    @mongo_autoreconnect
+    async def update_simulation(self, simulation):
+        await self.db.simulations.update_one(
             {"id": simulation["id"], "userId": simulation["userId"], "deleted": False},
             {"$set": simulation},
         )
 
-    def create_sim_spatial_step_trace(self, spatial_step_trace):
-        self.db.simSpatialStepTraces.insert_one(spatial_step_trace)
+    @mongo_autoreconnect
+    async def create_sim_spatial_step_trace(self, spatial_step_trace):
+        await self.db.simSpatialStepTraces.insert_one(spatial_step_trace)
 
-    def create_sim_trace(self, sim_trace):
-        self.db.simTraces.insert_one(sim_trace)
+    @mongo_autoreconnect
+    async def create_sim_trace(self, sim_trace):
+        await self.db.simTraces.insert_one(sim_trace)
 
-    def delete_sim_trace(self, simulation):
-        self.db.simTraces.delete_many({"simId": simulation["id"]})
+    @mongo_autoreconnect
+    async def delete_sim_trace(self, simulation):
+        await self.db.simTraces.delete_many({"simId": simulation["id"]})
 
-    def get_sim_trace(self, sim_id):
-        return self.db.simTraces.find_one({"simId": sim_id})
+    @mongo_autoreconnect
+    async def get_sim_trace(self, sim_id):
+        return await self.db.simTraces.find_one({"simId": sim_id})
 
-    def create_sim_log(self, sim_log):
-        self.db.simLogs.insert_one(sim_log)
+    @mongo_autoreconnect
+    async def create_sim_log(self, sim_log):
+        await self.db.simLogs.insert_one(sim_log)
 
-    def get_sim_log(self, sim_id):
-        return self.db.simLogs.find_one({"simId": sim_id})
+    @mongo_autoreconnect
+    async def get_sim_log(self, sim_id):
+        return await self.db.simLogs.find_one({"simId": sim_id})
 
-    def delete_sim_log(self, simulation):
-        self.db.simLogs.delete_many({"simId": simulation["id"]})
+    @mongo_autoreconnect
+    async def delete_sim_log(self, simulation):
+        await self.db.simLogs.delete_many({"simId": simulation["id"]})
 
-    def get_spatial_step_trace(self, sim_id, step_idx):
-        return self.db.simSpatialStepTraces.find_one(
+    @mongo_autoreconnect
+    async def get_spatial_step_trace(self, sim_id, step_idx):
+        return await self.db.simSpatialStepTraces.find_one(
             {
                 "simId": sim_id,
                 "stepIdx": step_idx,
             }
         )
 
-    def get_last_spatial_step_trace_idx(self, sim_id):
-        spatial_step_traces = self.db.simSpatialStepTraces.find(
+    @mongo_autoreconnect
+    async def get_last_spatial_step_trace_idx(self, sim_id):
+        spatial_step_traces = await self.db.simSpatialStepTraces.find(
             {"simId": sim_id},
             projection=["stepIdx"],
             sort=[("stepIdx", pymongo.DESCENDING)],
             limit=1,
-        )
+        ).to_list(None)
 
-        try:
-            last_idx = spatial_step_traces[0]["stepIdx"]
-        except IndexError:
-            last_idx = None
+        if len(spatial_step_traces) == 0:
+            return None
 
-        return last_idx
+        return spatial_step_traces[0]["stepIdx"]
 
-    def delete_simulation(self, simulation):
-        self.db.simulations.update_one(
+    @mongo_autoreconnect
+    async def delete_simulation(self, simulation):
+        await self.db.simulations.update_one(
             {"id": simulation["id"], "userId": simulation["userId"]}, {"$set": {"deleted": True}}
         )
 
-    def delete_sim_spatial_traces(self, simulation):
-        self.db.simSpatialStepTraces.delete_many({"simId": simulation["id"]})
+    @mongo_autoreconnect
+    async def delete_sim_spatial_traces(self, simulation):
+        await self.db.simSpatialStepTraces.delete_many({"simId": simulation["id"]})
 
-    def query_branch_names(self, search_str):
-        return self.db.repo.find({"branch": {"$regex": search_str}}).distinct("branch")
+    @mongo_autoreconnect
+    async def query_branch_names(self, search_str):
+        return await self.db.repo.find({"branch": {"$regex": search_str}}).distinct("branch")
 
-    def query_revisions(self, branch_name):
-        return self.db.repo.find({"branch": branch_name}).distinct("rev")
+    @mongo_autoreconnect
+    async def query_revisions(self, branch_name):
+        return await self.db.repo.find({"branch": branch_name}).distinct("rev")
 
-    def query_molecular_repo(self, query_dict):
+    @mongo_autoreconnect
+    async def query_molecular_repo(self, query_dict):
         L.debug(query_dict)
 
         mol_q_str = query_dict["moleculeStr"]
@@ -233,7 +277,7 @@ class Db:
             query_rev = (
                 rev
                 if rev != "latest"
-                else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+                else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
             )
             rev_q.append({"branch": branch, "rev": query_rev})
 
@@ -253,7 +297,7 @@ class Db:
                     }
                 )
 
-        structures = list(self.db.repo.find(structure_q))
+        structures = await self.db.repo.find(structure_q).to_list(None)
 
         if struct_q_tokens and not structures:
             return revision_data_from_entity_list([])
@@ -278,7 +322,7 @@ class Db:
                     }
                 )
 
-        molecules = list(self.db.repo.find(mol_q))
+        molecules = await self.db.repo.find(mol_q).to_list(None)
         found_entities += molecules
 
         structure_ids = [structure["_id"] for structure in structures]
@@ -291,7 +335,7 @@ class Db:
             "moleculeIds": {"$in": molecule_ids},
         }
 
-        tmp_entities = list(self.db.repo.find(q))
+        tmp_entities = await self.db.repo.find(q).to_list(None)
         found_entities += tmp_entities
 
         species = [spec for spec in tmp_entities if spec["entityType"] == EntityType.SPECIES]
@@ -324,7 +368,7 @@ class Db:
 
         # Query parameters, functions and observables
         q = {"_id": {"$in": parameter_ids + function_ids + observable_ids}}
-        tmp_entities = list(self.db.repo.find(q))
+        tmp_entities = await self.db.repo.find(q).to_list(None)
         found_entities += tmp_entities
 
         parameters = [
@@ -337,11 +381,14 @@ class Db:
 
         return revision_data_from_entity_list(filtered_entities)
 
-    def get_revision(self, branch, rev):
+    @mongo_autoreconnect
+    async def get_revision(self, branch, rev):
         query_rev = (
-            rev if rev != "latest" else max(self.db.repo.find({"branch": branch}).distinct("rev"))
+            rev
+            if rev != "latest"
+            else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
         )
-        all_entities = list(self.db.repo.find({"branch": branch, "rev": query_rev}))
+        all_entities = await self.db.repo.find({"branch": branch, "rev": query_rev}).to_list(None)
         revision_data = {}
         for entityType, coll_name in entity_coll_name_map.items():
             revision_data[coll_name] = [
@@ -349,18 +396,21 @@ class Db:
             ]
         return revision_data
 
-    def get_user_branches(self, user_id):
-        branches = self.db.repo.find({"userId": user_id}).distinct("branch")
+    @mongo_autoreconnect
+    async def get_user_branches(self, user_id):
+        branches = await self.db.repo.find({"userId": user_id}).distinct("branch")
         return branches
 
-    def get_branch_latest_rev(self, branch):
-        return max(self.db.repo.find({"branch": branch}).distinct("rev"))
+    @mongo_autoreconnect
+    async def get_branch_latest_rev(self, branch):
+        return max(await self.db.repo.find({"branch": branch}).distinct("rev"))
 
-    def save_revision(self, revision_data, user_id):
+    @mongo_autoreconnect
+    async def save_revision(self, revision_data, user_id):
         saved_db_entities = []
         branch = revision_data["branch"]
-        if self.db.repo.count_documents({"branch": branch}, limit=1):
-            rev = max(self.db.repo.find({"branch": branch}).distinct("rev")) + 1
+        if await self.db.repo.count_documents({"branch": branch}, limit=1):
+            rev = max(await self.db.repo.find({"branch": branch}).distinct("rev")) + 1
         else:
             rev = 1
 
@@ -422,7 +472,7 @@ class Db:
                 "parameterIds": parameter_ids,
             }
             db_entry.pop("_id", None)
-            saved_id = self.db.repo.insert_one(db_entry).inserted_id
+            saved_id = await self.db.repo.insert_one(db_entry).inserted_id
             db_entry["_id"] = saved_id
             saved_db_entities.append(db_entry)
 
@@ -465,7 +515,7 @@ class Db:
                 "observableIds": observable_ids,
             }
             db_entry.pop("_id", None)
-            saved_id = self.db.repo.insert_one(db_entry).inserted_id
+            saved_id = await self.db.repo.insert_one(db_entry).inserted_id
             db_entry["_id"] = saved_id
             saved_db_entities.append(db_entry)
 

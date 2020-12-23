@@ -1,9 +1,9 @@
 # pylint: disable=dangerous-default-value
-import signal
+from typing import Optional, List, Dict, Any
+from collections import defaultdict
 
-import tornado
+from tornado.websocket import WebSocketHandler
 
-from .enums import SimWorkerStatus
 from .sim import (
     SimProgress,
     SimStatus,
@@ -13,154 +13,179 @@ from .sim import (
     SimSpatialStepTrace,
     SimLog,
 )
+from .types import SimConfig, WorkerStatus
 from .logger import get_logger
-
+from .db import Db
 
 L = get_logger(__name__)
 
 
-def on_terminate():
-    L.debug("received shutdown signal")
-    tornado.ioloop.IOLoop.current().stop()
-
-
-signal.signal(signal.SIGINT, on_terminate)
-signal.signal(signal.SIGTERM, on_terminate)
-
-
 class SimWorker:
-    def __init__(self, worker_websocket):
+    def __init__(self, worker_websocket: WebSocketHandler) -> None:
         self.ws = worker_websocket
-        self.status = SimWorkerStatus.BUSY
-        self.sim_conf = None
+        self.sim_conf: Optional[SimConfig] = None
 
 
 class SimManager:
-    def __init__(self, db):
-        self.workers = []
-        self.clients = dict()
-        self.sim_conf_queue = []
+    def __init__(self, db: Db) -> None:
+        self.workers: List[SimWorker] = []
+        self.worker_by_sim_id: Dict[str, SimWorker] = {}
+        self.clients: Dict[str, List[WebSocketHandler]] = defaultdict(list)
+        self.sim_conf_queue: List[SimConfig] = []
         self.db = db
 
-    def add_worker(self, worker):
+    def add_worker(self, worker: SimWorker) -> None:
         self.workers.append(worker)
         L.debug("added one sim worker")
-        self.on_worker_change()
+        self.log_workers_status()
 
-    def remove_worker(self, worker):
-        if worker.status == SimWorkerStatus.BUSY:
-            self.process_sim_status(worker.sim_conf, SimStatus.ERROR)
+    async def remove_worker(self, worker: SimWorker) -> None:
+        if worker.sim_conf is not None:
+            await self.process_sim_status(
+                worker.sim_conf.userId, worker.sim_conf.simId, SimStatus.ERROR
+            )
         self.workers.remove(worker)
         L.debug("worker has been removed")
-        self.on_worker_change()
+        self.log_workers_status()
 
-    def on_worker_change(self):
-        free_workers_num = len(self.get_free_workers())
-        workers_num = len(self.workers)
-        L.debug("workers: {}, free: {}".format(workers_num, free_workers_num))
+    def log_workers_status(self) -> None:
+        L.debug(f"workers: {len(self.workers)}, free: {len(self.free_workers)}")
 
-    def get_free_workers(self):
-        return [worker for worker in self.workers if worker.status == SimWorkerStatus.READY]
+    @property
+    def free_workers(self) -> List[SimWorker]:
+        return [worker for worker in self.workers if worker.sim_conf is None]
 
-    def add_client(self, user_id, ws):
-        if user_id not in self.clients:
-            self.clients[user_id] = [ws]
-        elif ws not in self.clients[user_id]:
-            self.clients[user_id].append(ws)
-        L.debug("connection for client {} has been added".format(user_id))
+    def add_client(self, user_id: str, ws: WebSocketHandler) -> None:
+        self.clients[user_id].append(ws)
+        L.debug(f"connection for client {user_id} has been added")
 
-    def remove_client(self, user_id, ws):
+    def remove_client(self, user_id: str, ws: WebSocketHandler) -> None:
         self.clients[user_id].remove(ws)
-        L.debug("connection for client {} has been removed".format(user_id))
+        L.debug("connection for client {user_id} has been removed")
 
-    def process_worker_message(self, worker, msg, data, cmdid=None):
+    def prune_workers(self, worker: SimWorker, sim_config: SimConfig) -> None:
+        """
+        When a worker with a running sim reconnects find the old worker instance
+        and assign it's config to the newly created one.
+        """
+        stale_worker = self.worker_by_sim_id.get(sim_config.id)
+
+        if stale_worker is not None:
+            self.workers.remove(stale_worker)
+
+        self.worker_by_sim_id[sim_config.id] = worker
+        worker.sim_conf = sim_config
+        self.log_workers_status()
+
+    async def process_worker_message(
+        self, worker: SimWorker, msg: str, data: Any, cmdid=None
+    ) -> None:
+
+        if msg == "worker_connect":
+            if data:
+                L.info("worker_reconnected")
+                sim_config = SimConfig(**data)
+                self.prune_workers(worker, sim_config)
+            return
+
         if msg == "status":
-            status = data
-            worker.status = status
-            if status == SimWorkerStatus.READY:
+            status: WorkerStatus = data
+            if status == "ready":
                 worker.sim_conf = None
-            L.debug("sim worker reported as {}".format(data))
-            self.on_worker_change()
-            self.run_available()
-        elif msg == SimProgress.TYPE:
-            self.process_sim_progress(worker.sim_conf, data["progress"])
+            L.debug(f"sim worker reported as {status}")
+            self.log_workers_status()
+            await self.run_available()
+            return
+
+        if worker.sim_conf is None:
+            L.warning("Worker doesn't have a sim config")
+            return
+
+        if msg == SimProgress.TYPE:
+            await self.process_sim_progress(worker.sim_conf, data["progress"])
         elif msg == SimStepTrace.TYPE:
-            self.process_sim_step_trace(worker.sim_conf, data)
+            await self.process_sim_step_trace(worker.sim_conf, data)
         elif msg == SimTrace.TYPE:
-            self.process_sim_trace(worker.sim_conf, data)
+            await self.process_sim_trace(worker.sim_conf, data)
         elif msg == SimStatus.TYPE:
-            self.process_sim_status(worker.sim_conf, data["status"], data)
+            await self.process_sim_status(
+                worker.sim_conf.userId, worker.sim_conf.simId, data["status"], data
+            )
         elif msg == SimLogMessage.TYPE:
-            self.process_sim_log_msg(worker.sim_conf, data)
+            await self.process_sim_log_msg(worker.sim_conf, data)
         elif msg == SimLog.TYPE:
-            self.process_sim_log(worker.sim_conf, data)
+            await self.process_sim_log(worker.sim_conf, data)
         elif msg == SimSpatialStepTrace.TYPE:
-            self.process_sim_spatial_step_trace(worker.sim_conf, data)
+            await self.process_sim_spatial_step_trace(worker.sim_conf, data)
         elif msg == "tmp_sim_log":
-            # TODO: refactor
             tmp_sim_log = {
                 "log": data,
-                "userId": worker.sim_conf["userId"],
-                "simId": worker.sim_conf["id"],
+                "userId": worker.sim_conf.userId,
+                "simId": worker.sim_conf.id,
             }
-            self.send_message(worker.sim_conf["userId"], "tmp_sim_log", tmp_sim_log, cmdid=cmdid)
+            await self.send_message(worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=cmdid)
         elif msg == "tmp_sim_trace":
             tmp_sim_trace = {
                 **data,
-                "userId": worker.sim_conf["userId"],
-                "simId": worker.sim_conf["id"],
+                "userId": worker.sim_conf.userId,
+                "simId": worker.sim_conf.id,
             }
-            self.send_message(
-                worker.sim_conf["userId"], "tmp_sim_trace", tmp_sim_trace, cmdid=cmdid
+            await self.send_message(
+                worker.sim_conf.userId, "tmp_sim_trace", tmp_sim_trace, cmdid=cmdid
             )
 
-    def schedule_sim(self, sim_conf):
+    async def schedule_sim(self, sim_conf: SimConfig) -> None:
         L.debug("scheduling a simulation")
         self.sim_conf_queue.append(sim_conf)
-        self.process_sim_status(sim_conf, SimStatus.QUEUED)
-        self.run_available()
+        await self.process_sim_status(sim_conf.userId, sim_conf.id, SimStatus.QUEUED)
+        await self.run_available()
 
-    def get_running_sim_ids(self):
-        return [
-            worker.sim_conf["id"]
-            for worker in self.workers
-            if worker.status == SimWorkerStatus.BUSY
-        ]
+    @property
+    def running_sim_ids(self) -> List[str]:
+        return [worker.sim_conf.id for worker in self.workers if worker.sim_conf is not None]
 
-    def request_tmp_sim_log(self, sim_id, cmdid):
+    async def request_tmp_sim_log(self, sim_id, cmdid):
         worker = next(
             (
                 worker
                 for worker in self.workers
-                if worker.sim_conf and worker.sim_conf["id"] == sim_id
+                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
             ),
             None,
         )
 
         if worker:
-            worker.ws.send_message("get_tmp_sim_log", cmdid=cmdid)
+            await worker.ws.send_message("get_tmp_sim_log", cmdid=cmdid)
 
-    def request_tmp_sim_trace(self, sim_id, cmdid):
-        worker = next((worker for worker in self.workers if worker.sim_conf["id"] == sim_id), None)
+    async def request_tmp_sim_trace(self, sim_id, cmdid):
+        worker = next(
+            (
+                worker
+                for worker in self.workers
+                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
+            ),
+            None,
+        )
 
         if worker:
-            worker.ws.send_message("get_tmp_sim_trace", cmdid=cmdid)
+            await worker.ws.send_message("get_tmp_sim_trace", cmdid=cmdid)
 
-    def cancel_sim(self, sim_conf):
+    async def cancel_sim(self, sim_conf: dict):
+        user_id = sim_conf["userId"]
         sim_id = sim_conf["id"]
         queue_idx = next(
             (
                 index
                 for (index, sim_conf) in enumerate(self.sim_conf_queue)
-                if sim_conf["id"] == sim_id
+                if sim_conf.id == sim_id
             ),
             None,
         )
 
-        self.process_sim_status(sim_conf, SimStatus.CANCELLED)
+        await self.process_sim_status(user_id, sim_id, SimStatus.CANCELLED)
 
         if queue_idx is not None:
-            L.debug("sim to cancel is in queue, id: {}".format(queue_idx))
+            L.debug(f"sim to cancel is in queue, id: {queue_idx}")
             self.sim_conf_queue.pop(queue_idx)
             return
 
@@ -168,7 +193,7 @@ class SimManager:
             (
                 worker
                 for worker in self.workers
-                if worker.sim_conf and worker.sim_conf["id"] == sim_id
+                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
             ),
             None,
         )
@@ -178,64 +203,63 @@ class SimManager:
             return
 
         L.debug("sending message to worker to cancel the sim")
-        worker.ws.send_message("cancel_sim")
+        await worker.ws.send_message("cancel_sim")  # type: ignore
 
-    def process_sim_status(self, sim_conf, status, context={}):
-        user_id = sim_conf["userId"]
-        sim_id = sim_conf["id"]
-        self.db.update_simulation({**context, "id": sim_id, "userId": user_id, "status": status})
+    async def process_sim_status(self, user_id: str, sim_id: str, status: str, context={}) -> None:
+        await self.db.update_simulation(
+            {**context, "id": sim_id, "userId": user_id, "status": status}
+        )
+        await self.send_sim_status(user_id, sim_id, status, context=context)
 
-        self.send_sim_status(sim_conf, status, context=context)
-
-    def process_sim_progress(self, sim_conf, progress, context={}):
-        user_id = sim_conf["userId"]
-        sim_id = sim_conf["id"]
-        self.db.update_simulation(
+    async def process_sim_progress(self, sim_conf: SimConfig, progress, context={}):
+        user_id = sim_conf.userId
+        sim_id = sim_conf.id
+        await self.db.update_simulation(
             {**context, "id": sim_id, "userId": user_id, "progress": progress}
         )
 
-        self.send_message(
-            user_id, SimProgress.TYPE, {**context, "simId": sim_conf["id"], "progress": progress}
+        await self.send_message(
+            user_id, SimProgress.TYPE, {**context, "simId": sim_id, "progress": progress}
         )
 
-    def process_sim_log_msg(self, sim_conf, log_msg):
-        self.send_message(
-            sim_conf["userId"], SimLogMessage.TYPE, {**log_msg, "simId": sim_conf["id"]}
+    async def process_sim_log_msg(self, sim_conf: SimConfig, log_msg):
+        await self.send_message(
+            sim_conf.userId, SimLogMessage.TYPE, {**log_msg, "simId": sim_conf.id}
         )
 
-    def process_sim_log(self, sim_conf, sim_log):
-        user_id = sim_conf["userId"]
-        sim_id = sim_conf["id"]
+    async def process_sim_log(self, sim_conf: SimConfig, sim_log):
+        user_id = sim_conf.userId
+        sim_id = sim_conf.id
 
         log = {"log": sim_log, "userId": user_id, "simId": sim_id}
 
-        self.db.create_sim_log(log)
+        await self.db.create_sim_log(log)
         # TODO: do we need to send whole log at the end of a simulation?
-        self.send_message(sim_conf["userId"], SimLog.TYPE, log)
+        await self.send_message(user_id, SimLog.TYPE, log)
 
-    def process_sim_spatial_step_trace(self, sim_conf, spatial_step_trace):
-        user_id = sim_conf["userId"]
+    async def process_sim_spatial_step_trace(self, sim_conf: SimConfig, spatial_step_trace) -> None:
+        user_id = sim_conf.userId
 
-        self.db.create_sim_spatial_step_trace(
-            {**spatial_step_trace, "userId": user_id, "simId": sim_conf["id"]}
+        await self.db.create_sim_spatial_step_trace(
+            {**spatial_step_trace, "userId": user_id, "simId": sim_conf.id}
         )
 
-        self.send_message(
-            sim_conf["userId"],
+        await self.send_message(
+            user_id,
             SimSpatialStepTrace.TYPE,
-            {**spatial_step_trace, "simId": sim_conf["id"]},
+            {**spatial_step_trace, "simId": sim_conf.id},
         )
 
-    def process_sim_step_trace(self, sim_conf, step_trace):
-        msg = {**step_trace, "simId": sim_conf["id"]}
-        self.send_message(sim_conf["userId"], SimStepTrace.TYPE, msg)
+    async def process_sim_step_trace(self, sim_conf: SimConfig, step_trace) -> None:
+        msg = {**step_trace, "simId": sim_conf.id}
+        await self.send_message(sim_conf.userId, SimStepTrace.TYPE, msg)
 
-    def process_sim_trace(self, sim_conf, sim_trace):
-        user_id = sim_conf["userId"]
-        sim_id = sim_conf["id"]
+    async def process_sim_trace(self, sim_conf: SimConfig, sim_trace):
+        user_id = sim_conf.userId
+        sim_id = sim_conf.id
 
         if sim_trace["persist"]:
-            self.db.create_sim_trace(
+            await self.db.create_sim_trace(
                 {
                     **sim_trace,
                     "simId": sim_id,
@@ -247,40 +271,35 @@ class SimManager:
 
         status_message.update(sim_trace)
         if sim_trace["stream"]:
-            self.send_message(user_id, SimTrace.TYPE, status_message)
+            await self.send_message(user_id, SimTrace.TYPE, status_message)
 
-    def send_sim_status(self, sim_conf, status, context={}):
-        self.send_message(
-            sim_conf["userId"],
+    async def send_sim_status(self, user_id: str, sim_id: str, status: str, context={}) -> None:
+        await self.send_message(
+            user_id,
             SimStatus.TYPE,
-            {**context, "simId": sim_conf["id"], "status": status},
+            {**context, "simId": sim_id, "status": status},
         )
 
-    def send_message(self, user_id, name, message, cmdid=None):
-        if user_id not in self.clients:
-            return
+    async def send_message(self, user_id, name, message, cmdid=None):
+        for connection in self.clients[user_id]:
+            await connection.send_message(name, message, cmdid=cmdid)
 
-        connections = self.clients[user_id]
-        for connection in connections:
-            connection.send_message(name, message, cmdid=cmdid)
-
-    def run_available(self):
+    async def run_available(self):
         if len(self.sim_conf_queue) == 0:
             L.debug("sim queueu is empty, nothing to run")
             return
 
-        L.debug("{} simulations in the queue".format(len(self.sim_conf_queue)))
-        free_workers = self.get_free_workers()
-        if len(free_workers) == 0:
+        L.debug(f"{len(self.sim_conf_queue)} simulations in the queue")
+
+        if len(self.free_workers) == 0:
             L.debug("all workers are busy")
             return
 
-        worker = free_workers[0]
-        sim_conf = self.sim_conf_queue.pop(0)
+        worker = self.free_workers[0]
+        worker.sim_conf = self.sim_conf_queue.pop(0)
+        self.worker_by_sim_id[worker.sim_conf.id] = worker
 
-        worker.status = SimWorkerStatus.BUSY
-        worker.sim_conf = sim_conf
         L.debug("ready to run simulation, sending sim config to sim worker")
-        worker.ws.send_message("run_sim", sim_conf)
+        await worker.ws.send_message("run_sim", worker.sim_conf.dict())
 
-        self.run_available()
+        await self.run_available()

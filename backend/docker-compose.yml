@@ -9,7 +9,7 @@ services:
   backend:
     image: sc-svc
     volumes:
-      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
+      - .:/app
       - ./tmp/geometries:/data/geometries
     ports:
       - "8888:8000"
@@ -21,13 +21,13 @@ services:
     depends_on:
       - 'mongo'
     working_dir: /app
-    entrypoint: ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "-m", "subcellular_experiment.main"]
+    entrypoint: ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "main.py"]
   sim_worker:
     image: sc-svc
     depends_on:
       - backend
     volumes:
-      - ./subcellular_experiment:/usr/local/lib/python3.7/site-packages/subcellular_experiment
+      - .:/app
       - ./tmp/geometries:/data/geometries
     environment:
       - MASTER_HOST=backend
@@ -36,4 +36,4 @@ services:
     depends_on:
       - "backend"
     working_dir: /app
-    entrypoint: ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "-m", "subcellular_experiment.main"]
+    entrypoint: ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "main.py"]

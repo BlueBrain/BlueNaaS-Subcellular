@@ -10,3 +10,5 @@ subcellular_experiment/__pycache__
 !setup.py
 !tox.ini
 !build
+!main.py
+!requirements.txt

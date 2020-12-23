@@ -43,18 +43,6 @@ WORKDIR /code
 COPY setup.py .
 COPY ./subcellular_experiment ./subcellular_experiment
 
-
-# Build python package
-# TODO: These layers won't be cached if the code changes. Improve this
-# so that if the python dependencies haven't changed we don't need to
-# run setup and pip install, even if the code has changed.
-RUN python setup.py sdist
-
-# Install python package and dependencies
-RUN pip install \
-    --no-cache-dir \
-    $(ls -t $PWD/dist/*.* | head -n 1)
-
 # Lint code
 COPY tox.ini .
 COPY .pylintrc .

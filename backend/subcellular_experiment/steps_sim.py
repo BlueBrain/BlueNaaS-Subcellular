@@ -812,17 +812,18 @@ class StepsSim:
 
         elements_per_chunk = len(tpnts) // nchunks
 
-        for i in range(0, len(tpnts), elements_per_chunk):
-            times_chunk = tpnts[i : i + elements_per_chunk]
-            values_chunk = trace_values[i : i + elements_per_chunk].T
+        for chunk_idx in range(0, len(tpnts), elements_per_chunk):
+            times_chunk = tpnts[chunk_idx : chunk_idx + elements_per_chunk]
+            values_chunk = trace_values[chunk_idx : chunk_idx + elements_per_chunk].T
 
             values_by_observable = {
                 trace_observable_names[i]: values_chunk[i].tolist()
                 for i in range(len(trace_observable_names))
             }
+
             self.send_progress(
                 SimTrace(
-                    index=i,
+                    index=chunk_idx,
                     times=times_chunk.tolist(),
                     values_by_observable=values_by_observable,
                     persist=True,
