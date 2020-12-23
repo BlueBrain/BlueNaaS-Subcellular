@@ -6,9 +6,10 @@ import pymongo
 import wrapt
 from pymongo.errors import ConfigurationError, AutoReconnect
 from motor.motor_asyncio import AsyncIOMotorClient
+from sentry_sdk import capture_message
 
 from .bngl_extended_model import EntityType, entity_coll_name_map
-from .logger import get_logger
+from .logger import get_logger, log_many
 from .envvars import MONGO_URI
 
 L = get_logger(__name__)
@@ -81,9 +82,9 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
         try:
             return await wrapped(*args, **kwargs)
         except AutoReconnect:
-            L.info("Mongodb retrying")
+            log_many("Mongodb retrying", L.info, capture_message)
             await asyncio.sleep(2 ** i)
-    L.error("Can't connect to mongodb")
+    log_many("Can't connect to mongodb", L.error, capture_message)
 
 
 class Db:

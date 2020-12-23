@@ -258,8 +258,8 @@ app = tornado.web.Application(
     [(r"/ws", WSHandler), (r"/sim", SimRunnerWSHandler), (r"/health", HealthHandler)],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,
-    ping_interval=1,
-    ping_timeout=60,
+    ping_interval=30,
+    ping_timeout=10,
 )
 
 L.debug("starting tornado io loop")

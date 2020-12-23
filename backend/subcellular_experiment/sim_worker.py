@@ -14,6 +14,7 @@ from types import FrameType
 from asyncio import AbstractEventLoop
 
 import sentry_sdk
+from sentry_sdk import capture_message
 from tornado.websocket import websocket_connect, WebSocketClosedError, WebSocketClientConnection
 
 from .enums import SimWorkerStatus
@@ -21,7 +22,7 @@ from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
-from .logger import get_logger
+from .logger import get_logger, log_many
 from .envvars import SENTRY_DSN
 
 if SENTRY_DSN is not None:
@@ -118,8 +119,6 @@ class SimWorker:
         self.socket = await websocket_connect(
             "ws://{}:8000/sim".format(MASTER_HOST),
             max_message_size=100 * 1024 * 1024,
-            ping_interval=1,
-            ping_timeout=60,
         )
 
         await self.on_open()
@@ -243,7 +242,7 @@ class SimWorker:
         try:
             await self.socket.write_message(payload)
         except (ConnectionError, WebSocketClosedError):
-            L.info("web socket connection closed")
+            log_many("web socket connection closed", L.error, capture_message)
             await self.on_close()
 
     def schedule_message(self, message: str, data: Any, cmdid=None) -> None:
