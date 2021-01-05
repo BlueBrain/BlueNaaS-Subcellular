@@ -24,6 +24,12 @@ class Message(BaseModel):
     data: Any
 
 
+class SimWorkerMessage(BaseModel):
+    message: str
+    data: Any
+    cmdid: Optional[int]
+
+
 class RunSimulationMessage(BaseModel):
     cmd: Literal["run_simulation"]
     cmdid: Optional[str]

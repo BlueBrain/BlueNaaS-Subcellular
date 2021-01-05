@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 from types import FrameType
+from typing import Union, Any, Optional
 import signal
 
 import tornado.ioloop
@@ -18,7 +19,7 @@ from .model_export import get_exported_model
 from .model_import import from_sbml, revision_from_excel
 from .logger import get_logger
 from .envvars import SENTRY_DSN
-from .types import SimConfig
+from .types import SimConfig, SimWorkerMessage
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
@@ -43,24 +44,28 @@ SEC_SHORT_TYPE_DICT = {
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     closed = False
+    user_id: Optional[str] = None
 
-    def open(self):
-        self.user_id = self.get_query_argument("userId", default=None)
-        L.debug("ws client has been connected")
-        if self.user_id is None:
+    def open(self, *args, **kwargs) -> None:
+        user_id = self.get_query_argument("userId", default=None)
+        if user_id is None:
             L.debug("closing ws connection without user_id param")
             self.close(reason="No user_id query param found")
             return
+        self.user_id = user_id
+        L.debug("ws client has been connected")
+
         sim_manager.add_client(self.user_id, self)
 
-    def check_origin(self, origin):  # pylint: disable=unused-argument
+    def check_origin(self, origin: str):  # pylint: disable=unused-argument
         return True
 
-    async def on_message(self, msg):  # pylint: disable=invalid-overridden-method
-        msg = json.loads(msg)
+    # pylint: disable=invalid-overridden-method
+    async def on_message(self, raw_msg: Union[str, bytes]) -> None:
+        msg = json.loads(raw_msg)
         cmd = msg["cmd"]
         cmdid = msg["cmdid"]
-        L.debug("got {} message".format(cmd))
+        L.debug(f"got {cmd} message")
 
         if cmd == "run_simulation":
             sim_conf = SimConfig(**msg["data"])
@@ -182,13 +187,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             step_idx = await db.get_last_spatial_step_trace_idx(sim_id)
             await self.send_message("last_spatial_step_trace_idx", step_idx, cmdid=cmdid)
 
-    def on_close(self):
+    def on_close(self) -> None:
         self.closed = True
         if self.user_id is not None:
             sim_manager.remove_client(self.user_id, self)
         L.debug("client connection has been closed")
 
-    async def send_message(self, cmd, data=None, cmdid=None):
+    async def send_message(self, cmd, data: Any = None, cmdid: Optional[int] = None) -> None:
         if self.closed:
             return
 
@@ -197,47 +202,48 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         try:
             await self.write_message(payload)
         except Exception as e:
-            L.error(e.args)
+            self.on_close()
+            L.exception(e)
 
 
 class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
-    closed = False
-    sim_worker = None
+    def __init__(self, *args, **kwargs) -> None:
+        self.closed = False
+        self.sim_worker = SimWorker(self)
+        super().__init__(*args, **kwargs)
 
     def check_origin(self, origin):  # pylint: disable=unused-argument
         L.debug("sim runner websocket client has been connected")
         return True
 
-    def open(self):
-        self.sim_worker = SimWorker(self)
+    def open(self, *args, **kwargs) -> None:
         sim_manager.add_worker(self.sim_worker)
 
-    async def on_message(self, rawMessage):  # pylint: disable=invalid-overridden-method
-        parsedMessage = json.loads(rawMessage)
-        msg = parsedMessage["message"]
-        data = parsedMessage["data"]
-        cmdid = parsedMessage["cmdid"]
+    # pylint: disable=invalid-overridden-method
+    async def on_message(self, rawMessage: Union[str, bytes]) -> None:
+        msg = SimWorkerMessage(**json.loads(rawMessage))
 
-        await sim_manager.process_worker_message(self.sim_worker, msg, data, cmdid=cmdid)
+        await sim_manager.process_worker_message(
+            self.sim_worker, msg.message, msg.data, cmdid=msg.cmdid
+        )
 
-    def on_close(self):
+    def on_close(self) -> None:
         L.info("sim worker connection has been closed")
         self.closed = True
+        coro = sim_manager.remove_worker(self.sim_worker)
+        asyncio.create_task(coro)
 
-        async def wrapper():
-            await sim_manager.remove_worker(self.sim_worker)
-
-        asyncio.create_task(wrapper())
-
-    async def send_message(self, cmd, data=None, cmdid=None):
+    async def send_message(self, cmd, data=None, cmdid=None) -> None:
         if self.closed:
             return
+
         payload = json.dumps({"cmd": cmd, "cmdid": cmdid, "data": data}, cls=ExtendedJSONEncoder)
 
         try:
             await self.write_message(payload)
         except Exception as e:
-            L.error(e.args)
+            self.on_close()
+            L.exception(e)
 
 
 class HealthHandler(tornado.web.RequestHandler):

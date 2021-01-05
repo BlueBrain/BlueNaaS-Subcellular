@@ -10,8 +10,7 @@ from threading import Thread
 from multiprocessing import Process, Queue
 from typing import Optional, Any
 from types import FrameType
-
-from asyncio import AbstractEventLoop
+import itertools
 
 import sentry_sdk
 from sentry_sdk import capture_message
@@ -23,7 +22,7 @@ from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
 from .logger import get_logger, log_many
-from .envvars import SENTRY_DSN
+from .envvars import SENTRY_DSN, MASTER_HOST
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
@@ -97,7 +96,7 @@ class SimWorker:
         self.sim_tmp_data_store: Optional[SimTmpDataStore] = None
         self.sim_config: dict = {}
         self.closed = True
-        self.loop: Optional[AbstractEventLoop] = None
+        self.loop = asyncio.new_event_loop()
 
     def init(self) -> None:
         def on_terminate(signum: int, frame: FrameType):  # pylint: disable=unused-argument
@@ -112,37 +111,45 @@ class SimWorker:
         # TODO: SIGINT handler?
         signal.signal(signal.SIGTERM, on_terminate)
 
-        asyncio.run(self.ws_connect())
+        self.loop.run_until_complete(self.listen())
 
-    async def ws_connect(self):
-        MASTER_HOST = os.environ["MASTER_HOST"]
-        self.socket = await websocket_connect(
-            "ws://{}:8000/sim".format(MASTER_HOST),
-            max_message_size=100 * 1024 * 1024,
-        )
-
-        await self.on_open()
-
+    async def listen(self):
+        await self.ws_connect()
         while True:
             msg = await self.socket.read_message()
-            if msg is None:
-                await self.on_close()
+            if msg is not None:
+                self.on_message(msg)
+                continue
+
+            self.closed = True
+            L.debug("Backend ws closed")
+            await self.ws_connect()
+
+    async def ws_connect(self):
+        for wait in itertools.chain([1, 2, 4, 8, 15, 30], itertools.repeat(60)):
+            try:
+                self.socket = await websocket_connect(
+                    f"ws://{MASTER_HOST}:8000/sim",
+                    max_message_size=100 * 1024 * 1024,
+                )
                 break
-            await self.on_message(msg)
+            except Exception as e:
+                L.debug(f"Connection refused retrying in {wait} s")
+                L.exception(e)
+                await asyncio.sleep(wait)
+
+        self.closed = False
+        L.debug("ws connection open")
+        self.send_message(
+            "status", SimWorkerStatus.READY if self.sim_proc is None else SimWorkerStatus.BUSY
+        )
+        self.send_message("worker_connect", self.sim_config)
 
     def teardown(self):
         self.socket.close()
         sys.exit(0)
 
-    async def on_open(self):
-        L.debug("ws connection open")
-        self.closed = False
-        await self.send_message(
-            "status", SimWorkerStatus.READY if self.sim_proc is None else SimWorkerStatus.BUSY
-        )
-        await self.send_message("worker_connect", self.sim_config)
-
-    async def on_message(self, raw_message) -> None:
+    def on_message(self, raw_message) -> None:
         message = json.loads(raw_message)
 
         if any(key not in message for key in ["data", "cmd", "cmdid"]):
@@ -154,16 +161,16 @@ class SimWorker:
         L.debug(f"got {msg} from the backend")
 
         if msg == "run_sim":
-            await self.on_run_sim_msg(sim_config)
+            self.on_run_sim_msg(sim_config)
 
         elif msg == "cancel_sim":
             self.on_cancel_sim_msg()
 
         elif msg == "get_tmp_sim_log" and self.sim_tmp_data_store is not None:
-            await self.send_message("tmp_sim_log", self.sim_tmp_data_store.log, cmdid=cmdid)
+            self.send_message("tmp_sim_log", self.sim_tmp_data_store.log, cmdid=cmdid)
 
         elif msg == "get_tmp_sim_trace" and self.sim_tmp_data_store is not None:
-            await self.send_message("tmp_sim_trace", self.sim_tmp_data_store.trace, cmdid=cmdid)
+            self.send_message("tmp_sim_trace", self.sim_tmp_data_store.trace, cmdid=cmdid)
 
     def on_cancel_sim_msg(self) -> None:
         L.debug("send SIGTERM to simulation process")
@@ -198,7 +205,7 @@ class SimWorker:
                 **{"simId": self.sim_config["id"], "userId": self.sim_config["userId"]},
             }
 
-            self.schedule_message(sim_data.TYPE, payload)
+            self.send_message(sim_data.TYPE, payload)
 
         L.debug("joining simulator process")
         self.sim_proc.join()
@@ -206,31 +213,24 @@ class SimWorker:
         self.sim_config = {}
 
         if self.sim_tmp_data_store is not None:
-            self.schedule_message("simLog", self.sim_tmp_data_store.log)
+            self.send_message("simLog", self.sim_tmp_data_store.log)
         self.sim_tmp_data_store = None
 
         if self.terminating:
             self.teardown()
 
-        self.schedule_message("status", SimWorkerStatus.READY)
+        self.send_message("status", SimWorkerStatus.READY)
 
-    async def on_run_sim_msg(self, sim_config: dict) -> None:
-        await self.send_message("status", SimWorkerStatus.BUSY)
+    def on_run_sim_msg(self, sim_config: dict) -> None:
+        self.send_message("status", SimWorkerStatus.BUSY)
         self.sim_tmp_data_store = SimTmpDataStore()
         self.sim_config = sim_config
-        self.loop = asyncio.get_running_loop()
 
         L.debug("starting a thread")
         self.sim_thread = threading.Thread(target=self.wait_for_sim_result)
         self.sim_thread.start()
 
-    async def on_close(self) -> None:
-        self.closed = True
-        L.debug("ws connection closed, trying to connect in 2 s")
-        await asyncio.sleep(2)
-        await self.ws_connect()
-
-    async def send_message(self, message, data, cmdid=None) -> None:
+    async def _send_message(self, message: str, data: Any, cmdid=None) -> None:
         if self.closed or self.socket is None:
             return
 
@@ -243,20 +243,14 @@ class SimWorker:
             await self.socket.write_message(payload)
         except (ConnectionError, WebSocketClosedError):
             log_many("web socket connection closed", L.error, capture_message)
-            await self.on_close()
 
-    def schedule_message(self, message: str, data: Any, cmdid=None) -> None:
-        """Wraps send_message in a coroutine and schedules it for
-        execution in the event loop. Can be run from other threads.
-        """
-        if not self.loop:
+    def send_message(self, message: str, data: Any, cmdid=None) -> None:
+        """Schedules a message to be sent, threadsafe."""
+        if not self.loop.is_running():
             L.warning("No running loop")
             return
 
-        async def send_message():
-            await self.send_message(message, data, cmdid)
-
-        asyncio.run_coroutine_threadsafe(send_message(), self.loop)
+        asyncio.run_coroutine_threadsafe(self._send_message(message, data, cmdid), self.loop)
 
     def run_sim_proc(self):
         if not self.sim_config:

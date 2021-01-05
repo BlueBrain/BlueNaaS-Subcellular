@@ -98,8 +98,7 @@ class Db:
         self.db = self.mongo_client[MONGO_URI]
 
     def create_indexes(self):
-        if asyncio.get_event_loop():
-            asyncio.create_task(self._create_indexes())
+        asyncio.create_task(self._create_indexes())
 
     async def _create_indexes(self):
         await self.db.simulations.create_index(
@@ -149,23 +148,6 @@ class Db:
         return await self.db.find_one({"id": geometry_id})
 
     @mongo_autoreconnect
-    async def get_geometries(self, user_id):
-        return await self.db.geometries.find({"userId": user_id, "deleted": False}).to_list(None)
-
-    @mongo_autoreconnect
-    async def create_model(self, model):
-        model["deleted"] = False
-        await self.db.models.insert_one(model)
-
-    @mongo_autoreconnect
-    async def get_user_models(self, user_id):
-        return await self.db.models.find({"userId": user_id}).to_list(None)
-
-    @mongo_autoreconnect
-    async def get_public_models(self):
-        return await self.db.models.find({"public": True}).to_list(None)
-
-    @mongo_autoreconnect
     async def create_simulation(self, simulation):
         simulation["deleted"] = False
         await self.db.simulations.insert_one(simulation)
@@ -194,10 +176,6 @@ class Db:
     @mongo_autoreconnect
     async def delete_sim_trace(self, simulation):
         await self.db.simTraces.delete_many({"simId": simulation["id"]})
-
-    @mongo_autoreconnect
-    async def get_sim_trace(self, sim_id):
-        return await self.db.simTraces.find_one({"simId": sim_id})
 
     @mongo_autoreconnect
     async def create_sim_log(self, sim_log):
