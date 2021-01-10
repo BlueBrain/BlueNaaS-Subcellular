@@ -8,7 +8,8 @@ import signal
 import asyncio
 from threading import Thread
 from multiprocessing import Process, Queue
-from typing import Optional, Any
+from collections import defaultdict
+from typing import Optional, Any, Dict, List, Union
 from types import FrameType
 import itertools
 
@@ -17,7 +18,7 @@ from sentry_sdk import capture_message
 from tornado.websocket import websocket_connect, WebSocketClosedError, WebSocketClientConnection
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace, SimStepTrace, SimLogMessage
+from .sim import SimStatus, SimTrace, SimLogMessage
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
@@ -32,58 +33,6 @@ if SENTRY_DSN is not None:
 
 L = get_logger(__name__)
 
-BNG_MODEL_EXPORT_TIMEOUT = 5
-
-
-class SimTmpDataStore:
-    def __init__(self):
-        self.log = {}
-        self.n_steps = 0
-        self.observables = []
-        self.times = []
-        self.values = []
-
-    def add(self, sim_data):
-        if sim_data.TYPE == SimLogMessage.TYPE:
-            self._add_log(sim_data)
-        elif sim_data.TYPE == SimStepTrace.TYPE:
-            self._add_step_trace(sim_data)
-        elif sim_data.TYPE == SimTrace.TYPE:
-            self._add_trace(sim_data)
-
-    @property
-    def trace(self):
-        return {
-            "nSteps": self.n_steps,
-            "observables": self.observables,
-            "times": self.times,
-            "values": self.values,
-        }
-
-    def _add_log(self, sim_log_msg: SimLogMessage):
-        source = sim_log_msg.source
-        message = sim_log_msg.message
-
-        if source not in self.log:
-            self.log[source] = [message]
-        else:
-            self.log[source].append(message)
-
-    def _add_step_trace(self, step_trace: SimStepTrace):
-        self.n_steps = step_trace.step_idx + 1
-        self.times.append(step_trace.t)
-        self.values.append(step_trace.values)
-
-        if not len(self.observables):
-            self.observables = step_trace.observables
-
-    def _add_trace(self, trace: SimTrace):
-        self.observables = trace.observables
-        self.times.append(trace.times)
-        self.values.append(trace.values)
-        # TODO: This is redundant, it can be derived from .times
-        self.n_steps += len(trace.times)
-
 
 class SimWorker:
     def __init__(self) -> None:
@@ -93,24 +42,13 @@ class SimWorker:
         self.terminating = False
         self.status = SimWorkerStatus.READY
         self.socket: Optional[WebSocketClientConnection] = None
-        self.sim_tmp_data_store: Optional[SimTmpDataStore] = None
+        self.sim_log: Dict[str, List[str]] = defaultdict(list)
         self.sim_config: dict = {}
         self.closed = True
         self.loop = asyncio.new_event_loop()
 
     def init(self) -> None:
-        def on_terminate(signum: int, frame: FrameType):  # pylint: disable=unused-argument
-            L.debug("received main process shutdown signal")
-            if not self.sim_proc and not self.sim_thread:
-                L.debug("Closing socket and exiting")
-                self.teardown()
-            else:
-                L.debug("Waiting for simulation to finish")
-                self.terminating = True
-
-        # TODO: SIGINT handler?
-        signal.signal(signal.SIGTERM, on_terminate)
-
+        signal.signal(signal.SIGTERM, self.on_terminate)
         self.loop.run_until_complete(self.listen())
 
     async def listen(self):
@@ -149,7 +87,7 @@ class SimWorker:
         self.socket.close()
         sys.exit(0)
 
-    def on_message(self, raw_message) -> None:
+    def on_message(self, raw_message: Union[bytes, str]) -> None:
         message = json.loads(raw_message)
 
         if any(key not in message for key in ["data", "cmd", "cmdid"]):
@@ -166,11 +104,8 @@ class SimWorker:
         elif msg == "cancel_sim":
             self.on_cancel_sim_msg()
 
-        elif msg == "get_tmp_sim_log" and self.sim_tmp_data_store is not None:
-            self.send_message("tmp_sim_log", self.sim_tmp_data_store.log, cmdid=cmdid)
-
-        elif msg == "get_tmp_sim_trace" and self.sim_tmp_data_store is not None:
-            self.send_message("tmp_sim_trace", self.sim_tmp_data_store.trace, cmdid=cmdid)
+        elif msg == "get_tmp_sim_log":
+            self.send_message("tmp_sim_log", self.sim_log, cmdid=cmdid)
 
     def on_cancel_sim_msg(self) -> None:
         L.debug("send SIGTERM to simulation process")
@@ -193,12 +128,10 @@ class SimWorker:
                 break
 
             is_sim_trace = isinstance(sim_data, SimTrace)
+            data = sim_data.dict() if is_sim_trace else sim_data.to_dict()
 
-            if is_sim_trace:
-                data = sim_data.dict()
-            elif self.sim_tmp_data_store is not None:
-                self.sim_tmp_data_store.add(sim_data)
-                data = sim_data.to_dict()
+            if isinstance(sim_data, SimLogMessage):
+                self.sim_log[sim_data.source].append(sim_data.message)
 
             payload = {
                 **data,
@@ -212,9 +145,8 @@ class SimWorker:
         self.sim_proc = None
         self.sim_config = {}
 
-        if self.sim_tmp_data_store is not None:
-            self.send_message("simLog", self.sim_tmp_data_store.log)
-        self.sim_tmp_data_store = None
+        self.send_message("simLog", self.sim_log)
+        self.sim_log = defaultdict(list)
 
         if self.terminating:
             self.teardown()
@@ -223,7 +155,6 @@ class SimWorker:
 
     def on_run_sim_msg(self, sim_config: dict) -> None:
         self.send_message("status", SimWorkerStatus.BUSY)
-        self.sim_tmp_data_store = SimTmpDataStore()
         self.sim_config = sim_config
 
         L.debug("starting a thread")
@@ -291,3 +222,12 @@ class SimWorker:
             self.sim_queue.put(None)
 
         shutil.rmtree(tmp_dir)
+
+    def on_terminate(self, signum: int, frame: FrameType):  # pylint: disable=unused-argument
+        L.debug("received main process shutdown signal")
+        if not self.sim_proc and not self.sim_thread:
+            L.debug("Closing socket and exiting")
+            self.teardown()
+        else:
+            L.debug("Waiting for simulation to finish")
+            self.terminating = True

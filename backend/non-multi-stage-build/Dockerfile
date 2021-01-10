@@ -12,7 +12,6 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
 
 COPY ./build/python-deps /usr/local/lib/python3.7/site-packages
-COPY ./build/sbmlTranslator /sbmlTranslator
 COPY ./build/BioNetGen /BioNetGen
 
 WORKDIR /app

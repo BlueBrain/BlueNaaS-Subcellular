@@ -75,26 +75,6 @@ class SimLog:
         return self.log
 
 
-class SimStepTrace:
-    TYPE = "simStepTrace"
-
-    def __init__(self, t, step_idx, values, observables):
-        self.type = self.TYPE
-
-        self.t = t
-        self.step_idx = step_idx
-        self.values = values
-        self.observables = observables
-
-    def to_dict(self):
-        return {
-            "t": self.t,
-            "stepIdx": self.step_idx,
-            "observables": self.observables,
-            "values": self.values,
-        }
-
-
 class SimTrace(BaseModel):
     """Simulation trace for a given observable.
 

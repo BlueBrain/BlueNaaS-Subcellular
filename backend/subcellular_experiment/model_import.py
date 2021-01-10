@@ -1,46 +1,13 @@
-import tempfile
-import subprocess
-import os
 import base64
 import io
 import uuid
 
-import shutil
 import pandas as pd
 
 from .logger import get_logger
-from .settings import SBML_TRANSLATOR_PATH
 
 
 L = get_logger(__name__)
-
-
-def from_sbml(sbml_str):
-    tmp_dir = tempfile.mkdtemp()
-    os.chdir(tmp_dir)
-
-    with open("model.xml", "w") as sbml_file:
-        sbml_file.write(sbml_str)
-
-    translator_run = subprocess.run(
-        [SBML_TRANSLATOR_PATH, "-i", "model.xml", "-a", "-o", "model.bngl"],
-        check=False,
-        capture_output=True,
-    )
-
-    bngl_str = (
-        None
-        if (translator_run.returncode != 0) or (not os.path.isfile("model.bngl"))
-        else open("model.bngl").read()
-    )
-
-    shutil.rmtree(tmp_dir)
-
-    return {
-        "bngl": bngl_str,
-        "stdout": translator_run.stdout.decode("utf-8"),
-        "stderr": translator_run.stderr.decode("utf-8"),
-    }
 
 
 # structures type: {'membrane', 'compartment'}

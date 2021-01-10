@@ -4,7 +4,7 @@ import re
 import time
 import math
 from datetime import datetime
-
+from typing import Callable, Any
 
 import numpy as np
 import pysb
@@ -47,56 +47,23 @@ def get_pysb_spec_comp_name(pysb_spec):
 
 
 class StepsSim:
-    def __init__(self, sim_config, progress_cb):
+    def __init__(self, sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
         self.sim_config = sim_config
         self.t_start = datetime.now()
         self.send_progress = progress_cb
 
-    def log(self, message):
+    def log(self, message: str) -> None:
         sim_time = datetime.now() - self.t_start
         hours, remainder = divmod(sim_time.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
-        timestamp = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+        timestamp = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
         sim_log_msg = SimLogMessage(f"{timestamp} {message}")
         self.send_progress(sim_log_msg)
 
-    def run(self):
+    def run(self) -> None:
         self.send_progress(SimStatus(SimStatus.INIT))
         self.log("init sim")
-
-        def simplify_string(st, compartments=True, is_bngl=False):
-            st0 = str(st)
-
-            if is_bngl:
-                name = re.sub(" ", "", st0)
-                name = re.sub("=None", "", name)
-                name = re.sub("=", "~", name)
-                name = re.sub("'", "", name)
-                name = re.sub(r"\*\*", "@", name)
-                name = re.sub("%", ".", name)
-
-                if not compartments:
-                    name = re.sub(r"@\s+\w+", "", name)
-
-                return name
-
-            if st0[0] == "(":
-                # find outer parens
-                outer = re.compile(r"\((.+)\)")
-                match = outer.search(st0)
-                st = match.group(1)
-            else:
-                st = st0
-
-            if not compartments:
-                st = re.sub(r"\*\*\s+\w+", "", st)
-
-            sim = re.split(r"\W+", st)
-            st2 = sim[0]
-            for i in range(1, len(sim)):
-                st2 = st2 + "_" + sim[i]
-            return st2
 
         def get_geom_struct_by_model_struct_name(model_struct_name):
             geom_struct_name = next(
@@ -584,12 +551,17 @@ class StepsSim:
             # STEPS units:
             # * 2d - # of molecules
             # * 3d - mM/m^3
-            if comp_type == COMPARTMENT:
-                self.log(f"set comp conc: @{comp_name}:{spec_name}, val: {value}")
-                sim.setCompConc(comp_name, spec_name, value)
-            else:
-                self.log(f"set patch count: @{comp_name}:{spec_name}, val: {value}")
-                sim.setPatchCount(comp_name, spec_name, value)
+            try:
+                if comp_type == COMPARTMENT:
+                    self.log(f"set comp conc: @{comp_name}:{spec_name}, val: {value}")
+                    sim.setCompConc(comp_name, spec_name, value)
+
+                else:
+                    self.log(f"set patch count: @{comp_name}:{spec_name}, val: {value}")
+                    sim.setPatchCount(comp_name, spec_name, value)
+            except Exception:
+                L.warning("Runtime warning")
+                L.warning(f"{comp_name}:{spec_name}")
 
         self.log("about to activate diffusion boundaries")
         for diff_boundary_name, spec_names in diff_boundary_spec_names_dict.items():
@@ -722,10 +694,15 @@ class StepsSim:
                         spec_name = pysb_spec.name
                         comp_name = pysb_spec.comp_name
                         comp_type = comp_type_by_name(comp_name)
-                        if comp_type == COMPARTMENT:
-                            spec_count = sim.getCompCount(comp_name, pysb_spec.name)
-                        else:
-                            spec_count = sim.getPatchCount(comp_name, pysb_spec.name)
+
+                        try:
+                            if comp_type == COMPARTMENT:
+                                spec_count = sim.getCompCount(comp_name, pysb_spec.name)
+                            else:
+                                spec_count = sim.getPatchCount(comp_name, pysb_spec.name)
+                        except Exception:
+                            L.warning("Runtime warning")
+                            print(comp_name, pysb_spec.name)
                         mol_count += spec_count
                     trace_values[
                         tidx, observable_idx
@@ -833,3 +810,37 @@ class StepsSim:
 
         self.log("done")
         self.send_progress(SimStatus(SimStatus.FINISHED))
+
+
+def simplify_string(st, compartments=True, is_bngl=False):
+    st0 = str(st)
+
+    if is_bngl:
+        name = re.sub(" ", "", st0)
+        name = re.sub("=None", "", name)
+        name = re.sub("=", "~", name)
+        name = re.sub("'", "", name)
+        name = re.sub(r"\*\*", "@", name)
+        name = re.sub("%", ".", name)
+
+        if not compartments:
+            name = re.sub(r"@\s+\w+", "", name)
+
+        return name
+
+    if st0[0] == "(":
+        # find outer parens
+        outer = re.compile(r"\((.+)\)")
+        match = outer.search(st0)
+        st = match.group(1)
+    else:
+        st = st0
+
+    if not compartments:
+        st = re.sub(r"\*\*\s+\w+", "", st)
+
+    sim = re.split(r"\W+", st)
+    st2 = sim[0]
+    for i in range(1, len(sim)):
+        st2 = st2 + "_" + sim[i]
+    return st2

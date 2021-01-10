@@ -4,13 +4,11 @@ import json
 import steps.utilities.meshio as meshio
 import numpy as np
 
-from .db import Db
 from .bngl_extended_model import StructureType
 from .logger import get_logger
 
 
 L = get_logger(__name__)
-db = Db()
 
 GEOMETRY_ROOT_PATH = "/data/geometries"
 TETGEN_TYPE_EXTENSION = {"nodes": "node", "faces": "face", "elements": "ele"}
@@ -22,10 +20,9 @@ if not os.path.exists(GEOMETRY_ROOT_PATH):
 
 
 class Geometry:
-    def __init__(self, geometry_config):
+    def __init__(self, id_: str, geometry_config: dict):
         meta = geometry_config["meta"]
-
-        self.id = str(db.create_geometry(geometry_config).inserted_id)
+        self.id = id_
         self.name = geometry_config["name"]
         self.description = geometry_config["description"]
         self.scale = meta["scale"]

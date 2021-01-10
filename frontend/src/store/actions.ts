@@ -504,7 +504,7 @@ export default {
       const translationResult = await socket.request('convert_from_sbml', {
         sbml: fileContent,
       });
-      bnglStr = translationResult.bngl;
+      bnglStr = translationResult;
       if (!bnglStr) throw new Error('Error in SBML translation');
     }
 

@@ -32,13 +32,6 @@ RUN git clone https://github.com/CNS-OIST/STEPS.git && \
     make && \
     make install
 
-# Install atomizer
-# TODO: Switch to main repo when https://github.com/RuleWorld/atomizer/issues/6 is fixed
-RUN git clone https://github.com/pgetta/atomizer.git && \
-    cd atomizer && \
-    make && \
-    make install
-
 WORKDIR /code
 COPY setup.py .
 COPY ./subcellular_experiment ./subcellular_experiment

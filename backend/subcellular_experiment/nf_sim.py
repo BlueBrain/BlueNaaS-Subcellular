@@ -107,7 +107,9 @@ class NfSim(Sim):
 
         L.debug("starting NFsim")
         nfsim_run = subprocess.run(
-            [NFSIM_PATH, "-csv", "-logo", "-rnf", "model.rnf"], check=False, capture_output=True
+            [NFSIM_PATH, "-csv", "-logo", "-gml", "10000000", "-rnf", "model.rnf"],
+            check=False,
+            capture_output=True,
         )
         self.log(nfsim_run.stdout.decode("utf-8"), "nfsim_stdout")
         self.log(nfsim_run.stderr.decode("utf-8"), "nfsim_stderr")

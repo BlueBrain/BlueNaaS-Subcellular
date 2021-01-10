@@ -27,6 +27,7 @@ setup(
         "wrapt==1.12.1",
         "sentry-sdk==0.19.5",
         "motor==2.3.0",
+        "python-libsbml==5.19.0",
     ],
     tests_require=["pytest", "pytest-cov"],
     packages=find_packages(exclude=[]),

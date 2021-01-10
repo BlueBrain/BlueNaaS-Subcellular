@@ -16,7 +16,8 @@ from .sim_manager import SimManager, SimWorker
 from .db import Db
 from .geometry import Geometry
 from .model_export import get_exported_model
-from .model_import import from_sbml, revision_from_excel
+from .model_import import revision_from_excel
+from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
 from .types import SimConfig, SimWorkerMessage
@@ -113,7 +114,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
         if cmd == "create_geometry":
             geometry_config = msg["data"]
-            geometry = Geometry(geometry_config)
+            geometry_db = await db.create_geometry(geometry_config)
+            geometry_id = geometry_db.inserted_id
+            geometry = Geometry(str(geometry_id), geometry_config)
             structure_size_dict = {st["name"]: st["size"] for st in geometry.structures}
             L.debug(f"new geometry {str(geometry.id)} has been created")
             await self.send_message(
@@ -133,8 +136,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 )
 
         if cmd == "convert_from_sbml":
-            sbml_str = msg["data"]["sbml"]
-            await self.send_message("from_sbml", from_sbml(sbml_str), cmdid=cmdid)
+            await self.send_message("from_sbml", sbml_to_bngl(msg["data"]["sbml"]), cmdid=cmdid)
 
         if cmd == "revision_from_excel":
             await self.send_message(

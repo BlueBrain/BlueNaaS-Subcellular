@@ -8,7 +8,6 @@ from .sim import (
     SimProgress,
     SimStatus,
     SimTrace,
-    SimStepTrace,
     SimLogMessage,
     SimSpatialStepTrace,
     SimLog,
@@ -103,8 +102,6 @@ class SimManager:
 
         if msg == SimProgress.TYPE:
             await self.process_sim_progress(worker.sim_conf, data["progress"])
-        elif msg == SimStepTrace.TYPE:
-            await self.process_sim_step_trace(worker.sim_conf, data)
         elif msg == SimTrace.TYPE:
             await self.process_sim_trace(worker.sim_conf, data)
         elif msg == SimStatus.TYPE:
@@ -249,10 +246,6 @@ class SimManager:
             SimSpatialStepTrace.TYPE,
             {**spatial_step_trace, "simId": sim_conf.id},
         )
-
-    async def process_sim_step_trace(self, sim_conf: SimConfig, step_trace) -> None:
-        msg = {**step_trace, "simId": sim_conf.id}
-        await self.send_message(sim_conf.userId, SimStepTrace.TYPE, msg)
 
     async def process_sim_trace(self, sim_conf: SimConfig, sim_trace):
         user_id = sim_conf.userId

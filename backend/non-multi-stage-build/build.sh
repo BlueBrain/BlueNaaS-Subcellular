@@ -26,7 +26,6 @@ docker build \
 
 docker create --name subcellular-app-container subcellular-app-assets
 docker cp subcellular-app-container:/usr/local/lib/python3.7/site-packages ./build/python-deps
-docker cp subcellular-app-container:/build/atomizer/bin/sbmlTranslator ./build/sbmlTranslator
 docker cp subcellular-app-container:/build/BioNetGen ./build/BioNetGen
 docker rm -f subcellular-app-container
 

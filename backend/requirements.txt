@@ -13,3 +13,4 @@ typing-extensions==3.7.4.3
 wrapt==1.12.1
 sentry-sdk==0.19.5
 motor==2.3.0
+python-libsbml==5.19.0
