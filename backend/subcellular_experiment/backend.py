@@ -4,6 +4,7 @@ import asyncio
 from types import FrameType
 from typing import Union, Any, Optional
 import signal
+from contextlib import suppress
 
 import tornado.ioloop
 import tornado.websocket
@@ -20,7 +21,7 @@ from .model_import import revision_from_excel
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
-from .types import SimConfig, SimWorkerMessage
+from .types import SimConfig, SimWorkerMessage, Message, SimId
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
@@ -61,19 +62,28 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin: str):  # pylint: disable=unused-argument
         return True
 
+    @staticmethod
+    def validate_sim_id(sim_id: Any):
+        if not isinstance(sim_id, str):
+            raise ValueError("Invalid data")
+
     # pylint: disable=invalid-overridden-method
     async def on_message(self, raw_msg: Union[str, bytes]) -> None:
-        msg = json.loads(raw_msg)
-        cmd = msg["cmd"]
-        cmdid = msg["cmdid"]
+        msg = Message(**json.loads(raw_msg))
+
+        cmd = msg.cmd
+        cmdid = msg.cmdid
         L.debug(f"got {cmd} message")
 
         if cmd == "run_simulation":
-            sim_conf = SimConfig(**msg["data"])
+            sim_conf = SimConfig(**msg.data)
             await sim_manager.schedule_sim(sim_conf)
 
         if cmd == "get_log":
-            sim_id = msg["data"]
+            sim_id = msg.data
+
+            self.validate_sim_id(sim_id)
+
             if sim_id in sim_manager.running_sim_ids:
                 await sim_manager.request_tmp_sim_log(sim_id, cmdid)
             else:
@@ -81,7 +91,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 await self.send_message("log", sim_log, cmdid=cmdid)
 
         if cmd == "get_trace":
-            sim_id = msg["data"]
+            sim_id = msg.data
+            self.validate_sim_id(sim_id)
+
             if sim_id in sim_manager.running_sim_ids:
                 await sim_manager.request_tmp_sim_trace(sim_id, cmdid)
             else:
@@ -90,17 +102,17 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     await self.send_message("simTrace", trace)
 
         if cmd == "cancel_simulation":
-            sim_conf = msg["data"]
-            await sim_manager.cancel_sim(sim_conf)
+            sim_id = SimId(**msg.data)
+            await sim_manager.cancel_sim(sim_id)
 
         if cmd == "create_simulation":
-            await db.create_simulation(msg["data"])
+            await db.create_simulation(msg.data)
 
         if cmd == "update_simulation":
-            await db.update_simulation(msg["data"])
+            await db.update_simulation(msg.data)
 
         if cmd == "delete_simulation":
-            sim = msg["data"]
+            sim = SimId(**msg.data)
             await sim_manager.cancel_sim(sim)
             await db.delete_simulation(sim)
             await db.delete_sim_spatial_traces(sim)
@@ -108,12 +120,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             await db.delete_sim_log(sim)
 
         if cmd == "get_simulations":
-            model_id = msg["data"]["modelId"]
+            model_id = msg.data["modelId"]
             simulations = await db.get_simulations(self.user_id, model_id)
             await self.send_message("simulations", {"simulations": simulations}, cmdid=cmdid)
 
         if cmd == "create_geometry":
-            geometry_config = msg["data"]
+            geometry_config = msg.data
             geometry_db = await db.create_geometry(geometry_config)
             geometry_id = geometry_db.inserted_id
             geometry = Geometry(str(geometry_id), geometry_config)
@@ -124,8 +136,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             )
 
         if cmd == "get_exported_model":
-            model_format = msg["data"]["format"]
-            model_dict = msg["data"]["model"]
+            model_format = msg.data["format"]
+            model_dict = msg.data["model"]
             model_str = None
             error_msg = None
             try:
@@ -136,21 +148,24 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 )
 
         if cmd == "convert_from_sbml":
-            await self.send_message("from_sbml", sbml_to_bngl(msg["data"]["sbml"]), cmdid=cmdid)
+            sbml = ""
+            with suppress(ValueError):
+                sbml = sbml_to_bngl(msg.data["sbml"])
+
+            await self.send_message("from_sbml", sbml, cmdid=cmdid)
 
         if cmd == "revision_from_excel":
             await self.send_message(
-                "revision_from_excel", revision_from_excel(msg["data"]), cmdid=cmdid
+                "revision_from_excel", revision_from_excel(msg.data), cmdid=cmdid
             )
 
         if cmd == "query_molecular_repo":
-            query = msg["data"]
+            query = msg.data
             result = await db.query_molecular_repo(query)
             await self.send_message("query_result", {"queryResult": result}, cmdid=cmdid)
 
         if cmd == "query_branch_names":
-            search_str = msg["data"] if "data" in msg else ""
-            branch_names = await db.query_branch_names(search_str)
+            branch_names = await db.query_branch_names(msg.data)
             await self.send_message("branch_names", {"branches": branch_names}, cmdid=cmdid)
 
         if cmd == "get_user_branches":
@@ -158,34 +173,34 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             await self.send_message("user_branches", {"userBranches": branches}, cmdid=cmdid)
 
         if cmd == "query_revisions":
-            branch_name = msg["data"]
+            branch_name = msg.data
             revisions = await db.query_revisions(branch_name)
             await self.send_message("revisions", {"revisions": revisions}, cmdid=cmdid)
 
         if cmd == "save_revision":
-            revision_data = msg["data"]
+            revision_data = msg.data
             revision_meta = await db.save_revision(revision_data, self.user_id)
             await self.send_message("save_revision", revision_meta, cmdid=cmdid)
 
         if cmd == "get_revision":
-            branch = msg["data"]["branch"]
-            revision = msg["data"]["revision"]
+            branch = msg.data["branch"]
+            revision = msg.data["revision"]
             revision_data = await db.get_revision(branch, revision)
             await self.send_message("revision_data", {"revision": revision_data}, cmdid=cmdid)
 
         if cmd == "get_branch_latest_rev":
-            branch = msg["data"]
+            branch = msg.data
             branch_latest_rev = await db.get_branch_latest_rev(branch)
             await self.send_message("branch_latest_rev", {"rev": branch_latest_rev}, cmdid=cmdid)
 
         if cmd == "get_spatial_step_trace":
-            sim_id = msg["data"]["simId"]
-            step_idx = msg["data"]["stepIdx"]
+            sim_id = msg.data["simId"]
+            step_idx = msg.data["stepIdx"]
             spatial_step_trace = await db.get_spatial_step_trace(sim_id, step_idx)
             await self.send_message("spatial_step_trace", spatial_step_trace, cmdid=cmdid)
 
         if cmd == "get_last_spatial_step_trace_idx":
-            sim_id = msg["data"]["simId"]
+            sim_id = msg.data["simId"]
             step_idx = await db.get_last_spatial_step_trace_idx(sim_id)
             await self.send_message("last_spatial_step_trace_idx", step_idx, cmdid=cmdid)
 

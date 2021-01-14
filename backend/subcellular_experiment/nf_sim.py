@@ -95,13 +95,13 @@ class NfSim(Sim):
             )
         except subprocess.TimeoutExpired:
             self.log("BNGL was not been able to convert a model into xml within 5 seconds")
-            self.send_progress(SimStatus(SimStatus.ERROR))
+            self.send_progress(SimStatus(status="error"))
             return
 
         self.log(bng_run.stdout.decode("utf-8"), "bng_stdout")
         self.log(bng_run.stderr.decode("utf-8"), "bng_stderr")
         if bng_run.returncode != 0:
-            self.send_progress(SimStatus(SimStatus.ERROR))
+            self.send_progress(SimStatus(status="error"))
             return
         L.debug("BNG xml model export has been finished")
 
@@ -116,12 +116,12 @@ class NfSim(Sim):
 
         L.debug("NFsim return code is {}".format(nfsim_run.returncode))
         if nfsim_run.returncode != 0:
-            self.send_progress(SimStatus(SimStatus.ERROR))
+            self.send_progress(SimStatus(status="error"))
             return
 
         if not os.path.isfile("model.gdat"):
             self.log("NFsim hasn\t generated model.gdat, check the logs for more information")
-            self.send_progress(SimStatus(SimStatus.ERROR))
+            self.send_progress(SimStatus(status="error"))
             return
 
         sim_traces = pd.read_csv("model.gdat")
@@ -155,6 +155,6 @@ class NfSim(Sim):
                 )
             )
 
-        self.send_progress(SimStatus(SimStatus.FINISHED))
+        self.send_progress(SimStatus(status="finished"))
 
         self.rm_tmp_dir()

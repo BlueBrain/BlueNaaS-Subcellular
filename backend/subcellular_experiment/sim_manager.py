@@ -6,13 +6,12 @@ from tornado.websocket import WebSocketHandler
 
 from .sim import (
     SimProgress,
-    SimStatus,
     SimTrace,
     SimLogMessage,
     SimSpatialStepTrace,
     SimLog,
 )
-from .types import SimConfig, WorkerStatus
+from .types import SimConfig, WorkerStatus, SimId, SimStatus
 from .logger import get_logger
 from .db import Db
 
@@ -40,9 +39,7 @@ class SimManager:
 
     async def remove_worker(self, worker: SimWorker) -> None:
         if worker.sim_conf is not None:
-            await self.process_sim_status(
-                worker.sim_conf.userId, worker.sim_conf.simId, SimStatus.ERROR
-            )
+            await self.process_sim_status(worker.sim_conf.userId, worker.sim_conf.simId, "error")
         self.workers.remove(worker)
         L.debug("worker has been removed")
         self.log_workers_status()
@@ -104,7 +101,7 @@ class SimManager:
             await self.process_sim_progress(worker.sim_conf, data["progress"])
         elif msg == SimTrace.TYPE:
             await self.process_sim_trace(worker.sim_conf, data)
-        elif msg == SimStatus.TYPE:
+        elif msg == "simStatus":
             await self.process_sim_status(
                 worker.sim_conf.userId, worker.sim_conf.simId, data["status"], data
             )
@@ -134,7 +131,7 @@ class SimManager:
     async def schedule_sim(self, sim_conf: SimConfig) -> None:
         L.debug("scheduling a simulation")
         self.sim_conf_queue.append(sim_conf)
-        await self.process_sim_status(sim_conf.userId, sim_conf.id, SimStatus.QUEUED)
+        await self.process_sim_status(sim_conf.userId, sim_conf.id, "queued")
         await self.run_available()
 
     @property
@@ -167,19 +164,17 @@ class SimManager:
         if worker:
             await worker.ws.send_message("get_tmp_sim_trace", cmdid=cmdid)
 
-    async def cancel_sim(self, sim_conf: dict):
-        user_id = sim_conf["userId"]
-        sim_id = sim_conf["id"]
+    async def cancel_sim(self, sim: SimId):
         queue_idx = next(
             (
                 index
                 for (index, sim_conf) in enumerate(self.sim_conf_queue)
-                if sim_conf.id == sim_id
+                if sim_conf.id == sim.id
             ),
             None,
         )
 
-        await self.process_sim_status(user_id, sim_id, SimStatus.CANCELLED)
+        await self.process_sim_status(sim.userId, sim.id, "cancelled")
 
         if queue_idx is not None:
             L.debug(f"sim to cancel is in queue, id: {queue_idx}")
@@ -190,7 +185,7 @@ class SimManager:
             (
                 worker
                 for worker in self.workers
-                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
+                if worker.sim_conf is not None and worker.sim_conf.id == sim.id
             ),
             None,
         )
@@ -202,7 +197,9 @@ class SimManager:
         L.debug("sending message to worker to cancel the sim")
         await worker.ws.send_message("cancel_sim")  # type: ignore
 
-    async def process_sim_status(self, user_id: str, sim_id: str, status: str, context={}) -> None:
+    async def process_sim_status(
+        self, user_id: str, sim_id: str, status: SimStatus, context={}
+    ) -> None:
         await self.db.update_simulation(
             {**context, "id": sim_id, "userId": user_id, "status": status}
         )
@@ -260,20 +257,22 @@ class SimManager:
                 }
             )
 
-        status_message = {"simId": sim_id, "userId": user_id, "status": SimStatus.FINISHED}
+        status_message = {"simId": sim_id, "userId": user_id, "status": "finished"}
 
         status_message.update(sim_trace)
         if sim_trace["stream"]:
             await self.send_message(user_id, SimTrace.TYPE, status_message)
 
-    async def send_sim_status(self, user_id: str, sim_id: str, status: str, context={}) -> None:
+    async def send_sim_status(
+        self, user_id: str, sim_id: str, status: SimStatus, context={}
+    ) -> None:
         await self.send_message(
             user_id,
-            SimStatus.TYPE,
+            "simStatus",
             {**context, "simId": sim_id, "status": status},
         )
 
-    async def send_message(self, user_id, name, message, cmdid=None):
+    async def send_message(self, user_id: str, name: str, message: Any, cmdid=None):
         for connection in self.clients[user_id]:
             await connection.send_message(name, message, cmdid=cmdid)
 

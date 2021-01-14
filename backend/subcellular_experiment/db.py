@@ -11,6 +11,7 @@ from sentry_sdk import capture_message
 from .bngl_extended_model import EntityType, entity_coll_name_map
 from .logger import get_logger, log_many
 from .envvars import MONGO_URI
+from .types import SimId
 
 L = get_logger(__name__)
 
@@ -174,8 +175,8 @@ class Db:
         await self.db.simTraces.insert_one(sim_trace)
 
     @mongo_autoreconnect
-    async def delete_sim_trace(self, simulation):
-        await self.db.simTraces.delete_many({"simId": simulation["id"]})
+    async def delete_sim_trace(self, simulation: SimId):
+        await self.db.simTraces.delete_many({"simId": simulation.id})
 
     @mongo_autoreconnect
     async def create_sim_log(self, sim_log):
@@ -186,8 +187,8 @@ class Db:
         return await self.db.simLogs.find_one({"simId": sim_id})
 
     @mongo_autoreconnect
-    async def delete_sim_log(self, simulation):
-        await self.db.simLogs.delete_many({"simId": simulation["id"]})
+    async def delete_sim_log(self, simulation: SimId):
+        await self.db.simLogs.delete_many({"simId": simulation.id})
 
     @mongo_autoreconnect
     async def get_spatial_step_trace(self, sim_id, step_idx):
@@ -213,14 +214,14 @@ class Db:
         return spatial_step_traces[0]["stepIdx"]
 
     @mongo_autoreconnect
-    async def delete_simulation(self, simulation):
+    async def delete_simulation(self, simulation: SimId):
         await self.db.simulations.update_one(
-            {"id": simulation["id"], "userId": simulation["userId"]}, {"$set": {"deleted": True}}
+            {"id": simulation.id, "userId": simulation.userId}, {"$set": {"deleted": True}}
         )
 
     @mongo_autoreconnect
-    async def delete_sim_spatial_traces(self, simulation):
-        await self.db.simSpatialStepTraces.delete_many({"simId": simulation["id"]})
+    async def delete_sim_spatial_traces(self, simulation: SimId):
+        await self.db.simSpatialStepTraces.delete_many({"simId": simulation.id})
 
     @mongo_autoreconnect
     async def query_branch_names(self, search_str):

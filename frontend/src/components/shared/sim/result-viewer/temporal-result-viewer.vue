@@ -16,7 +16,7 @@
   // eslint-disable-next-line
   import { SimTrace, Simulation } from '@/types';
 
-  const layout = {
+  const layout: Plotly.Layout = {
     xaxis: {
       ticks: 'outside',
       title: 'Time, s',
@@ -102,32 +102,24 @@
         config,
       );
 
+      graphDiv.on('plotly_doubleclick', this.handleChartDoubleClick);
+
       graphDiv.on('plotly_relayout', async (eventData) => {
-        let start = eventData['xaxis.range[0]'];
-        let end = eventData['xaxis.range[1]'];
+        const xstart = eventData['xaxis.range[0]'];
+        const xend = eventData['xaxis.range[1]'];
+        const ystart = eventData['yaxis.range[0]'];
+        const yend = eventData['yaxis.range[1]'];
 
         // When user hits reset axis an event with these properties is emitted
         // This rerenders the whole chart
-        if (
-          eventData['xaxis.autorange'] &&
-          eventData['yaxis.autorange'] &&
-          eventData['xaxis.showspikes'] === false &&
-          eventData['yaxis.showspikes'] === false
-        ) {
-          start = 0;
-          end = this.simulation.solverConf.tEnd;
+        if (eventData['xaxis.autorange'] && eventData['yaxis.autorange']) {
+          this.handleChartDoubleClick();
+          return;
         }
-        if (start === undefined || end === undefined) return;
 
         // If zooming in don't append new data points to the end
-        this.canExtendTraces = false;
-        await this.rerenderChart(start, end);
-
-        // Can extend traces again if the last point is visible
-        if (this.trace && end > this.trace.times[this.trace.times.length - 1]) {
-          this.chartPointN = this.trace.times.length;
-          this.canExtendTraces = true;
-        }
+        if (xend) this.canExtendTraces = false;
+        await this.rerenderChart({ xstart, xend, ystart, yend });
       });
 
       simDataStorage.trace.subscribe(this.simId, this.extendTraces);
@@ -140,16 +132,21 @@
         return;
       }
 
-      await this.rerenderChart(0, this.simulation.solverConf.tEnd);
+      await this.rerenderChart({});
       this.chartPointN = this.trace.times.length;
       this.canExtendTraces = true;
     },
+
     async beforeDestroy() {
       this.extendTraces.cancel();
       simDataStorage.trace.unsubscribe(this.simId);
       await Plotly.purge(this.$refs.chart);
     },
     methods: {
+      handleChartDoubleClick() {
+        this.canExtendTraces = true;
+        this.rerenderChart({});
+      },
       async extendTraces() {
         if (!this.canExtendTraces) return;
 
@@ -186,12 +183,22 @@
         });
       },
 
-      async rerenderChart(xstart: number, xend: number) {
+      async rerenderChart({
+        xstart,
+        xend,
+        ystart,
+        yend,
+      }: {
+        xstart?: number;
+        xend?: number;
+        ystart?: number;
+        yend?: number;
+      }) {
         if (this.trace) this.loading = false;
         if (!this.trace) return;
 
-        const start = floorDiv(xstart, this.dt);
-        const end = floorDiv(xend, this.dt);
+        const start = xstart && floorDiv(xstart, this.dt);
+        const end = xend && floorDiv(xend, this.dt);
 
         const slice = this.trace.times.slice(start, end);
 
@@ -212,7 +219,8 @@
 
         // We need to set autorange back to true as Plotly will mutate layout
         layout.xaxis.autorange = true;
-        layout.yaxis.autorange = true;
+        if (!ystart || !yend) layout.yaxis.autorange = true;
+        layout.yaxis.range = [ystart, yend];
         await Plotly.react(this.$refs.chart, chartData, layout, config);
       },
 

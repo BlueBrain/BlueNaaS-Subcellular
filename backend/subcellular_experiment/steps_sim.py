@@ -62,7 +62,7 @@ class StepsSim:
         self.send_progress(sim_log_msg)
 
     def run(self) -> None:
-        self.send_progress(SimStatus(SimStatus.INIT))
+        self.send_progress(SimStatus(status="init"))
         self.log("init sim")
 
         def get_geom_struct_by_model_struct_name(model_struct_name):
@@ -673,7 +673,7 @@ class StepsSim:
                         sim.setPatchClamped(comp_name, pysb_spec.name, clamp)
 
         self.log("run sim")
-        self.send_progress(SimStatus(SimStatus.STARTED))
+        self.send_progress(SimStatus(status="started"))
 
         for tidx, tpnt in enumerate(tpnts):
 
@@ -809,7 +809,7 @@ class StepsSim:
             )
 
         self.log("done")
-        self.send_progress(SimStatus(SimStatus.FINISHED))
+        self.send_progress(SimStatus(status="finished"))
 
 
 def simplify_string(st, compartments=True, is_bngl=False):

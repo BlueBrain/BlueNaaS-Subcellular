@@ -101,7 +101,7 @@
   import get from 'lodash/get';
   import pick from 'lodash/pick';
   import cloneDeep from 'lodash/cloneDeep';
-  import uuidv1 from 'uuid/v1';
+  import { v4 as uuid } from 'uuid';
 
   import bus from '@/services/event-bus';
 
@@ -277,7 +277,7 @@
         this.newSimulation = {
           ...cloneDeep(defaultSimulation),
           valid: false,
-          id: uuidv1(),
+          id: uuid(),
           userId: this.$store.state.user.id,
           modelId: this.$store.state.model.id,
           name: findUniqName(this.simulations, 'sim'),
@@ -306,7 +306,7 @@
           this.newSimulation,
           {
             name,
-            id: uuidv1(),
+            id: uuid(),
             status: SimStatus.CREATED,
           },
           pick(this.selectedSimulation, [
@@ -330,6 +330,11 @@
       onOk() {
         this.newSimulationModalVisible = false;
         this.$store.dispatch('addSimulation', this.newSimulation);
+        this.$store.commit('setEntitySelection', {
+          index: this.filteredSimulations.length - 1,
+          type: 'simulation',
+          entity: this.newSimulation,
+        });
       },
       runSimulation() {
         this.$store.dispatch('runSimulation', this.selectedSimulation);

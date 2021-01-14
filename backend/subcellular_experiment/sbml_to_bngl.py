@@ -16,7 +16,7 @@ def parseUnitValue(unit_definition: UnitDefinition) -> float:
     """
     value = 1.0
     for unit in unit_definition.getListOfUnits():
-        value = value ** unit.getExponent()
+        value *= value ** unit.getExponent()
         value *= unit.getMultiplier()
     return value
 

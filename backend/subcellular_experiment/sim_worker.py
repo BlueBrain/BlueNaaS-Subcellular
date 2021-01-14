@@ -18,7 +18,7 @@ from sentry_sdk import capture_message
 from tornado.websocket import websocket_connect, WebSocketClosedError, WebSocketClientConnection
 
 from .enums import SimWorkerStatus
-from .sim import SimStatus, SimTrace, SimLogMessage
+from .sim import SimStatus, SimLogMessage
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
@@ -127,8 +127,10 @@ class SimWorker:
             if sim_data is None:
                 break
 
-            is_sim_trace = isinstance(sim_data, SimTrace)
-            data = sim_data.dict() if is_sim_trace else sim_data.to_dict()
+            try:
+                data = sim_data.dict()
+            except AttributeError:
+                data = sim_data.to_dict()
 
             if isinstance(sim_data, SimLogMessage):
                 self.sim_log[sim_data.source].append(sim_data.message)
@@ -215,7 +217,7 @@ class SimWorker:
         except Exception as error:
             L.debug("Sim error")
             L.exception(error)
-            sim_status = SimStatus(SimStatus.ERROR)
+            sim_status = SimStatus(status="error")
             sim_log = SimLogMessage(str(error))
             self.sim_queue.put(sim_log)
             self.sim_queue.put(sim_status)

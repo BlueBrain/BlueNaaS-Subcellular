@@ -1,10 +1,12 @@
 import os
 import tempfile
 import shutil
-from typing import Dict, List, ClassVar
+from typing import Dict, List, ClassVar, Optional
 
 from typing_extensions import Literal
 from pydantic import BaseModel
+
+from .types import SimStatus as SimStatusLiteral
 
 
 STIMULUS_TYPE_BY_CODE = {
@@ -91,26 +93,10 @@ class SimTrace(BaseModel):
     values_by_observable: Dict[str, List[float]]
 
 
-class SimStatus:
-    QUEUED = "queued"
-    INIT = "init"
-    STARTED = "started"
-    ERROR = "error"
-    FINISHED = "finished"
-    CANCELLED = "cancelled"
-
-    TYPE = "simStatus"
-
-    def __init__(self, status, description=None):
-        self.type = self.TYPE
-        self.status = status
-        self.description = description
-
-    def to_dict(self):
-        return {
-            "status": self.status,
-            "description": self.description,
-        }
+class SimStatus(BaseModel):
+    TYPE: ClassVar[Literal["simStatus"]] = "simStatus"
+    status: SimStatusLiteral
+    description: Optional[str]
 
 
 class StimulusType:

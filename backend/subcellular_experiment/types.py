@@ -20,7 +20,7 @@ class SimConfig(BaseModel):
 
 class Message(BaseModel):
     cmd: str
-    cmdid: Optional[str]
+    cmdid: Optional[int]
     data: Any
 
 
@@ -30,10 +30,10 @@ class SimWorkerMessage(BaseModel):
     cmdid: Optional[int]
 
 
-class RunSimulationMessage(BaseModel):
-    cmd: Literal["run_simulation"]
-    cmdid: Optional[str]
-    data: SimConfig
+class SimId(BaseModel):
+    id: str
+    userId: str
 
 
 WorkerStatus = Literal["ready", "busy"]
+SimStatus = Literal["queued", "init", "started", "error", "finished", "cancelled"]
