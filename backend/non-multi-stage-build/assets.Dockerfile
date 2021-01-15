@@ -38,6 +38,7 @@ COPY ./subcellular_experiment ./subcellular_experiment
 
 # Lint code
 COPY tox.ini .
+COPY mypy.ini .
 COPY .pylintrc .
 COPY pyproject.toml .
 RUN tox

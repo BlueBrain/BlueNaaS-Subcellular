@@ -2,8 +2,6 @@
 from typing import Optional, List, Dict, Any
 from collections import defaultdict
 
-from tornado.websocket import WebSocketHandler
-
 from .sim import (
     SimProgress,
     SimTrace,
@@ -11,7 +9,7 @@ from .sim import (
     SimSpatialStepTrace,
     SimLog,
 )
-from .types import SimConfig, WorkerStatus, SimId, SimStatus
+from .types import SimConfig, WorkerStatus, SimId, SimStatus, WebSocketHandler
 from .logger import get_logger
 from .db import Db
 

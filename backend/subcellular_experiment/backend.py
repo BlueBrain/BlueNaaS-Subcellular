@@ -21,7 +21,7 @@ from .model_import import revision_from_excel
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
-from .types import SimConfig, SimWorkerMessage, Message, SimId
+from .types import SimConfig, SimWorkerMessage, Message, SimId, WebSocketHandler
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
@@ -44,7 +44,7 @@ SEC_SHORT_TYPE_DICT = {
 }
 
 
-class WSHandler(tornado.websocket.WebSocketHandler):
+class WSHandler(WebSocketHandler):
     closed = False
     user_id: Optional[str] = None
 
@@ -70,48 +70,45 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     # pylint: disable=invalid-overridden-method
     async def on_message(self, raw_msg: Union[str, bytes]) -> None:
         msg = Message(**json.loads(raw_msg))
+        L.debug(f"got {msg.cmd} message")
 
-        cmd = msg.cmd
-        cmdid = msg.cmdid
-        L.debug(f"got {cmd} message")
-
-        if cmd == "run_simulation":
+        if msg.cmd == "run_simulation":
             sim_conf = SimConfig(**msg.data)
             await sim_manager.schedule_sim(sim_conf)
 
-        if cmd == "get_log":
+        if msg.cmd == "get_log":
             sim_id = msg.data
 
             self.validate_sim_id(sim_id)
 
             if sim_id in sim_manager.running_sim_ids:
-                await sim_manager.request_tmp_sim_log(sim_id, cmdid)
+                await sim_manager.request_tmp_sim_log(sim_id, msg.cmdid)
             else:
                 sim_log = await db.get_sim_log(sim_id)
-                await self.send_message("log", sim_log, cmdid=cmdid)
+                await self.send_message("log", sim_log, cmdid=msg.cmdid)
 
-        if cmd == "get_trace":
+        if msg.cmd == "get_trace":
             sim_id = msg.data
             self.validate_sim_id(sim_id)
 
             if sim_id in sim_manager.running_sim_ids:
-                await sim_manager.request_tmp_sim_trace(sim_id, cmdid)
+                await sim_manager.request_tmp_sim_trace(sim_id, msg.cmdid)
             else:
                 traces = db.db.simTraces.find({"simId": sim_id})
                 async for trace in traces:
                     await self.send_message("simTrace", trace)
 
-        if cmd == "cancel_simulation":
+        if msg.cmd == "cancel_simulation":
             sim_id = SimId(**msg.data)
             await sim_manager.cancel_sim(sim_id)
 
-        if cmd == "create_simulation":
+        if msg.cmd == "create_simulation":
             await db.create_simulation(msg.data)
 
-        if cmd == "update_simulation":
+        if msg.cmd == "update_simulation":
             await db.update_simulation(msg.data)
 
-        if cmd == "delete_simulation":
+        if msg.cmd == "delete_simulation":
             sim = SimId(**msg.data)
             await sim_manager.cancel_sim(sim)
             await db.delete_simulation(sim)
@@ -119,12 +116,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             await db.delete_sim_trace(sim)
             await db.delete_sim_log(sim)
 
-        if cmd == "get_simulations":
+        if msg.cmd == "get_simulations":
             model_id = msg.data["modelId"]
             simulations = await db.get_simulations(self.user_id, model_id)
-            await self.send_message("simulations", {"simulations": simulations}, cmdid=cmdid)
+            await self.send_message("simulations", {"simulations": simulations}, cmdid=msg.cmdid)
 
-        if cmd == "create_geometry":
+        if msg.cmd == "create_geometry":
             geometry_config = msg.data
             geometry_db = await db.create_geometry(geometry_config)
             geometry_id = geometry_db.inserted_id
@@ -132,10 +129,12 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             structure_size_dict = {st["name"]: st["size"] for st in geometry.structures}
             L.debug(f"new geometry {str(geometry.id)} has been created")
             await self.send_message(
-                "geometry", {"id": geometry.id, "structureSize": structure_size_dict}, cmdid=cmdid
+                "geometry",
+                {"id": geometry.id, "structureSize": structure_size_dict},
+                cmdid=msg.cmdid,
             )
 
-        if cmd == "get_exported_model":
+        if msg.cmd == "get_exported_model":
             model_format = msg.data["format"]
             model_dict = msg.data["model"]
             model_str = None
@@ -144,65 +143,69 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                 model_str = get_exported_model(model_dict, model_format)
             except Exception as error:
                 await self.send_message(
-                    "exported_model", {"fileContent": model_str, "error": str(error)}, cmdid=cmdid
+                    "exported_model",
+                    {"fileContent": model_str, "error": str(error)},
+                    cmdid=msg.cmdid,
                 )
 
-        if cmd == "convert_from_sbml":
+        if msg.cmd == "convert_from_sbml":
             sbml = ""
             with suppress(ValueError):
                 sbml = sbml_to_bngl(msg.data["sbml"])
 
-            await self.send_message("from_sbml", sbml, cmdid=cmdid)
+            await self.send_message("from_sbml", sbml, cmdid=msg.cmdid)
 
-        if cmd == "revision_from_excel":
+        if msg.cmd == "revision_from_excel":
             await self.send_message(
-                "revision_from_excel", revision_from_excel(msg.data), cmdid=cmdid
+                "revision_from_excel", revision_from_excel(msg.data), cmdid=msg.cmdid
             )
 
-        if cmd == "query_molecular_repo":
+        if msg.cmd == "query_molecular_repo":
             query = msg.data
             result = await db.query_molecular_repo(query)
-            await self.send_message("query_result", {"queryResult": result}, cmdid=cmdid)
+            await self.send_message("query_result", {"queryResult": result}, cmdid=msg.cmdid)
 
-        if cmd == "query_branch_names":
+        if msg.cmd == "query_branch_names":
             branch_names = await db.query_branch_names(msg.data)
-            await self.send_message("branch_names", {"branches": branch_names}, cmdid=cmdid)
+            await self.send_message("branch_names", {"branches": branch_names}, cmdid=msg.cmdid)
 
-        if cmd == "get_user_branches":
+        if msg.cmd == "get_user_branches":
             branches = await db.get_user_branches(self.user_id)
-            await self.send_message("user_branches", {"userBranches": branches}, cmdid=cmdid)
+            await self.send_message("user_branches", {"userBranches": branches}, cmdid=msg.cmdid)
 
-        if cmd == "query_revisions":
+        if msg.cmd == "query_revisions":
             branch_name = msg.data
             revisions = await db.query_revisions(branch_name)
-            await self.send_message("revisions", {"revisions": revisions}, cmdid=cmdid)
+            await self.send_message("revisions", {"revisions": revisions}, cmdid=msg.cmdid)
 
-        if cmd == "save_revision":
+        if msg.cmd == "save_revision":
             revision_data = msg.data
             revision_meta = await db.save_revision(revision_data, self.user_id)
-            await self.send_message("save_revision", revision_meta, cmdid=cmdid)
+            await self.send_message("save_revision", revision_meta, cmdid=msg.cmdid)
 
-        if cmd == "get_revision":
+        if msg.cmd == "get_revision":
             branch = msg.data["branch"]
             revision = msg.data["revision"]
             revision_data = await db.get_revision(branch, revision)
-            await self.send_message("revision_data", {"revision": revision_data}, cmdid=cmdid)
+            await self.send_message("revision_data", {"revision": revision_data}, cmdid=msg.cmdid)
 
-        if cmd == "get_branch_latest_rev":
+        if msg.cmd == "get_branch_latest_rev":
             branch = msg.data
             branch_latest_rev = await db.get_branch_latest_rev(branch)
-            await self.send_message("branch_latest_rev", {"rev": branch_latest_rev}, cmdid=cmdid)
+            await self.send_message(
+                "branch_latest_rev", {"rev": branch_latest_rev}, cmdid=msg.cmdid
+            )
 
-        if cmd == "get_spatial_step_trace":
+        if msg.cmd == "get_spatial_step_trace":
             sim_id = msg.data["simId"]
             step_idx = msg.data["stepIdx"]
             spatial_step_trace = await db.get_spatial_step_trace(sim_id, step_idx)
-            await self.send_message("spatial_step_trace", spatial_step_trace, cmdid=cmdid)
+            await self.send_message("spatial_step_trace", spatial_step_trace, cmdid=msg.cmdid)
 
-        if cmd == "get_last_spatial_step_trace_idx":
+        if msg.cmd == "get_last_spatial_step_trace_idx":
             sim_id = msg.data["simId"]
             step_idx = await db.get_last_spatial_step_trace_idx(sim_id)
-            await self.send_message("last_spatial_step_trace_idx", step_idx, cmdid=cmdid)
+            await self.send_message("last_spatial_step_trace_idx", step_idx, cmdid=msg.cmdid)
 
     def on_close(self) -> None:
         self.closed = True
@@ -210,7 +213,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             sim_manager.remove_client(self.user_id, self)
         L.debug("client connection has been closed")
 
-    async def send_message(self, cmd, data: Any = None, cmdid: Optional[int] = None) -> None:
+    async def send_message(self, cmd: str, data: Any = None, cmdid: Optional[int] = None) -> None:
         if self.closed:
             return
 
@@ -223,7 +226,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             L.exception(e)
 
 
-class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
+class SimRunnerWSHandler(WebSocketHandler):
     def __init__(self, *args, **kwargs) -> None:
         self.closed = False
         self.sim_worker = SimWorker(self)
@@ -250,7 +253,7 @@ class SimRunnerWSHandler(tornado.websocket.WebSocketHandler):
         coro = sim_manager.remove_worker(self.sim_worker)
         asyncio.create_task(coro)
 
-    async def send_message(self, cmd, data=None, cmdid=None) -> None:
+    async def send_message(self, cmd: str, data: Any = None, cmdid: Optional[int] = None) -> None:
         if self.closed:
             return
 

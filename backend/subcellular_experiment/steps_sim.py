@@ -4,7 +4,8 @@ import re
 import time
 import math
 from datetime import datetime
-from typing import Callable, Any
+from typing import Callable, Any, Dict, List
+from collections import defaultdict
 
 import numpy as np
 import pysb
@@ -396,7 +397,7 @@ class StepsSim:
 
         self.log("about to create STEPS diffusion rules")
         steps_diffs = []
-        diff_pysb_spec_idx_dict = {}
+        diff_pysb_spec_idx_dict: Dict[str, List[int]] = defaultdict(list)
         model_diffs = self.sim_config["model"]["diffusions"]
 
         diff_observables = [
@@ -406,7 +407,8 @@ class StepsSim:
         ]
 
         for observable_idx, observable in enumerate(diff_observables):
-            diff_common_name = re.match(f"{DIFF_PREFIX}(.*)", observable.name).groups()[0]
+            match = re.match(f"{DIFF_PREFIX}(.*)", observable.name)
+            diff_common_name = "" if match is None else match.groups()[0]
             for pysb_spec_idx in observable.species:
                 steps_spec = get_steps_spec_by_pysb_spec_idx(pysb_spec_idx)
                 pysb_spec = pysb_model.species[pysb_spec_idx]
@@ -418,8 +420,6 @@ class StepsSim:
                 diff = smodel.Diff(diff_name, sys, steps_spec, dcst=dcst)
                 steps_diffs.append(diff)
 
-                if comp_name not in diff_pysb_spec_idx_dict:
-                    diff_pysb_spec_idx_dict[comp_name] = []
                 diff_pysb_spec_idx_dict[comp_name].append(pysb_spec_idx)
 
         self.log("about to create STEPS reactions")
@@ -702,7 +702,6 @@ class StepsSim:
                                 spec_count = sim.getPatchCount(comp_name, pysb_spec.name)
                         except Exception:
                             L.warning("Runtime warning")
-                            print(comp_name, pysb_spec.name)
                         mol_count += spec_count
                     trace_values[
                         tidx, observable_idx
@@ -730,10 +729,9 @@ class StepsSim:
                     # client requires them, waiting for ack for each of them.
                     time.sleep(0.02)
 
-                    spatial_trace_data_dict = {}
+                    spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
                     for structure in solver_config["spatialSampling"]["structures"]:
-                        structure_name = structure["name"]
-                        spatial_trace_data_dict[structure_name] = {}
+                        structure_name: str = structure["name"]
                         struct_empty = True
                         geom_struct = get_geom_struct_by_model_struct_name(structure_name)
                         geom_idxs_key = (
@@ -767,9 +765,6 @@ class StepsSim:
                                     geom_idxs_key: geom_idxs_np[non_zero_counts],
                                     "molCounts": mol_counts[non_zero_counts],
                                 }
-
-                        if struct_empty:
-                            del spatial_trace_data_dict[structure_name]
 
                     self.send_progress(SimSpatialStepTrace(tidx, tpnt, spatial_trace_data_dict))
 

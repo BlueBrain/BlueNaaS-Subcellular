@@ -1,7 +1,11 @@
 from typing import Optional, Any
 
 from typing_extensions import Literal
+from tornado import websocket
 from pydantic import BaseModel
+
+WorkerStatus = Literal["ready", "busy"]
+SimStatus = Literal["queued", "init", "started", "error", "finished", "cancelled"]
 
 
 class SimConfig(BaseModel):
@@ -35,5 +39,6 @@ class SimId(BaseModel):
     userId: str
 
 
-WorkerStatus = Literal["ready", "busy"]
-SimStatus = Literal["queued", "init", "started", "error", "finished", "cancelled"]
+class WebSocketHandler(websocket.WebSocketHandler):
+    async def send_message(self, cmd: str, data: Any = None, cmdid: Optional[int] = None) -> None:
+        raise NotImplementedError

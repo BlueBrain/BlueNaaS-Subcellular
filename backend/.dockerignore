@@ -12,3 +12,4 @@ subcellular_experiment/__pycache__
 !build
 !main.py
 !requirements.txt
+!mypy.ini
