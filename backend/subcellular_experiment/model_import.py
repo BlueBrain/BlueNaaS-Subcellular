@@ -60,7 +60,7 @@ def revision_from_excel(base64_encoded_xlsx_data):
                 for entity in sheet_data
                 if entity["name"] == ""
             ]
-        except Exception as error:
+        except Exception:
             revision_data[sheet_name] = []
 
     L.debug("done processing importing revision data from an excel source")

@@ -8,10 +8,10 @@ from pymongo.errors import ConfigurationError, AutoReconnect
 from motor.motor_asyncio import AsyncIOMotorClient
 from sentry_sdk import capture_message
 
-from .bngl_extended_model import EntityType, entity_coll_name_map
+from .model_to_bngl import ENTITY_TYPES
 from .logger import get_logger, log_many
 from .envvars import MONGO_URI
-from .types import SimId
+from .types import SimId, Simulation, UpdateSimulation
 
 L = get_logger(__name__)
 
@@ -47,7 +47,7 @@ def get_expr_entities(expr, entity_dict):
 def get_def_structure_ids(definition, db_entities):
     st_def_set = {match_obj.groups()[0] for match_obj in list(st_def_r.finditer(definition))}
 
-    structures = [entity for entity in db_entities if entity["entityType"] == EntityType.STRUCTURE]
+    structures = [entity for entity in db_entities if entity["entityType"] == "structure"]
 
     spec_structure_ids = [st["_id"] for st in structures if st["name"] in st_def_set]
 
@@ -57,7 +57,7 @@ def get_def_structure_ids(definition, db_entities):
 def get_def_molecule_ids(definition, db_entities):
     mol_def_set = {match_obj.groups()[0] for match_obj in list(mol_def_r.finditer(definition))}
 
-    molecules = [entity for entity in db_entities if entity["entityType"] == EntityType.MOLECULE]
+    molecules = [entity for entity in db_entities if entity["entityType"] == "molecule"]
 
     spec_mol_ids = [
         mol["_id"]
@@ -69,12 +69,10 @@ def get_def_molecule_ids(definition, db_entities):
 
 
 def revision_data_from_entity_list(entity_list):
-    revision_data = {}
-    for entityType, coll_name in entity_coll_name_map.items():
-        revision_data[coll_name] = [
-            entity for entity in entity_list if entity["entityType"] == entityType
-        ]
-    return revision_data
+    return {
+        f"{entity_type}s": [entity for entity in entity_list if entity["entityType"] == entity_type]
+        for entity_type in ENTITY_TYPES
+    }
 
 
 @wrapt.decorator
@@ -149,29 +147,28 @@ class Db:
         return await self.db.find_one({"id": geometry_id})
 
     @mongo_autoreconnect
-    async def create_simulation(self, simulation):
-        simulation["deleted"] = False
-        await self.db.simulations.insert_one(simulation)
+    async def create_simulation(self, simulation: Simulation):
+        await self.db.simulations.insert_one({**simulation.dict(), "deleted": False})
 
     @mongo_autoreconnect
-    async def get_simulations(self, user_id, model_id):
+    async def get_simulations(self, user_id: str, model_id: str):
         return await self.db.simulations.find(
             {"userId": user_id, "modelId": model_id, "deleted": False}
         ).to_list(None)
 
     @mongo_autoreconnect
-    async def update_simulation(self, simulation):
+    async def update_simulation(self, simulation: UpdateSimulation):
         await self.db.simulations.update_one(
-            {"id": simulation["id"], "userId": simulation["userId"], "deleted": False},
-            {"$set": simulation},
+            {"id": simulation.id, "userId": simulation.userId, "deleted": False},
+            {"$set": simulation.dict(exclude_none=True)},
         )
 
     @mongo_autoreconnect
-    async def create_sim_spatial_step_trace(self, spatial_step_trace):
+    async def create_sim_spatial_step_trace(self, spatial_step_trace: dict) -> None:
         await self.db.simSpatialStepTraces.insert_one(spatial_step_trace)
 
     @mongo_autoreconnect
-    async def create_sim_trace(self, sim_trace):
+    async def create_sim_trace(self, sim_trace: dict) -> None:
         await self.db.simTraces.insert_one(sim_trace)
 
     @mongo_autoreconnect
@@ -248,7 +245,7 @@ class Db:
         found_entities = []
 
         # Query structures
-        structure_q = {"entityType": EntityType.STRUCTURE, "$and": []}
+        structure_q = {"entityType": "structure", "$and": []}
 
         rev_q = []
         for version in versions:
@@ -283,7 +280,7 @@ class Db:
             return revision_data_from_entity_list([])
 
         # Query molecules
-        mol_q = {"entityType": EntityType.MOLECULE, "$and": [{"$or": rev_q}]}
+        mol_q = {"entityType": "molecule", "$and": [{"$or": rev_q}]}
 
         if mol_q_tokens:
             mol_q["$and"].append({"$or": []})
@@ -310,7 +307,7 @@ class Db:
 
         # Query species, reactions and diffusions
         q = {
-            "entityType": {"$in": [EntityType.SPECIES, EntityType.REACTION, EntityType.DIFFUSION]},
+            "entityType": {"$in": ["species", "reaction", "diffusion"]},
             "structureIds": {"$in": structure_ids},
             "moleculeIds": {"$in": molecule_ids},
         }
@@ -318,9 +315,8 @@ class Db:
         tmp_entities = await self.db.repo.find(q).to_list(None)
         found_entities += tmp_entities
 
-        species = [spec for spec in tmp_entities if spec["entityType"] == EntityType.SPECIES]
-        reactions = [reac for reac in tmp_entities if reac["entityType"] == EntityType.REACTION]
-        diffusions = [diff for diff in tmp_entities if diff["entityType"] == EntityType.DIFFUSION]
+        species = [spec for spec in tmp_entities if spec["entityType"] == "species"]
+        reactions = [reac for reac in tmp_entities if reac["entityType"] == "reaction"]
 
         # Filter out structures without species
         spec_structure_ids = [
@@ -351,12 +347,6 @@ class Db:
         tmp_entities = await self.db.repo.find(q).to_list(None)
         found_entities += tmp_entities
 
-        parameters = [
-            param for param in tmp_entities if param["entityType"] == EntityType.PARAMETER
-        ]
-        functions = [func for func in tmp_entities if func["entityType"] == EntityType.FUNCTION]
-        observables = [o for o in tmp_entities if o["entityType"] == EntityType.OBSERVABLE]
-
         filtered_entities = [e for e in found_entities if e["entityType"] in entity_q_type_set]
 
         return revision_data_from_entity_list(filtered_entities)
@@ -369,12 +359,7 @@ class Db:
             else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
         )
         all_entities = await self.db.repo.find({"branch": branch, "rev": query_rev}).to_list(None)
-        revision_data = {}
-        for entityType, coll_name in entity_coll_name_map.items():
-            revision_data[coll_name] = [
-                entity for entity in all_entities if entity["entityType"] == entityType
-            ]
-        return revision_data
+        return revision_data_from_entity_list(all_entities)
 
     @mongo_autoreconnect
     async def get_user_branches(self, user_id):
@@ -395,16 +380,15 @@ class Db:
             rev = 1
 
         entity_types_wo_refs = [
-            EntityType.STRUCTURE,
-            EntityType.MOLECULE,
-            EntityType.PARAMETER,
-            EntityType.FUNCTION,
-            EntityType.OBSERVABLE,
+            "structure",
+            "molecule",
+            "parameter",
+            "function",
+            "observable",
         ]
 
         for entity_type in entity_types_wo_refs:
-            coll_name = entity_coll_name_map[entity_type]
-            for entity in revision_data[coll_name]:
+            for entity in revision_data[entity_type + "s"]:
                 db_entry = {
                     **entity,
                     "rev": rev,
@@ -419,14 +403,13 @@ class Db:
                 saved_db_entities.append(db_entry)
 
         # Additional structures for get_expr_entities to work
-        dep_entity_types = [EntityType.PARAMETER, EntityType.FUNCTION, EntityType.OBSERVABLE]
+        dep_entity_types = ["parameter", "function", "observable"]
         dep_entities = [e for e in saved_db_entities if e["entityType"] in dep_entity_types]
         dep_entity_dict = {entity["name"]: entity for entity in dep_entities}
 
         # TODO: refactor
         # add ids for structures and molecules for every species
-        spec_coll_name = entity_coll_name_map[EntityType.SPECIES]
-        for spec in revision_data[spec_coll_name]:
+        for spec in revision_data["species"]:
             spec_def = spec["definition"]
             structure_ids = get_def_structure_ids(spec_def, saved_db_entities)
             molecule_ids = get_def_molecule_ids(spec_def, saved_db_entities)
@@ -438,14 +421,14 @@ class Db:
                 parameter_ids += [
                     entity["_id"]
                     for entity in get_expr_entities(conc_dic[conc_source], dep_entity_dict)
-                    if entity["entityType"] == EntityType.PARAMETER
+                    if entity["entityType"] == "parameter"
                 ]
 
             db_entry = {
                 **spec,
                 "rev": rev,
                 "branch": branch,
-                "entityType": EntityType.SPECIES,
+                "entityType": "species",
                 "userId": user_id,
                 "structureIds": structure_ids,
                 "moleculeIds": molecule_ids,
@@ -457,8 +440,7 @@ class Db:
             saved_db_entities.append(db_entry)
 
         # add ids for structures and molecules for every reaction
-        spec_coll_name = entity_coll_name_map[EntityType.REACTION]
-        for reac in revision_data[spec_coll_name]:
+        for reac in revision_data["reactions"]:
             reac_def = reac["definition"]
             structure_ids = get_def_structure_ids(reac_def, saved_db_entities)
             molecule_ids = get_def_molecule_ids(reac_def, saved_db_entities)
@@ -467,26 +449,26 @@ class Db:
             parameter_ids = [
                 entity["_id"]
                 for entity in get_expr_entities(reac["kf"], dep_entity_dict)
-                if entity["entityType"] == EntityType.PARAMETER
+                if entity["entityType"] == "parameter"
             ]
 
             function_ids = [
                 entity["_id"]
                 for entity in get_expr_entities(reac["kf"], dep_entity_dict)
-                if entity["entityType"] == EntityType.FUNCTION
+                if entity["entityType"] == "function"
             ]
 
             observable_ids = [
                 entity["_id"]
                 for entity in get_expr_entities(reac["kf"], dep_entity_dict)
-                if entity["entityType"] == EntityType.OBSERVABLE
+                if entity["entityType"] == "observable"
             ]
 
             db_entry = {
                 **reac,
                 "rev": rev,
                 "branch": branch,
-                "entityType": EntityType.REACTION,
+                "entityType": "reaction",
                 "userId": user_id,
                 "structureIds": structure_ids,
                 "moleculeIds": molecule_ids,
@@ -500,8 +482,7 @@ class Db:
             saved_db_entities.append(db_entry)
 
         # add ids for structures and molecules for every diffusion
-        spec_coll_name = entity_coll_name_map[EntityType.DIFFUSION]
-        for diffusion in revision_data[spec_coll_name]:
+        for diffusion in revision_data["diffusions"]:
             diff_def = diffusion["definition"]
             structure_ids = get_def_structure_ids(diff_def, saved_db_entities)
             molecule_ids = get_def_molecule_ids(diff_def, saved_db_entities)
@@ -509,7 +490,7 @@ class Db:
                 **diffusion,
                 "rev": rev,
                 "branch": branch,
-                "entityType": EntityType.DIFFUSION,
+                "entityType": "diffusion",
                 "userId": user_id,
                 "structureIds": structure_ids,
                 "moleculeIds": molecule_ids,

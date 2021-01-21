@@ -4,7 +4,6 @@ import asyncio
 from types import FrameType
 from typing import Union, Any, Optional
 import signal
-from contextlib import suppress
 
 import tornado.ioloop
 import tornado.websocket
@@ -15,13 +14,25 @@ from sentry_sdk.integrations.tornado import TornadoIntegration
 from .utils import ExtendedJSONEncoder
 from .sim_manager import SimManager, SimWorker
 from .db import Db
-from .geometry import Geometry
+from .geometry import create_geometry
 from .model_export import get_exported_model
 from .model_import import revision_from_excel
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
-from .types import SimConfig, SimWorkerMessage, Message, SimId, WebSocketHandler
+
+from .worker_message import SimWorkerMessage
+from .types import (
+    SimConfig,
+    Message,
+    SimId,
+    WebSocketHandler,
+    Simulation,
+    UpdateSimulation,
+    GetSimulations,
+    GetExportedModel,
+)
+
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
@@ -34,14 +45,6 @@ L = get_logger(__name__)
 
 db = Db()
 sim_manager = SimManager(db)
-
-
-SEC_SHORT_TYPE_DICT = {
-    "soma": "soma",
-    "basal_dendrite": "dend",
-    "apical_dendrite": "apic",
-    "axon": "axon",
-}
 
 
 class WSHandler(WebSocketHandler):
@@ -63,7 +66,7 @@ class WSHandler(WebSocketHandler):
         return True
 
     @staticmethod
-    def validate_sim_id(sim_id: Any):
+    def validate_id(sim_id: Any):
         if not isinstance(sim_id, str):
             raise ValueError("Invalid data")
 
@@ -79,7 +82,7 @@ class WSHandler(WebSocketHandler):
         if msg.cmd == "get_log":
             sim_id = msg.data
 
-            self.validate_sim_id(sim_id)
+            self.validate_id(sim_id)
 
             if sim_id in sim_manager.running_sim_ids:
                 await sim_manager.request_tmp_sim_log(sim_id, msg.cmdid)
@@ -89,7 +92,7 @@ class WSHandler(WebSocketHandler):
 
         if msg.cmd == "get_trace":
             sim_id = msg.data
-            self.validate_sim_id(sim_id)
+            self.validate_id(sim_id)
 
             if sim_id in sim_manager.running_sim_ids:
                 await sim_manager.request_tmp_sim_trace(sim_id, msg.cmdid)
@@ -99,14 +102,13 @@ class WSHandler(WebSocketHandler):
                     await self.send_message("simTrace", trace)
 
         if msg.cmd == "cancel_simulation":
-            sim_id = SimId(**msg.data)
-            await sim_manager.cancel_sim(sim_id)
+            await sim_manager.cancel_sim(SimId(**msg.data))
 
         if msg.cmd == "create_simulation":
-            await db.create_simulation(msg.data)
+            await db.create_simulation(Simulation(**msg.data))
 
         if msg.cmd == "update_simulation":
-            await db.update_simulation(msg.data)
+            await db.update_simulation(UpdateSimulation(**msg.data))
 
         if msg.cmd == "delete_simulation":
             sim = SimId(**msg.data)
@@ -117,41 +119,46 @@ class WSHandler(WebSocketHandler):
             await db.delete_sim_log(sim)
 
         if msg.cmd == "get_simulations":
-            model_id = msg.data["modelId"]
+            model_id = GetSimulations(**msg.data).modelId
             simulations = await db.get_simulations(self.user_id, model_id)
             await self.send_message("simulations", {"simulations": simulations}, cmdid=msg.cmdid)
 
         if msg.cmd == "create_geometry":
             geometry_config = msg.data
             geometry_db = await db.create_geometry(geometry_config)
-            geometry_id = geometry_db.inserted_id
-            geometry = Geometry(str(geometry_id), geometry_config)
-            structure_size_dict = {st["name"]: st["size"] for st in geometry.structures}
-            L.debug(f"new geometry {str(geometry.id)} has been created")
+            geometry_id = str(geometry_db.inserted_id)
+            structure_sizes = create_geometry(geometry_id, geometry_config)
+            L.debug(f"new geometry {geometry_id} has been created")
             await self.send_message(
                 "geometry",
-                {"id": geometry.id, "structureSize": structure_size_dict},
+                {"id": geometry_id, "structureSize": structure_sizes},
                 cmdid=msg.cmdid,
             )
 
         if msg.cmd == "get_exported_model":
-            model_format = msg.data["format"]
-            model_dict = msg.data["model"]
-            model_str = None
-            error_msg = None
+            model_data = GetExportedModel(**msg.data)
+
+            model = ""
+            error_msg = ""
             try:
-                model_str = get_exported_model(model_dict, model_format)
+                model = get_exported_model(model_data.model.dict(), model_data.format)
             except Exception as error:
-                await self.send_message(
-                    "exported_model",
-                    {"fileContent": model_str, "error": str(error)},
-                    cmdid=msg.cmdid,
-                )
+                L.warning("Model export error")
+                error_msg = error.args[0] if len(error.args) > 0 else "Model export error"
+
+            await self.send_message(
+                "exported_model",
+                {"fileContent": model, "error": error_msg},
+                cmdid=msg.cmdid,
+            )
 
         if msg.cmd == "convert_from_sbml":
+
             sbml = ""
-            with suppress(ValueError):
+            try:
                 sbml = sbml_to_bngl(msg.data["sbml"])
+            except (ValueError, KeyError) as e:
+                L.warnimg(f"Model import error {type(e)}: {e.args}")
 
             await self.send_message("from_sbml", sbml, cmdid=msg.cmdid)
 
@@ -242,10 +249,7 @@ class SimRunnerWSHandler(WebSocketHandler):
     # pylint: disable=invalid-overridden-method
     async def on_message(self, rawMessage: Union[str, bytes]) -> None:
         msg = SimWorkerMessage(**json.loads(rawMessage))
-
-        await sim_manager.process_worker_message(
-            self.sim_worker, msg.message, msg.data, cmdid=msg.cmdid
-        )
+        await sim_manager.process_worker_message(self.sim_worker, msg)
 
     def on_close(self) -> None:
         L.info("sim worker connection has been closed")
@@ -267,7 +271,7 @@ class SimRunnerWSHandler(WebSocketHandler):
 
 
 class HealthHandler(tornado.web.RequestHandler):
-    def get(self):
+    def get(self) -> None:
         self.write("ok")
 
 

@@ -14,7 +14,6 @@ disable=
       W1202,
       no-self-use,
       too-many-locals,
-      unused-variable,
       too-many-branches,
       too-many-statements,
       too-many-nested-blocks,
@@ -22,7 +21,8 @@ disable=
       E0401,
       abstract-method,
       W0221,
-      E0611
+      E0611,
+      too-many-return-statements,
 
 [DESIGN]
 # Maximum number of arguments for function / method

@@ -6,43 +6,25 @@ import shutil
 from pysb.importers import bngl
 from pysb.export import export
 
-from .bngl_extended_model import BnglExtModel
+from .model_to_bngl import model_to_bngl
+from .types import ModelFormat
 
 
-def get_exported_model(model_dict, model_format):
+def get_exported_model(model: dict, model_format: ModelFormat):
     if model_format == "bngl":
-        return get_exported_bngl_model(model_dict)
+        return model_to_bngl(model)
     if model_format == "ebngl":
-        return get_exported_ebngl_model(model_dict)
+        return json.dumps(model)
     if model_format == "pysb_flat":
-        return get_exported_pysb_model(model_dict)
+        pysb_model = pysb_model_from_bngl_str(model_to_bngl(model))
+        return export(pysb_model, "pysb_flat")
     if model_format == "sbml":
-        return get_exported_sbml_model(model_dict)
+        pysb_model = pysb_model_from_bngl_str(model_to_bngl(model))
+        return export(pysb_model, "sbml")
     return ""
 
 
-def get_exported_bngl_model(model_dict):
-    bnglModel = BnglExtModel(model_dict)
-    return bnglModel.to_bngl()
-
-
-def get_exported_ebngl_model(model_dict):
-    return json.dumps(model_dict)
-
-
-def get_exported_pysb_model(model_dict):
-    bnglModel = BnglExtModel(model_dict)
-    model = pysb_model_from_bngl_str(bnglModel.to_bngl())
-    return export(model, "pysb_flat")
-
-
-def get_exported_sbml_model(model_dict):
-    bnglModel = BnglExtModel(model_dict)
-    model = pysb_model_from_bngl_str(bnglModel.to_bngl())
-    return export(model, "sbml")
-
-
-def pysb_model_from_bngl_str(bngl_str):
+def pysb_model_from_bngl_str(bngl_str: str):
     tmp_dir = tempfile.mkdtemp()
     os.chdir(tmp_dir)
 

@@ -10,7 +10,7 @@ from libsbml import (
 )
 
 
-def parseUnitValue(unit_definition: UnitDefinition) -> float:
+def parse_unit_value(unit_definition: UnitDefinition) -> float:
     """Returns the value of unit_definition in sbml base units.
     http://sbml.org/Software/libSBML/5.18.0/docs/python-api/classlibsbml_1_1_unit_definition.html
     """
@@ -39,6 +39,7 @@ def species_str(species_refs: List[SpeciesReference], model: Model):
 
 
 def rate_laws(kinetic_law: KineticLaw, model: Model):
+    """Converts an sbml kinetic law to a series of bionetgen reaction rules."""
     formula = kinetic_law.getFormula().replace(" ", "")
 
     parameter_name_by_id = {
@@ -64,7 +65,7 @@ def sbml_to_bngl(xml: str):
     model = document.getModel()
 
     units = "\n".join(
-        f"{unit.getId()} {parseUnitValue(unit)}    #{unit.getName()}"
+        f"{unit.getId()} {parse_unit_value(unit)}    #{unit.getName()}"
         for unit in model.getListOfUnitDefinitions()
     )
 

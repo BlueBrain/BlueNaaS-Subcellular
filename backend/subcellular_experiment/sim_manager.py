@@ -2,14 +2,15 @@
 from typing import Optional, List, Dict, Any
 from collections import defaultdict
 
-from .sim import (
-    SimProgress,
-    SimTrace,
-    SimLogMessage,
-    SimSpatialStepTrace,
-    SimLog,
+from .sim import SimProgress, SimTrace, SimLogMessage, SimSpatialStepTrace, SimLog, SimStatus
+from .worker_message import Status, SimWorkerMessage
+from .types import (
+    SimConfig,
+    SimId,
+    WebSocketHandler,
+    UpdateSimulation,
+    SimStatus as SimStatusLiteral,
 )
-from .types import SimConfig, WorkerStatus, SimId, SimStatus, WebSocketHandler
 from .logger import get_logger
 from .db import Db
 
@@ -71,22 +72,21 @@ class SimManager:
         worker.sim_conf = sim_config
         self.log_workers_status()
 
-    async def process_worker_message(
-        self, worker: SimWorker, msg: str, data: Any, cmdid=None
-    ) -> None:
+    async def process_worker_message(self, worker: SimWorker, msg: SimWorkerMessage) -> None:
 
-        if msg == "worker_connect":
-            if data:
+        if msg.message == "worker_connect":
+            if msg.data:
                 L.info("worker_reconnected")
-                sim_config = SimConfig(**data)
+                sim_config = SimConfig(**msg.data)
                 self.prune_workers(worker, sim_config)
             return
 
-        if msg == "status":
-            status: WorkerStatus = data
-            if status == "ready":
+        if msg.message == "status":
+            status = Status(**msg.dict())
+
+            if status.data == "ready":
                 worker.sim_conf = None
-            L.debug(f"sim worker reported as {status}")
+            L.debug(f"sim worker reported as {status.data}")
             self.log_workers_status()
             await self.run_available()
             return
@@ -95,35 +95,52 @@ class SimManager:
             L.warning("Worker doesn't have a sim config")
             return
 
-        if msg == SimProgress.TYPE:
-            await self.process_sim_progress(worker.sim_conf, data["progress"])
-        elif msg == SimTrace.TYPE:
-            await self.process_sim_trace(worker.sim_conf, data)
-        elif msg == "simStatus":
+        if msg.message == "simProgress":
+            sim_progress = SimProgress(**msg.data)
+            await self.process_sim_progress(worker.sim_conf, sim_progress.progress)
+        elif msg.message == "simTrace":
+            sim_trace = SimTrace(**msg.data)
+            await self.process_sim_trace(worker.sim_conf, sim_trace)
+        elif msg.message == "simStatus":
+
+            sim_status = SimStatus(**msg.data)
+
             await self.process_sim_status(
-                worker.sim_conf.userId, worker.sim_conf.simId, data["status"], data
+                worker.sim_conf.userId, worker.sim_conf.simId, sim_status.status, sim_status.dict()
             )
-        elif msg == SimLogMessage.TYPE:
-            await self.process_sim_log_msg(worker.sim_conf, data)
-        elif msg == SimLog.TYPE:
-            await self.process_sim_log(worker.sim_conf, data)
-        elif msg == SimSpatialStepTrace.TYPE:
-            await self.process_sim_spatial_step_trace(worker.sim_conf, data)
-        elif msg == "tmp_sim_log":
-            tmp_sim_log = {
-                "log": data,
+
+        elif msg.message == "simLog":
+            sim_log = SimLog(**msg.data)
+
+            log = {
+                "log": sim_log.log,
                 "userId": worker.sim_conf.userId,
                 "simId": worker.sim_conf.id,
             }
-            await self.send_message(worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=cmdid)
-        elif msg == "tmp_sim_trace":
-            tmp_sim_trace = {
-                **data,
+
+            await self.db.create_sim_log(log)
+
+        elif msg.message == "simLogMessage":
+            sim_log_msg = SimLogMessage(**msg.data)
+            await self.send_message(
+                worker.sim_conf.userId,
+                "simLogMessage",
+                {**sim_log_msg.dict(), "simId": worker.sim_conf.id},
+            )
+        elif msg.message == "simSpatialStepTrace":
+            trace = SimSpatialStepTrace(**msg.data)
+
+            await self.process_sim_spatial_step_trace(worker.sim_conf, trace)
+        elif msg.message == "tmp_sim_log":
+            sim_log = SimLog(**msg.data)
+
+            tmp_sim_log = {
+                "log": sim_log.log,
                 "userId": worker.sim_conf.userId,
                 "simId": worker.sim_conf.id,
             }
             await self.send_message(
-                worker.sim_conf.userId, "tmp_sim_trace", tmp_sim_trace, cmdid=cmdid
+                worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=msg.cmdid
             )
 
     async def schedule_sim(self, sim_conf: SimConfig) -> None:
@@ -196,60 +213,47 @@ class SimManager:
         await worker.ws.send_message("cancel_sim")  # type: ignore
 
     async def process_sim_status(
-        self, user_id: str, sim_id: str, status: SimStatus, context={}
+        self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}
     ) -> None:
         await self.db.update_simulation(
-            {**context, "id": sim_id, "userId": user_id, "status": status}
+            UpdateSimulation(**{**context, "id": sim_id, "userId": user_id, "status": status})
         )
         await self.send_sim_status(user_id, sim_id, status, context=context)
 
-    async def process_sim_progress(self, sim_conf: SimConfig, progress, context={}):
+    async def process_sim_progress(self, sim_conf: SimConfig, progress: float, context={}) -> None:
         user_id = sim_conf.userId
         sim_id = sim_conf.id
         await self.db.update_simulation(
-            {**context, "id": sim_id, "userId": user_id, "progress": progress}
+            UpdateSimulation(**{**context, "id": sim_id, "userId": user_id, "progress": progress})
         )
 
         await self.send_message(
-            user_id, SimProgress.TYPE, {**context, "simId": sim_id, "progress": progress}
+            user_id, "simProgress", {**context, "simId": sim_id, "progress": progress}
         )
 
-    async def process_sim_log_msg(self, sim_conf: SimConfig, log_msg):
-        await self.send_message(
-            sim_conf.userId, SimLogMessage.TYPE, {**log_msg, "simId": sim_conf.id}
-        )
-
-    async def process_sim_log(self, sim_conf: SimConfig, sim_log):
-        user_id = sim_conf.userId
-        sim_id = sim_conf.id
-
-        log = {"log": sim_log, "userId": user_id, "simId": sim_id}
-
-        await self.db.create_sim_log(log)
-        # TODO: do we need to send whole log at the end of a simulation?
-        await self.send_message(user_id, SimLog.TYPE, log)
-
-    async def process_sim_spatial_step_trace(self, sim_conf: SimConfig, spatial_step_trace) -> None:
+    async def process_sim_spatial_step_trace(
+        self, sim_conf: SimConfig, spatial_step_trace: SimSpatialStepTrace
+    ) -> None:
         user_id = sim_conf.userId
 
         await self.db.create_sim_spatial_step_trace(
-            {**spatial_step_trace, "userId": user_id, "simId": sim_conf.id}
+            {**spatial_step_trace.dict(), "userId": user_id, "simId": sim_conf.id}
         )
 
         await self.send_message(
             user_id,
-            SimSpatialStepTrace.TYPE,
-            {**spatial_step_trace, "simId": sim_conf.id},
+            "simSpatialStepTrace",
+            {**spatial_step_trace.dict(), "simId": sim_conf.id},
         )
 
-    async def process_sim_trace(self, sim_conf: SimConfig, sim_trace):
+    async def process_sim_trace(self, sim_conf: SimConfig, sim_trace: SimTrace) -> None:
         user_id = sim_conf.userId
         sim_id = sim_conf.id
 
-        if sim_trace["persist"]:
+        if sim_trace.persist:
             await self.db.create_sim_trace(
                 {
-                    **sim_trace,
+                    **sim_trace.dict(),
                     "simId": sim_id,
                     "userId": user_id,
                 }
@@ -257,12 +261,12 @@ class SimManager:
 
         status_message = {"simId": sim_id, "userId": user_id, "status": "finished"}
 
-        status_message.update(sim_trace)
-        if sim_trace["stream"]:
-            await self.send_message(user_id, SimTrace.TYPE, status_message)
+        status_message.update(sim_trace.dict())
+        if sim_trace.stream:
+            await self.send_message(user_id, "simTrace", status_message)
 
     async def send_sim_status(
-        self, user_id: str, sim_id: str, status: SimStatus, context={}
+        self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}
     ) -> None:
         await self.send_message(
             user_id,

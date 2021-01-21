@@ -246,10 +246,12 @@ export default {
       return;
     }
 
-    const { fileContent: modelData } = await socket.request('get_exported_model', {
+    const { fileContent: modelData, error } = await socket.request('get_exported_model', {
       model,
       format: exportFormat,
     });
+
+    if (error) throw new Error(error);
 
     const fileExtension = constants.ModelFormatExtensions[exportFormat];
     saveAs(new Blob([modelData]), `${state.model.name}.${fileExtension}`);

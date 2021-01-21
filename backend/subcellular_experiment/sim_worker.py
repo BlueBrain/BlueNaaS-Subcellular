@@ -17,8 +17,8 @@ import sentry_sdk
 from sentry_sdk import capture_message
 from tornado.websocket import websocket_connect, WebSocketClosedError, WebSocketClientConnection
 
-from .enums import SimWorkerStatus
-from .sim import SimStatus, SimLogMessage
+from .worker_message import WorkerStatus
+from .sim import SimStatus, SimLogMessage, SimData
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
@@ -38,9 +38,9 @@ class SimWorker:
     def __init__(self) -> None:
         self.sim_proc: Optional[Process] = None
         self.sim_thread: Optional[Thread] = None
-        self.sim_queue: "Queue[Any]" = Queue(10)
+        self.sim_queue: Queue = Queue(10)
         self.terminating = False
-        self.status = SimWorkerStatus.READY
+        self.status: WorkerStatus = "ready"
         self.socket: Optional[WebSocketClientConnection] = None
         self.sim_log: Dict[str, List[str]] = defaultdict(list)
         self.sim_config: dict = {}
@@ -51,10 +51,10 @@ class SimWorker:
         signal.signal(signal.SIGTERM, self.on_terminate)
         self.loop.run_until_complete(self.listen())
 
-    async def listen(self):
+    async def listen(self) -> None:
         await self.ws_connect()
         while True:
-            msg = await self.socket.read_message()
+            msg = await self.socket.read_message()  # type: ignore
             if msg is not None:
                 self.on_message(msg)
                 continue
@@ -63,7 +63,7 @@ class SimWorker:
             L.debug("Backend ws closed")
             await self.ws_connect()
 
-    async def ws_connect(self):
+    async def ws_connect(self) -> None:
         for wait in itertools.chain([1, 2, 4, 8, 15, 30], itertools.repeat(60)):
             try:
                 self.socket = await websocket_connect(
@@ -78,13 +78,12 @@ class SimWorker:
 
         self.closed = False
         L.debug("ws connection open")
-        self.send_message(
-            "status", SimWorkerStatus.READY if self.sim_proc is None else SimWorkerStatus.BUSY
-        )
+        self.send_message("status", "ready" if self.sim_proc is None else "busy")
         self.send_message("worker_connect", self.sim_config)
 
-    def teardown(self):
-        self.socket.close()
+    def teardown(self) -> None:
+        if self.socket is not None:
+            self.socket.close()
         sys.exit(0)
 
     def on_message(self, raw_message: Union[bytes, str]) -> None:
@@ -105,7 +104,7 @@ class SimWorker:
             self.on_cancel_sim_msg()
 
         elif msg == "get_tmp_sim_log":
-            self.send_message("tmp_sim_log", self.sim_log, cmdid=cmdid)
+            self.send_message("tmp_sim_log", {"log": self.sim_log}, cmdid=cmdid)
 
     def on_cancel_sim_msg(self) -> None:
         L.debug("send SIGTERM to simulation process")
@@ -123,40 +122,36 @@ class SimWorker:
         L.debug("start loop to get sim data from MP queue")
 
         while True:
-            sim_data = self.sim_queue.get()
+            sim_data: SimData = self.sim_queue.get()
+
             if sim_data is None:
                 break
-
-            try:
-                data = sim_data.dict()
-            except AttributeError:
-                data = sim_data.to_dict()
 
             if isinstance(sim_data, SimLogMessage):
                 self.sim_log[sim_data.source].append(sim_data.message)
 
             payload = {
-                **data,
+                **sim_data.dict(),
                 **{"simId": self.sim_config["id"], "userId": self.sim_config["userId"]},
             }
 
-            self.send_message(sim_data.TYPE, payload)
+            self.send_message(sim_data.type, payload)
 
         L.debug("joining simulator process")
         self.sim_proc.join()
         self.sim_proc = None
         self.sim_config = {}
 
-        self.send_message("simLog", self.sim_log)
+        self.send_message("simLog", {"log": self.sim_log})
         self.sim_log = defaultdict(list)
 
         if self.terminating:
             self.teardown()
 
-        self.send_message("status", SimWorkerStatus.READY)
+        self.send_message("status", "ready")
 
     def on_run_sim_msg(self, sim_config: dict) -> None:
-        self.send_message("status", SimWorkerStatus.BUSY)
+        self.send_message("status", "busy")
         self.sim_config = sim_config
 
         L.debug("starting a thread")
@@ -177,7 +172,7 @@ class SimWorker:
         except (ConnectionError, WebSocketClosedError):
             log_many("web socket connection closed", L.error, capture_message)
 
-    def send_message(self, message: str, data: Any, cmdid=None) -> None:
+    def send_message(self, message: str, data: Any, cmdid: Optional[int] = None) -> None:
         """Schedules a message to be sent, threadsafe."""
         if not self.loop.is_running():
             L.warning("No running loop")
@@ -185,14 +180,14 @@ class SimWorker:
 
         asyncio.run_coroutine_threadsafe(self._send_message(message, data, cmdid), self.loop)
 
-    def run_sim_proc(self):
+    def run_sim_proc(self) -> None:
         if not self.sim_config:
             L.warning("No sim config")
             return
 
         def on_sigterm(sig_num, frame):  # pylint: disable=unused-argument
             L.debug("got SIGTERM on simulation process")
-            self.sim_queue.put(SimLogMessage("STOP"))
+            self.sim_queue.put(SimLogMessage(message="STOP"))
             self.sim_queue.put(None)
             sys.exit(0)
 
@@ -204,7 +199,7 @@ class SimWorker:
         solver = self.sim_config.get("solver")
 
         if solver == "nfsim":
-            sim = NfSim(self.sim_config, self.sim_queue.put)
+            sim: Union[NfSim, StepsSim] = NfSim(self.sim_config, self.sim_queue.put)
         elif solver == "steps":
             sim = StepsSim(self.sim_config, self.sim_queue.put)
         else:
@@ -218,7 +213,7 @@ class SimWorker:
             L.debug("Sim error")
             L.exception(error)
             sim_status = SimStatus(status="error")
-            sim_log = SimLogMessage(str(error))
+            sim_log = SimLogMessage(message=str(error))
             self.sim_queue.put(sim_log)
             self.sim_queue.put(sim_status)
             self.sim_queue.put(None)

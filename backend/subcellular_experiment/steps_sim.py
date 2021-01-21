@@ -18,14 +18,13 @@ import steps.solver as ssolver
 import steps.utilities.meshio as meshio
 from typing_extensions import Literal
 
-from .bngl_extended_model import BnglExtModel, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
+from .model_to_bngl import model_to_bngl, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
 from .sim import (
     SimProgress,
     SimTrace,
     SimSpatialStepTrace,
     SimStatus,
     SimLogMessage,
-    StimulusType,
     decompress_stimulation,
 )
 from .logger import get_logger
@@ -59,7 +58,7 @@ class StepsSim:
         minutes, seconds = divmod(remainder, 60)
         timestamp = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
-        sim_log_msg = SimLogMessage(f"{timestamp} {message}")
+        sim_log_msg = SimLogMessage(message=f"{timestamp} {message}")
         self.send_progress(sim_log_msg)
 
     def run(self) -> None:
@@ -115,6 +114,7 @@ class StepsSim:
         spatial_sampling_enabled = (
             "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]
         )
+
         if spatial_sampling_enabled:
             self.log("extend model observables with molecule definitions for spatial sampling")
             spatial_sample_observables = [
@@ -127,8 +127,10 @@ class StepsSim:
             model_dict["observables"].extend(spatial_sample_observables)
 
         self.log("generate BNGL model file with artificial structures")
-        bngl_ext_model = BnglExtModel(self.sim_config["model"])
-        bngl_str = bngl_ext_model.to_bngl(artificial_structures=True, add_diff_observables=True)
+
+        bngl_str = model_to_bngl(
+            self.sim_config["model"], artificial_structures=True, add_diff_observables=True
+        )
 
         self.log(f"write BNGL model file: \n\n {bngl_str}")
         with open("model.bngl", "w") as model_file:
@@ -322,7 +324,7 @@ class StepsSim:
 
         def create_sreac(reac_name, comp_names, pysb_reac):
             patch_dict = get_patch_dict_by_comp_names(comp_names)
-            tm_patch = patch_dict["tm_patch"]
+
             reac_param_dict = {
                 "ilhs": [],
                 "slhs": [],
@@ -585,12 +587,8 @@ class StepsSim:
             if re.match(rf"({SPAT_PREFIX})\w+", observable.name)
         ]
 
-        # Send simulation meta
-        structures = [{"name": structure["name"]} for structure in model_dict["structures"]]
-        species = [{"name": simplify_string(spec, is_bngl=True)} for spec in pysb_model.species]
-
         def apply_stimulus(stim):
-            if stim["type"] == StimulusType.SET_PARAM:
+            if stim["type"] == "setParam":
                 param_name = stim["target"]
                 value = float(stim["value"])
                 self.log(f"stimulation: setting param {param_name} to {value}")
@@ -623,7 +621,7 @@ class StepsSim:
                             steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val
                         )
 
-            elif stim["type"] == StimulusType.SET_CONC:
+            elif stim["type"] == "setConc":
                 observable = next(
                     observable
                     for observable in pysb_model.observables
@@ -652,7 +650,7 @@ class StepsSim:
                 else:
                     sim.setPatchCount(pysb_spec.comp_name, pysb_spec.name, stim["value"])
 
-            elif stim["type"] == StimulusType.CLAMP_CONC:
+            elif stim["type"] == "clampConc":
                 # TODO: DRY
                 clamp = stim["value"] == 1
                 observable = next(
@@ -732,7 +730,6 @@ class StepsSim:
                     spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
                     for structure in solver_config["spatialSampling"]["structures"]:
                         structure_name: str = structure["name"]
-                        struct_empty = True
                         geom_struct = get_geom_struct_by_model_struct_name(structure_name)
                         geom_idxs_key = (
                             "tetIdxs" if geom_struct["type"] == COMPARTMENT else "triIdxs"
@@ -760,20 +757,21 @@ class StepsSim:
                             non_zero_counts = mol_counts > 0
 
                             if np.any(non_zero_counts):
-                                struct_empty = False
                                 spatial_trace_data_dict[structure_name][mol_name] = {
                                     geom_idxs_key: geom_idxs_np[non_zero_counts],
                                     "molCounts": mol_counts[non_zero_counts],
                                 }
 
-                    self.send_progress(SimSpatialStepTrace(tidx, tpnt, spatial_trace_data_dict))
+                    self.send_progress(
+                        SimSpatialStepTrace(stepIdx=tidx, t=tpnt, data=spatial_trace_data_dict)
+                    )
 
             num_points = len(tpnts)
             progress = int((tidx + 1) / num_points * 100)
 
             if (tidx) % math.ceil(len(tpnts) / 100) == 0:
                 self.log(f"done {progress}% (sim time: {tpnt} s)")
-                self.send_progress(SimProgress(progress))
+                self.send_progress(SimProgress(progress=progress))
 
         times_size_bytes = tpnts.itemsize * len(tpnts)
         values_size_bytes = trace_values.size * trace_values.itemsize

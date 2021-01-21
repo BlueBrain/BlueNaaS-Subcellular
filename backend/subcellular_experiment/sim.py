@@ -1,7 +1,4 @@
-import os
-import tempfile
-import shutil
-from typing import Dict, List, ClassVar, Optional
+from typing import Dict, List, Optional, Union
 
 from typing_extensions import Literal
 from pydantic import BaseModel
@@ -28,53 +25,27 @@ def decompress_stimulation(stimulation):
     return stimuli
 
 
-class SimSpatialStepTrace:
-    TYPE = "simSpatialStepTrace"
-
-    def __init__(self, step_idx, t, trace_data):
-        self.type = self.TYPE
-
-        self.step_idx = step_idx
-        self.t = t
-        self.trace_data = trace_data
-
-    def to_dict(self):
-        return {"stepIdx": self.step_idx, "t": self.t, "data": self.trace_data}
+class SimSpatialStepTrace(BaseModel):
+    type: Literal["simSpatialStepTrace"] = "simSpatialStepTrace"
+    stepIdx: int
+    t: float
+    data: Dict[str, Dict[str, dict]]
 
 
-class SimLogMessage:
-    TYPE = "simLogMessage"
-
-    def __init__(self, message, source="system"):
-        self.type = self.TYPE
-
-        self.message = message
-        self.source = source
-
-    def to_dict(self):
-        return {"message": self.message, "source": self.source}
+class SimLogMessage(BaseModel):
+    type: Literal["simLogMessage"] = "simLogMessage"
+    message: str
+    source: str = "system"
 
 
-class SimProgress:
-    TYPE = "simProgress"
-
-    def __init__(self, progress):
-        self.type = self.TYPE
-
-        self.progress = progress
-
-    def to_dict(self):
-        return {"progress": self.progress}
+class SimLog(BaseModel):
+    type: Literal["simLog"] = "simLog"
+    log: Dict[str, List[str]]
 
 
-class SimLog:
-    TYPE = "simLog"
-
-    def __init__(self, log_dict):
-        self.log = log_dict
-
-    def to_dict(self):
-        return self.log
+class SimProgress(BaseModel):
+    type: Literal["simProgress"] = "simProgress"
+    progress: float
 
 
 class SimTrace(BaseModel):
@@ -85,7 +56,7 @@ class SimTrace(BaseModel):
         values: Dict mapping of observables to values
     """
 
-    TYPE: ClassVar[Literal["simTrace"]] = "simTrace"
+    type: Literal["simTrace"] = "simTrace"
     index: int
     persist: bool = False
     stream: bool = True
@@ -94,21 +65,9 @@ class SimTrace(BaseModel):
 
 
 class SimStatus(BaseModel):
-    TYPE: ClassVar[Literal["simStatus"]] = "simStatus"
+    type: Literal["simStatus"] = "simStatus"
     status: SimStatusLiteral
     description: Optional[str]
 
 
-class StimulusType:
-    SET_PARAM = "setParam"
-    SET_CONC = "setConc"
-    CLAMP_CONC = "clampConc"
-
-
-class Sim:
-    def prepare_tmp_dir(self):
-        self.tmp_dir = tempfile.mkdtemp()
-        os.chdir(self.tmp_dir)
-
-    def rm_tmp_dir(self):
-        shutil.rmtree(self.tmp_dir)
+SimData = Union[SimSpatialStepTrace, SimLogMessage, SimLog, SimProgress, SimTrace, SimStatus, None]

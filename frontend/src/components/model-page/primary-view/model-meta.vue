@@ -80,8 +80,15 @@
           this.saveInProgress = false;
         }, 1200);
       },
-      exportModel(format) {
-        this.$store.dispatch('exportModel', format);
+      async exportModel(format) {
+        try {
+          await this.$store.dispatch('exportModel', format);
+        } catch (err) {
+          this.$Notice.error({
+            title: 'Export error',
+            desc: err.message,
+          });
+        }
       },
       showImportModal() {
         this.importModalVisible = true;

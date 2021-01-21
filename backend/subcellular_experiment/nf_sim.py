@@ -1,12 +1,15 @@
 import os
 import subprocess
 import math
+import shutil
+import tempfile
+from typing import Callable, Any
 
 import numpy as np
 import pandas as pd
 
-from .sim import SimStatus, SimTrace, SimLogMessage, Sim, StimulusType, decompress_stimulation
-from .bngl_extended_model import BnglExtModel
+from .sim import SimStatus, SimTrace, SimLogMessage, decompress_stimulation
+from .model_to_bngl import model_to_bngl
 from .settings import BNG_PATH, NFSIM_PATH
 from .logger import get_logger
 
@@ -15,17 +18,16 @@ L = get_logger(__name__)
 BNG_MODEL_EXPORT_TIMEOUT = 5
 
 
-class NfSim(Sim):
-    def __init__(self, sim_config, progress_cb):
+class NfSim:
+    def __init__(self, sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
         self.sim_config = sim_config
         self.send_progress = progress_cb
-        self.prepare_tmp_dir()
 
-    def log(self, message, source=None):
-        sim_log_message = SimLogMessage(message, source)
+    def log(self, message: str, source=None) -> None:
+        sim_log_message = SimLogMessage(message=message, source=source)
         self.send_progress(sim_log_message)
 
-    def generate_rnf(self):
+    def generate_rnf(self) -> str:
         solver_conf = self.sim_config["solverConf"]
         stimuli = decompress_stimulation(solver_conf["stimulation"])
         t_end = solver_conf["tEnd"]
@@ -46,7 +48,8 @@ class NfSim(Sim):
             actions = [action for action in stimuli if action["t"] == action_t]
             for action in actions:
                 rnf_action = None
-                if action["type"] == StimulusType.SET_PARAM:
+
+                if action["type"] == "setParam":
                     rnf_action = "  set {} {}".format(action["target"], action["value"])
                 else:
                     raise ValueError("Unknown stimulus type {}".format(action["type"]))
@@ -56,7 +59,7 @@ class NfSim(Sim):
                 rnf_actions.append("  update")
             t = action_t
 
-        rnf = "\n".join(
+        return "\n".join(
             [
                 "-xml model.xml",
                 "-v",
@@ -69,21 +72,22 @@ class NfSim(Sim):
             ]
         )
 
-        return rnf
+    def run(self) -> None:
 
-    def run(self):
-        bngl_ext_model = BnglExtModel(self.sim_config["model"])
-        bngl_str = bngl_ext_model.to_bngl(write_xml_op=True)
+        tmp_dir = tempfile.mkdtemp()
+        os.chdir(tmp_dir)
 
-        self.log(bngl_str, source="model_bngl")
+        bngl = model_to_bngl(self.sim_config["model"], write_xml_op=True)
 
-        rnf_str = self.generate_rnf()
-        self.log(rnf_str, source="model_rnf")
+        self.log(bngl, source="model_bngl")
+
+        rnf = self.generate_rnf()
+        self.log(rnf, source="model_rnf")
 
         with open("model.bngl", "w") as model_file:
-            model_file.write(bngl_str)
+            model_file.write(bngl)
         with open("model.rnf", "w") as rnf_file:
-            rnf_file.write(rnf_str)
+            rnf_file.write(rnf)
 
         L.debug("starting BNG xml model export")
         try:
@@ -157,4 +161,4 @@ class NfSim(Sim):
 
         self.send_progress(SimStatus(status="finished"))
 
-        self.rm_tmp_dir()
+        shutil.rmtree(tmp_dir)
