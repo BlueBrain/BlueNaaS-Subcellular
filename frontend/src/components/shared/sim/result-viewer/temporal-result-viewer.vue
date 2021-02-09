@@ -11,7 +11,7 @@
   import Plotly from 'plotly.js-basic-dist';
   import { saveAs } from 'file-saver';
 
-  import simDataStorage from '@/services/sim-data-storage';
+  import { getTrace, subscribeTrace, unsubscribeTrace } from '@/services/sim-data-storage';
   import socket from '@/services/websocket';
   // eslint-disable-next-line
   import { SimTrace, Simulation } from '@/types';
@@ -122,7 +122,7 @@
         await this.rerenderChart({ xstart, xend, ystart, yend });
       });
 
-      simDataStorage.trace.subscribe(this.simId, this.extendTraces);
+      subscribeTrace(this.simId, this.extendTraces);
       downloadCsvBtn.click = () => this.downloadCsv();
 
       // If there is no data when mounting for this chart request it
@@ -139,7 +139,7 @@
 
     async beforeDestroy() {
       this.extendTraces.cancel();
-      simDataStorage.trace.unsubscribe(this.simId);
+      unsubscribeTrace(this.simId);
       await Plotly.purge(this.$refs.chart);
     },
     methods: {
@@ -153,7 +153,7 @@
         const data = this.getChartData(this.chartPointN) as ChartData[];
 
         if (!data) return;
-        this.chartPointN = simDataStorage.trace.getCached(this.simId).times.length;
+        this.chartPointN = getTrace(this.simId).times.length;
 
         const traceExtension = {
           x: data.map((line) => line.x),
@@ -164,7 +164,7 @@
       },
 
       getChartData(start = 0, end) {
-        const trace = simDataStorage.trace.getCached(this.simId) as SimTrace;
+        const trace = getTrace(this.simId) as SimTrace;
 
         if (trace) this.loading = false;
         if (!trace) return;
@@ -260,7 +260,7 @@
         return this.simulation.solverConf.dt;
       },
       trace(): SimTrace | undefined {
-        return simDataStorage.trace.getCached(this.simId);
+        return getTrace(this.simId);
       },
     },
     watch: {

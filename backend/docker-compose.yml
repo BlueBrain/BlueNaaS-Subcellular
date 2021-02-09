@@ -10,7 +10,7 @@ services:
     image: sc-svc
     volumes:
       - .:/app
-      - ./tmp/geometries:/data/geometries
+      - ./tmp:/data
     ports:
       - "8888:8000"
     environment:

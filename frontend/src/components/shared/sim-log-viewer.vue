@@ -19,7 +19,7 @@
 <script>
   import throttle from 'lodash/throttle';
 
-  import simDataStorage from '@/services/sim-data-storage';
+  import { requestLog, subscribeLog, unsubscribeLog } from '@/services/sim-data-storage';
 
   const MAX_LINES = 2000;
 
@@ -40,10 +40,10 @@
     mounted() {
       this.init();
       const updateLogThrottled = throttle(this.updateLog.bind(this), 250);
-      simDataStorage.log.subscribe(this.simId, updateLogThrottled);
+      subscribeLog(this.simId, updateLogThrottled);
     },
     beforeDestroy() {
-      simDataStorage.log.unsubscribe(this.simId);
+      unsubscribeLog(this.simId);
     },
     data() {
       return {
@@ -59,7 +59,7 @@
         if (log) {
           this.log = log;
         } else {
-          this.log = await simDataStorage.log.get(this.simId);
+          this.log = await requestLog(this.simId);
         }
 
         this.logTypes = Object.keys(this.log);

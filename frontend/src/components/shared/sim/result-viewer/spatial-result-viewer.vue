@@ -117,7 +117,7 @@
         </div>
       </Poptip>
       <i-button
-        class="live-btn ml-12 mr-6"
+        class="live-btn ml-6 mr-6"
         :icon="progressCtrl.live ? 'ios-pulse' : ''"
         :type="progressCtrl.live ? 'info' : 'default'"
         :disabled="!liveAvailable"
@@ -125,6 +125,7 @@
       >
         Live
       </i-button>
+      <a :href="fileUrl">Download</a>
     </div>
 
     <canvas ref="canvas" />
@@ -137,7 +138,12 @@
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
   import constants from '@/constants';
   import bus from '@/services/event-bus';
-  import simDataStorage from '@/services/sim-data-storage';
+  import {
+    subscribeSpatialTrace,
+    unsubscribeSpatialTrace,
+    getLastSpatialStepIdx,
+    getSpatialStepTraceByIdx,
+  } from '@/services/sim-data-storage';
 
   const { StructureType, SimStatus } = constants;
 
@@ -172,18 +178,15 @@
     },
     created() {
       this.progressCtrl.live = this.liveAvailable;
-      this.renderMoleculesThrottled = throttle(this.renderMolecules.bind(this));
     },
     async mounted() {
       this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
 
-      this.onLayoutChangeBinded = this.onLayoutChange.bind(this);
-      bus.$on('layoutChange', this.onLayoutChangeBinded);
+      bus.$on('layoutChange', this.onLayoutChange);
 
-      const onSpatialTraceChangeThrottled = throttle(this.onSpatialStepTrace.bind(this), 250);
-      simDataStorage.spatialTrace.subscribe(this.simId, onSpatialTraceChangeThrottled);
+      subscribeSpatialTrace(this.simId, throttle(this.onSpatialStepTrace, 250));
 
-      const lastStepIdx = await simDataStorage.spatialTrace.getLastStepIdx(this.simId);
+      const lastStepIdx = await getLastSpatialStepIdx(this.simId);
       this.simulatedStepsN = lastStepIdx + 1;
 
       if (this.liveAvailable) {
@@ -200,8 +203,8 @@
       }, 10);
     },
     beforeDestroy() {
-      bus.$off('layoutChange', this.onLayoutChangeBinded);
-      simDataStorage.spatialTrace.unsubscribe(this.simId);
+      bus.$off('layoutChange', this.onLayoutChange);
+      unsubscribeSpatialTrace(this.simId);
       this.renderer.destroy();
     },
     methods: {
@@ -241,7 +244,7 @@
 
         if (this.progressCtrl.live) {
           this.progressCtrl.stepIdx = this.lastSpatialStepTrace.stepIdx;
-          this.renderMolecules(this.lastSpatialStepTrace);
+          this.renderer.renderMolecules(this.lastSpatialStepTrace);
         }
       },
       onNextStepClick() {
@@ -315,21 +318,18 @@
         this.renderMoleculesByStepIdx(stepIdx);
       },
       async renderMoleculesByStepIdx(stepIdx) {
-        const spatialStepTrace = await simDataStorage.spatialTrace.getStepByIdx(
-          this.simId,
-          stepIdx,
-        );
+        const spatialStepTrace = await getSpatialStepTraceByIdx(this.simId, stepIdx);
         if (!spatialStepTrace) {
           console.warn(`No spatial trace is found for stepIdx: ${stepIdx}`);
           return;
         }
 
         this.lastSpatialStepTrace = spatialStepTrace;
-        this.renderMoleculesThrottled(spatialStepTrace);
+        this.renderer.renderMolecules(this.lastSpatialStepTrace);
       },
       onStructureVisibilityChange(comp) {
         this.renderer.setVisible(comp.name, comp.visible);
-        this.renderMolecules();
+        this.renderer.renderMolecules(this.lastSpatialStepTrace);
       },
       onDisplayConfChange() {
         this.renderer.setDisplayConf(this.displayConf);
@@ -338,11 +338,9 @@
         this.renderer.setMoleculeConfig(molecule.name, {
           visible: molecule.visible,
         });
-        this.renderMolecules();
+        this.renderer.renderMolecules(this.lastSpatialStepTrace);
       },
-      renderMolecules(spatialStepTrace) {
-        this.renderer.renderMolecules(spatialStepTrace || this.lastSpatialStepTrace);
-      },
+
       toggleLive() {
         this.progressCtrl.live = !this.progressCtrl.live;
 
@@ -357,9 +355,13 @@
       },
     },
     computed: {
+      fileUrl() {
+        return `https://${window.location.host}/data/spatial-traces/${this.simId}.json`;
+      },
       geometry() {
         return this.$store.state.model.geometry;
       },
+
       sim() {
         return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
       },

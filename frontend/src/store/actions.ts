@@ -11,7 +11,7 @@ import modelBuilder from '@/services/model-builder';
 import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
 import socket from '@/services/websocket';
-import simDataStorage from '@/services/sim-data-storage';
+import { removeSimulation } from '@/services/sim-data-storage';
 import constants from '@/constants';
 import modelTools from '@/tools/model-tools';
 import arrayBufferToBase64 from '@/tools/array-buffer-to-base64';
@@ -39,7 +39,7 @@ export default {
   },
 
   removeSelectedSimulation({ state, dispatch }) {
-    simDataStorage.removeSimulation(state.selectedEntity.entity.id);
+    removeSimulation(state.selectedEntity.entity.id);
     socket.send('delete_simulation', state.selectedEntity.entity);
     dispatch('removeSelectedEntity');
   },

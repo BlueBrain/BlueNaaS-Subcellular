@@ -2,7 +2,6 @@
 import get from 'lodash/get';
 
 import config from '@/config';
-import store from '@/store';
 import eventBus from './event-bus';
 
 const socketState = {

@@ -112,11 +112,17 @@ class WSHandler(WebSocketHandler):
 
         if msg.cmd == "delete_simulation":
             sim = SimId(**msg.data)
+
             await sim_manager.cancel_sim(sim)
             await db.delete_simulation(sim)
             await db.delete_sim_spatial_traces(sim)
             await db.delete_sim_trace(sim)
             await db.delete_sim_log(sim)
+
+            path = f"/data/spatial-traces/{sim.id}.json"
+
+            if os.path.exists(path):
+                os.remove(path)
 
         if msg.cmd == "get_simulations":
             model_id = GetSimulations(**msg.data).modelId
@@ -283,9 +289,22 @@ def on_terminate(signum: int, frame: FrameType):  # pylint: disable=unused-argum
 signal.signal(signal.SIGINT, on_terminate)
 signal.signal(signal.SIGTERM, on_terminate)
 
+if not os.path.exists("/data/spatial-traces"):
+    umask = os.umask(0)
+    os.makedirs("/data/spatial-traces", 0o777)
+    os.umask(umask)
 
 app = tornado.web.Application(
-    [(r"/ws", WSHandler), (r"/sim", SimRunnerWSHandler), (r"/health", HealthHandler)],
+    [
+        (r"/ws", WSHandler),
+        (r"/sim", SimRunnerWSHandler),
+        (r"/health", HealthHandler),
+        (
+            r"/data/spatial-traces/(.*)",
+            tornado.web.StaticFileHandler,
+            {"path": "/data/spatial-traces"},
+        ),
+    ],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,
     ping_interval=30,
