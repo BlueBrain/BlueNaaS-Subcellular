@@ -33,7 +33,7 @@ RUN git clone https://github.com/CNS-OIST/STEPS.git && \
     make install
 
 WORKDIR /code
-COPY setup.py .
+COPY requirements.txt .
 COPY ./subcellular_experiment ./subcellular_experiment
 
 # Lint code

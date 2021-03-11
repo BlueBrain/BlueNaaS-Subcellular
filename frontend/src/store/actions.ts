@@ -7,7 +7,7 @@ import { decode, encode } from '@msgpack/msgpack';
 
 import * as Sentry from '@sentry/browser';
 
-import modelBuilder from '@/services/model-builder';
+import buildFromBngl from '@/services/model-builder';
 import ModelGeometry from '@/services/model-geometry';
 import storage from '@/services/storage';
 import socket from '@/services/websocket';
@@ -389,7 +389,7 @@ export default {
     }
 
     try {
-      revision = modelBuilder.buildFromBngl(bnglStr);
+      revision = buildFromBngl(bnglStr);
     } catch (e) {
       Sentry.configureScope((scope) => {
         scope.setExtra('bnglModel', bnglStr);
@@ -511,7 +511,7 @@ export default {
     }
 
     try {
-      model = modelBuilder.buildFromBngl(bnglStr);
+      model = buildFromBngl(bnglStr);
     } catch (e) {
       Sentry.configureScope((scope) => {
         scope.setExtra('bnglModel', bnglStr);

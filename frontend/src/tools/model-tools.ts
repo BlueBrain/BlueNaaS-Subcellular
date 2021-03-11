@@ -4,7 +4,7 @@ import webWorker from 'simple-web-worker';
 
 import constants from '@/constants';
 
-const { StructureType, StimulusTypeEnum } = constants;
+const { StimulusTypeEnum } = constants;
 
 function createSimulationTemplate(simulation) {
   const simCleanupDefaults = {
@@ -29,7 +29,7 @@ function getDefaultSpecUnit(model, specDef) {
   if (!structure) return '';
 
   const unit = {
-    str: structure.type === StructureType.COMPARTMENT ? 'M' : '#',
+    str: structure.type === 'compartment' ? 'M' : '#',
   };
 
   return unit;
@@ -53,10 +53,7 @@ function getDefaultKineticRateUnit(model, reacSideDef) {
 
   const ambiguous = structTypes.some((type) => !type);
 
-  const nComps = structTypes.reduce(
-    (acc, type) => acc + Number(type !== StructureType.MEMBRANE),
-    0,
-  );
+  const nComps = structTypes.reduce((acc, type) => acc + Number(type !== 'membrane'), 0);
 
   const unitPow = 1 - nComps;
 

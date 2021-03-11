@@ -1,10 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 
-import constants from './constants';
-
-const { EntityType } = constants;
-
 Vue.use(VueRouter);
 
 export default new VueRouter({
@@ -35,7 +31,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.STRUCTURE}s`,
+          path: `structures`,
           component: () =>
             import(
               /* webpackChunkName: "model-structures" */
@@ -43,7 +39,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.PARAMETER}s`,
+          path: `parameters`,
           component: () =>
             import(
               /* webpackChunkName: "model-parameters" */
@@ -51,7 +47,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.FUNCTION}s`,
+          path: 'functions',
           component: () =>
             import(
               /* webpackChunkName: "model-functions" */
@@ -59,7 +55,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.MOLECULE}s`,
+          path: 'molecules',
           component: () =>
             import(
               /* webpackChunkName: "model-molecules" */
@@ -67,7 +63,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: EntityType.SPECIES,
+          path: 'species',
           component: () =>
             import(
               /* webpackChunkName: "model-species" */
@@ -75,7 +71,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.OBSERVABLE}s`,
+          path: 'observables',
           component: () =>
             import(
               /* webpackChunkName: "model-observables" */
@@ -83,7 +79,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.REACTION}s`,
+          path: 'reactions',
           component: () =>
             import(
               /* webpackChunkName: "model-reactions" */
@@ -91,7 +87,7 @@ export default new VueRouter({
             ),
         },
         {
-          path: `${EntityType.DIFFUSION}s`,
+          path: 'diffusions',
           component: () =>
             import(
               /* webpackChunkName: "model-diffusions" */
@@ -99,11 +95,19 @@ export default new VueRouter({
             ),
         },
         {
-          path: EntityType.GEOMETRY,
+          path: 'geometry',
           component: () =>
             import(
               /* webpackChunkName: "model-geometry" */
               './components/model-page/primary-view/geometry.vue'
+            ),
+        },
+        {
+          path: 'viz',
+          component: () =>
+            import(
+              /* webpackChunkName: "model-viz" */
+              './components/model-page/primary-view/viz.vue'
             ),
         },
       ],

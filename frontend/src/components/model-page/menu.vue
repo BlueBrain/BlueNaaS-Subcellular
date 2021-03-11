@@ -70,6 +70,8 @@
         <strong v-if="model.simulations.length">({{ model.simulations.length }})</strong>
         <span v-else>(0)</span>
       </MenuItem>
+
+      <MenuItem name="viz"> Visualizations</MenuItem>
     </i-menu>
   </div>
 </template>

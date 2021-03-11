@@ -27,7 +27,7 @@ from .envvars import SENTRY_DSN, MASTER_HOST
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
-        "https://252f85f1037f47bea93b31981043dd4c@o224246.ingest.sentry.io/5561238",
+        SENTRY_DSN,
         traces_sample_rate=1.0,
     )
 

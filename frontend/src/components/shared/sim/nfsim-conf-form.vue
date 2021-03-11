@@ -5,7 +5,6 @@
         v-model="conf.dt"
         size="small"
         :min="0.000000001"
-        :max="1"
         :step="0.01"
         :active-change="false"
         @input="onChange"

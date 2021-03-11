@@ -1,5 +1,4 @@
-// TODO: split into different files
-
+// TODO most constants here can be replaced by Typescript's literal types,
 const ServerMessageType = {
   SIM_TRACE: 'simTrace',
   SIM_STEP_TRACE: 'simStepTrace',
@@ -7,24 +6,6 @@ const ServerMessageType = {
 };
 
 export const SIM_TRACE_MAX_SIZE = 10e6;
-
-const EntityType = {
-  STRUCTURE_TYPE: 'structureType',
-  STRUCTURE: 'structure',
-  PARAMETER: 'parameter',
-  FUNCTION: 'function',
-  MOLECULE: 'molecule',
-  SPECIES: 'species',
-  REACTION: 'reaction',
-  OBSERVABLE: 'observable',
-  DIFFUSION: 'diffusion',
-  GEOMETRY: 'geometry',
-};
-
-const StructureType = {
-  COMPARTMENT: 'compartment',
-  MEMBRANE: 'membrane',
-};
 
 const ModelExportFormats = {
   BNGL: 'bngl',
@@ -192,8 +173,6 @@ const validationMessageType = {
 const DEFAULT_VISIBLE_CONC_N_PER_REV = 5;
 
 export default {
-  EntityType,
-  StructureType,
   SimStatus,
   SimSolver,
   units,

@@ -8,14 +8,14 @@ import constants from '../constants';
 const { EntityType, entityTypeCollectionMap, validationMessageType: messageType } = constants;
 
 const entityTypesToValidate = [
-  EntityType.STRUCTURE,
-  EntityType.PARAMETER,
-  EntityType.FUNCTION,
-  EntityType.MOLECULE,
-  EntityType.SPECIES,
-  EntityType.OBSERVABLE,
-  EntityType.REACTION,
-  EntityType.DIFFUSION,
+  'structure',
+  'parameter',
+  'function',
+  'molecule',
+  'species',
+  'observable',
+  'reaction',
+  'diffusion',
 ];
 
 class ValidationResult {
@@ -96,14 +96,14 @@ class ModelValidator {
     this.allMessages = [];
 
     this.validateEntity = {
-      [EntityType.STRUCTURE]: this.validateStructure.bind(this),
-      [EntityType.MOLECULE]: this.validateMolecule.bind(this),
-      [EntityType.SPECIES]: this.validateSpecies.bind(this),
-      [EntityType.PARAMETER]: this.validateParameter.bind(this),
-      [EntityType.FUNCTION]: this.validateFunction.bind(this),
-      [EntityType.OBSERVABLE]: this.validateObservable.bind(this),
-      [EntityType.REACTION]: this.validateReaction.bind(this),
-      [EntityType.DIFFUSION]: this.validateDiffusion.bind(this),
+      structure: this.validateStructure.bind(this),
+      molecule: this.validateMolecule.bind(this),
+      species: this.validateSpecies.bind(this),
+      parameter: this.validateParameter.bind(this),
+      function: this.validateFunction.bind(this),
+      observable: this.validateObservable.bind(this),
+      reaction: this.validateReaction.bind(this),
+      diffusion: this.validateDiffusion.bind(this),
     };
   }
 

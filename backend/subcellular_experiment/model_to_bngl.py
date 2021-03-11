@@ -124,8 +124,10 @@ def reaction_to_str(reac: dict) -> str:
     if name == "-":
         name = ""
 
-    return f"  {name}{': ' if name else ''}{reac['definition']} {reac['kf']}" + (
-        f", {reac['kr']}" if "<->" in reac["definition"] else ""
+    return (
+        f"  {name}{': ' if name else ''}{reac['definition']} {reac['kf']}"
+        + (f", {reac['kr']}" if "<->" in reac["definition"] and "rate_f" not in reac["kf"] else "")
+        + (" TotalRate" if "rate_f" in reac["kf"] else "")
     )
 
 

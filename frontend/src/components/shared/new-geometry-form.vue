@@ -105,12 +105,10 @@
 
   import geometryMetaSchema from '@/schemas/geometry-meta.json';
 
-  import constants from '@/constants';
   import ModelGeometry from '@/services/model-geometry';
   import GeometryViewer from './geometry-viewer.vue';
 
   const validateGeometryMeta = new Ajv().compile(geometryMetaSchema);
-  const { StructureType } = constants;
   const uploadComponentFormat = ['node', 'ele', 'face', 'json'];
   const meshTypeMap = {
     node: 'nodes',
@@ -119,8 +117,8 @@
   };
 
   const geomMetaStructProp = {
-    [StructureType.COMPARTMENT]: 'tetIdxs',
-    [StructureType.MEMBRANE]: 'triIdxs',
+    compartment: 'tetIdxs',
+    membrane: 'triIdxs',
   };
 
   // TODO: refactor
@@ -187,8 +185,8 @@
         // TODO: move to json schema validation if possible
         const validateStructure = (st) => {
           const valid =
-            (st.type === StructureType.COMPARTMENT && st.tetIdxs.length) ||
-            (st.type === StructureType.MEMBRANE && st.triIdxs.length);
+            (st.type === 'compartment' && st.tetIdxs.length) ||
+            (st.type === 'membrane' && st.triIdxs.length);
 
           if (!valid) {
             this.error = `geometry.json error: ${st.name} should contain ${

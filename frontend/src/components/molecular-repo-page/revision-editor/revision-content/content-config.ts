@@ -4,8 +4,6 @@ import constants from '@/constants';
 
 import BnglText from '@/components/shared/bngl-text.vue';
 
-const { EntityType } = constants;
-
 const Type = {
   EDITOR: 'editor',
   VIEWER: 'viewer',
@@ -36,7 +34,7 @@ function getConcentrationColumnConfig(
       render: (h, params) =>
         h(BnglText, {
           props: {
-            entityType: EntityType.PARAMETER,
+            entityType: 'parameter',
             value: params.row.concentration[source],
           },
         }),
@@ -51,7 +49,7 @@ function getConcentrationColumnConfig(
       render: (h, params) =>
         h(BnglText, {
           props: {
-            entityType: EntityType.PARAMETER,
+            entityType: 'parameter',
             value: params.row.concentration[concSource],
           },
         }),
@@ -61,7 +59,7 @@ function getConcentrationColumnConfig(
 
 function build(configType, structureType, config = {}) {
   const revisionSearchColumnConfig = {
-    [EntityType.STRUCTURE]: [
+    structure: [
       {
         type: 'selection',
         width: 60,
@@ -94,7 +92,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-    [EntityType.MOLECULE]: [
+    molecule: [
       {
         type: 'selection',
         width: 60,
@@ -113,7 +111,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.MOLECULE,
+              entityType: 'molecule',
               value: params.row.definition,
             },
           }),
@@ -149,7 +147,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-    [EntityType.SPECIES]: [
+    species: [
       {
         type: 'selection',
         maxWidth: 60,
@@ -171,7 +169,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.SPECIES,
+              entityType: 'species',
               value: params.row.definition,
             },
           }),
@@ -183,7 +181,7 @@ function build(configType, structureType, config = {}) {
         key: 'units',
       },
     ],
-    [EntityType.REACTION]: [
+    reaction: [
       {
         type: 'selection',
         width: 60,
@@ -205,7 +203,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.REACTION,
+              entityType: 'reaction',
               value: params.row.definition,
             },
           }),
@@ -215,7 +213,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.kf,
             },
           }),
@@ -234,7 +232,7 @@ function build(configType, structureType, config = {}) {
         maxWidth: 200,
       },
     ],
-    [EntityType.DIFFUSION]: [
+    diffusion: [
       {
         type: 'selection',
         width: 60,
@@ -254,7 +252,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.DIFFUSION,
+              entityType: 'diffusion',
               value: params.row.definition,
             },
           }),
@@ -264,7 +262,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.rate,
             },
           }),
@@ -279,7 +277,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-    [EntityType.PARAMETER]: [
+    parameter: [
       {
         type: 'selection',
         width: 60,
@@ -298,7 +296,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.definition,
             },
           }),
@@ -314,7 +312,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-    [EntityType.FUNCTION]: [
+    function: [
       {
         type: 'selection',
         width: 60,
@@ -333,7 +331,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.definition,
             },
           }),
@@ -352,7 +350,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-    [EntityType.OBSERVABLE]: [
+    observable: [
       {
         type: 'selection',
         width: 60,
@@ -371,7 +369,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.OBSERVABLE,
+              entityType: 'observable',
               value: params.row.definition,
             },
           }),
@@ -385,7 +383,7 @@ function build(configType, structureType, config = {}) {
   };
 
   const revisionEditorColumnConfig = {
-    [EntityType.STRUCTURE]: [
+    structure: [
       {
         type: 'selection',
         width: 60,
@@ -431,7 +429,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.MOLECULE]: [
+    molecule: [
       {
         type: 'selection',
         width: 60,
@@ -451,7 +449,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.MOLECULE,
+              entityType: 'molecule',
               value: params.row.definition,
             },
           }),
@@ -500,7 +498,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.SPECIES]: [
+    species: [
       {
         type: 'selection',
         width: 60,
@@ -516,7 +514,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.SPECIES,
+              entityType: 'species',
               value: params.row.definition,
             },
           }),
@@ -545,7 +543,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.REACTION]: [
+    reaction: [
       {
         type: 'selection',
         width: 60,
@@ -565,7 +563,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.REACTION,
+              entityType: 'reaction',
               value: params.row.definition,
             },
           }),
@@ -575,7 +573,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: `${params.row.kf}${params.row.kr ? `, ${params.row.kr}` : ''}`,
             },
           }),
@@ -603,7 +601,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.DIFFUSION]: [
+    diffusion: [
       {
         type: 'selection',
         width: 60,
@@ -623,7 +621,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.DIFFUSION,
+              entityType: 'diffusion',
               value: params.row.definition,
             },
           }),
@@ -633,7 +631,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.rate,
             },
           }),
@@ -660,7 +658,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.PARAMETER]: [
+    parameter: [
       {
         type: 'selection',
         width: 60,
@@ -680,7 +678,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.PARAMETER,
+              entityType: 'parameter',
               value: params.row.definition,
             },
           }),
@@ -708,7 +706,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.FUNCTION]: [
+    function: [
       {
         type: 'selection',
         width: 60,
@@ -728,7 +726,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.FUNCTION,
+              entityType: 'function',
               value: params.row.definition,
             },
           }),
@@ -759,7 +757,7 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-    [EntityType.OBSERVABLE]: [
+    observable: [
       {
         type: 'selection',
         width: 60,
@@ -779,7 +777,7 @@ function build(configType, structureType, config = {}) {
         render: (h, params) =>
           h(BnglText, {
             props: {
-              entityType: EntityType.OBSERVABLE,
+              entityType: 'observable',
               value: params.row.definition,
             },
           }),

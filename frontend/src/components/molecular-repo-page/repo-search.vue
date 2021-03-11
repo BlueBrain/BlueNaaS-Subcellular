@@ -93,7 +93,6 @@
   import { saveAs } from 'file-saver';
   import Ajv from 'ajv';
 
-  import constants from '@/constants';
   import repoFilterSchema from '@/schemas/repo-filter.json';
 
   import FileImport from '@/components/shared/file-import.vue';
@@ -104,16 +103,14 @@
 
   const validateFilter = new Ajv().compile(repoFilterSchema);
 
-  const { EntityType } = constants;
-
   const entityLabels = {
-    [EntityType.PARAMETER]: 'Parameters',
-    [EntityType.STRUCTURE]: 'Structures',
-    [EntityType.MOLECULE]: 'Molecules',
-    [EntityType.SPECIES]: 'Species',
-    [EntityType.OBSERVABLE]: 'Observables',
-    [EntityType.FUNCTION]: 'Functions',
-    [EntityType.REACTION]: 'Reactions',
+    parameter: 'Parameters',
+    structure: 'Structures',
+    molecule: 'Molecules',
+    species: 'Species',
+    observable: 'Observables',
+    function: 'Functions',
+    reaction: 'Reactions',
   };
 
   export default {

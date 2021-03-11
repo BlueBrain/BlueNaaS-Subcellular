@@ -65,6 +65,24 @@ class StepsSim:
         self.send_progress(SimStatus(status="init"))
         self.log("init sim")
 
+        model_dict = self.sim_config["model"]
+
+        react_with_standard_rate_laws = [
+            reaction
+            for reaction in model_dict["reactions"]
+            if not has_functional_rate_laws(reaction)
+        ]
+
+        if len(model_dict["reactions"]) != len(react_with_standard_rate_laws):
+            self.log("Warning reactions with functional will be skipeed")
+
+            model_dict["reactions"] = react_with_standard_rate_laws
+            model_dict["functions"] = [
+                function for function in model_dict["functions"] if not "rate_" in function["name"]
+            ]
+
+        solver_config = self.sim_config["solverConf"]
+
         def get_geom_struct_by_model_struct_name(model_struct_name):
             geom_struct_name = next(
                 st["geometryStructureName"]
@@ -93,9 +111,6 @@ class StepsSim:
             )
 
             return comp_name
-
-        model_dict = self.sim_config["model"]
-        solver_config = self.sim_config["solverConf"]
 
         self.log("extend model observables with molecule definitions from stimulation")
         stimuli = decompress_stimulation(self.sim_config["solverConf"]["stimulation"])
@@ -128,9 +143,7 @@ class StepsSim:
 
         self.log("generate BNGL model file with artificial structures")
 
-        bngl_str = model_to_bngl(
-            self.sim_config["model"], artificial_structures=True, add_diff_observables=True
-        )
+        bngl_str = model_to_bngl(model_dict, artificial_structures=True, add_diff_observables=True)
 
         self.log(f"write BNGL model file: \n\n {bngl_str}")
         with open("model.bngl", "w") as model_file:
@@ -166,7 +179,7 @@ class StepsSim:
                 steps_spec for steps_spec in steps_species if steps_spec.getID() == pysb_spec.name
             )
 
-        geometry_id = self.sim_config["model"]["geometry"]["id"]
+        geometry_id = model_dict["geometry"]["id"]
         geometry_path = os.path.join(GEOMETRY_ROOT_PATH, geometry_id)
         self.log("load mesh id: {}".format(geometry_id))
         mesh = meshio.loadMesh(os.path.join(geometry_path, "mesh"))[0]
@@ -400,7 +413,7 @@ class StepsSim:
         self.log("about to create STEPS diffusion rules")
         steps_diffs = []
         diff_pysb_spec_idx_dict: Dict[str, List[int]] = defaultdict(list)
-        model_diffs = self.sim_config["model"]["diffusions"]
+        model_diffs = model_dict["diffusions"]
 
         diff_observables = [
             observable
@@ -837,3 +850,7 @@ def simplify_string(st, compartments=True, is_bngl=False):
     for i in range(1, len(sim)):
         st2 = st2 + "_" + sim[i]
     return st2
+
+
+def has_functional_rate_laws(reaction: dict):
+    return any("rate_" in k for k in (reaction["kf"], reaction["kr"]))

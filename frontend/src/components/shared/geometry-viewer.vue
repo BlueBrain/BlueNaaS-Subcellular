@@ -45,10 +45,7 @@
   import toggleFullscreen from 'toggle-fullscreen';
 
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
-  import constants from '@/constants';
   import bus from '@/services/event-bus';
-
-  const { StructureType } = constants;
 
   const displayConf = {
     default: {
@@ -103,10 +100,8 @@
           type: st.type,
         }));
 
-        this.structure.compartments = structure.filter(
-          (st) => st.type === StructureType.COMPARTMENT,
-        );
-        this.structure.membranes = structure.filter((st) => st.type === StructureType.MEMBRANE);
+        this.structure.compartments = structure.filter((st) => st.type === 'compartment');
+        this.structure.membranes = structure.filter((st) => st.type === 'membrane');
       },
       onLayoutChange() {
         this.renderer.onResize();

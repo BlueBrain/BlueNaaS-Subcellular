@@ -7,7 +7,7 @@
     <FormItem label="Type *">
       <i-select v-model="structure.type" @input="onStructureChange">
         <i-option
-          v-for="entityType in constants.StructureType"
+          v-for="entityType in ['membrane', 'compartment']"
           :value="entityType"
           :key="entityType"
         >

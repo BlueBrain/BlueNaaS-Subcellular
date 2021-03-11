@@ -1,8 +1,6 @@
 import os
 import subprocess
 import math
-import shutil
-import tempfile
 from typing import Callable, Any
 
 import numpy as np
@@ -12,6 +10,7 @@ from .sim import SimStatus, SimTrace, SimLogMessage, decompress_stimulation
 from .model_to_bngl import model_to_bngl
 from .settings import BNG_PATH, NFSIM_PATH
 from .logger import get_logger
+from .utils import tempdir
 
 L = get_logger(__name__)
 
@@ -72,10 +71,8 @@ class NfSim:
             ]
         )
 
+    @tempdir()
     def run(self) -> None:
-
-        tmp_dir = tempfile.mkdtemp()
-        os.chdir(tmp_dir)
 
         bngl = model_to_bngl(self.sim_config["model"], write_xml_op=True)
 
@@ -160,5 +157,3 @@ class NfSim:
             )
 
         self.send_progress(SimStatus(status="finished"))
-
-        shutil.rmtree(tmp_dir)

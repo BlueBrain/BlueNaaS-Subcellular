@@ -23,6 +23,7 @@ disable=
       W0221,
       E0611,
       too-many-return-statements,
+      unused-argument
 
 [DESIGN]
 # Maximum number of arguments for function / method

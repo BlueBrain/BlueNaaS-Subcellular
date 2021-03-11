@@ -1,122 +1,117 @@
 import words from 'lodash/words';
 import cloneDeep from 'lodash/cloneDeep';
-import uuidv4 from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 import constants from '@/constants';
 import modelTools from '@/tools/model-tools';
+import { Structure } from '@/types';
 
-function buildFromBngl(fileContent) {
-  const newLineR = /\r\n|\r|\n/;
-
-  const model = Object.assign(cloneDeep(constants.defaultEmptyModel), {
-    id: uuidv4(),
-  });
-
-  const sPartsToStructure = (sParts) => ({
+function sPartsToStructure(sParts: string[]): Structure {
+  return {
     name: sParts[0],
-    type:
-      sParts[1] === '3' ? constants.StructureType.COMPARTMENT : constants.StructureType.MEMBRANE,
+    type: sParts[1] === '3' ? 'compartment' : 'membrane',
     size: sParts[2],
     parentName: sParts[3] ? sParts[3] : '-',
     annotation: '',
-    entityId: uuidv4(),
-  });
+    entityId: uuid(),
+  };
+}
 
-  const pPartsToParameter = (pParts) => ({
-    name: pParts[0],
-    definition: pParts.slice(1).join(' '),
+const pPartsToParameter = (pParts: string[]) => ({
+  name: pParts[0],
+  definition: pParts.slice(1).join(' '),
+  annotation: '',
+  entityId: uuid(),
+});
+
+const lineToFunction = (line: string) => {
+  const functionR = /(\w+)\((\w*)\)\s*=?\s*(.*)/;
+  const functionMatch = line.match(functionR);
+
+  const func = {
+    name: functionMatch[1],
+    argument: functionMatch[2],
+    definition: functionMatch[3],
     annotation: '',
-    entityId: uuidv4(),
-  });
-
-  const lineToFunction = (line) => {
-    const functionR = /(\w+)\((\w*)\)\s*=?\s*(.*)/;
-    const functionMatch = line.match(functionR);
-
-    const func = {
-      name: functionMatch[1],
-      argument: functionMatch[2],
-      definition: functionMatch[3],
-      annotation: '',
-      entityId: uuidv4(),
-    };
-
-    return func;
+    entityId: uuid(),
   };
 
-  const mPartsToMolecule = (mParts) => {
-    const molecule = {
-      name: mParts[0].match(/(.*)\(/)[1],
-      definition: mParts[0],
-      annotation: '',
-      entityId: uuidv4(),
-    };
+  return func;
+};
 
-    return molecule;
-  };
-
-  const partsToSpecies = (parts) => {
-    const def = parts[0];
-
-    return {
-      name: words(parts[0].match(/(.*)(\(?|$)/)[1]).join('_'),
-      definition: def,
-      concentration: parts[1],
-      unit: modelTools.getDefaultSpecUnit(model, def),
-      annotation: '',
-      entityId: uuidv4(),
-    };
-  };
-
-  const lineToReaction = (line) => {
-    const bidirectional = line.includes('<->');
-
-    const reactionR = bidirectional
-      ? /^((\w*)\s?:)?\s*(.*)\s+(\S+)\s*,\s*(\S+)#?(.*?)$/
-      : /^((\w*)\s?:)?\s*(.*)\s+(\S+)#?(.*?)$/;
-
-    const reactionMatch = line.match(reactionR);
-
-    const reacDef = reactionMatch[3];
-
-    const reaction = {
-      name: reactionMatch[2] || '-',
-      definition: reacDef,
-      kf: reactionMatch[4],
-      // kfUnit: modelTools.getDefaultForwardKineticRateUnit(model, reacDef),
-      kr: bidirectional ? reactionMatch[5] : '',
-      // krUnit: bidirectional ? modelTools.getDefaultBackwardKineticRateUnit(model, reacDef) : null,
-      annotation: bidirectional ? reactionMatch[6] : reactionMatch[5],
-      entityId: uuidv4(),
-    };
-
-    return reaction;
-  };
-
-  const partsToObservable = (parts) => ({
-    name: parts[1],
-    definition: parts[2],
+const mPartsToMolecule = (mParts) => {
+  const molecule = {
+    name: mParts[0].match(/(.*)\(/)[1],
+    definition: mParts[0],
     annotation: '',
-    entityId: uuidv4(),
-  });
-
-  const partsToDiffusion = (parts) => {
-    const specPrefixCompR = /^@(\w+):(\w+\(.*\))$/;
-    const specSuffixCompR = /^(\w+\(.*\))@(\w+)$/;
-
-    const definition = parts[1];
-    const prefixNotation = specPrefixCompR.test(definition);
-    const defParsed = definition.match(prefixNotation ? specPrefixCompR : specSuffixCompR);
-
-    return {
-      name: parts[0],
-      speciesDefinition: defParsed[prefixNotation ? 2 : 1],
-      compartment: defParsed[prefixNotation ? 1 : 2],
-      diffusionConstant: parts[2],
-      annotation: '',
-      entityId: uuidv4(),
-    };
+    entityId: uuid(),
   };
+
+  return molecule;
+};
+
+function getRegex(line: string) {
+  if (line.includes('TotalRate'))
+    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+\(\))\s+TotalRate#?(?<annotation>.*?)$/; // Functional reaction
+
+  if (line.includes('<->'))
+    // Bidirectional reaction
+    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)\s*,\s*(?<kr>\S+)#?(?<annotation>.*?)$/;
+
+  return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)#?(?<annotation>.*?)$/; // Unidirectional reaction
+}
+
+const lineToReaction = (line: string) => {
+  const reactionR = getRegex(line);
+
+  const reactionGroups = line.match(reactionR)?.groups;
+
+  if (!reactionGroups) {
+    throw new Error('Wrongly formatted bngl');
+  }
+
+  return {
+    name: reactionGroups.name || '',
+    definition: reactionGroups.definition,
+    kf: reactionGroups.kf,
+    kr: reactionGroups.kr || '',
+    annotation: reactionGroups.annotation || '',
+    entityId: uuid(),
+  };
+};
+
+const partsToObservable = (parts: string[]) => ({
+  name: parts[1],
+  definition: parts[2],
+  annotation: '',
+  entityId: uuid(),
+});
+
+const partsToDiffusion = (parts: string[]) => {
+  const specPrefixCompR = /^@(\w+):(\w+\(.*\))$/;
+  const specSuffixCompR = /^(\w+\(.*\))@(\w+)$/;
+
+  const definition = parts[1];
+  const prefixNotation = specPrefixCompR.test(definition);
+  const defParsed = definition.match(prefixNotation ? specPrefixCompR : specSuffixCompR);
+
+  return {
+    name: parts[0],
+    speciesDefinition: defParsed[prefixNotation ? 2 : 1],
+    compartment: defParsed[prefixNotation ? 1 : 2],
+    diffusionConstant: parts[2],
+    annotation: '',
+    entityId: uuid(),
+  };
+};
+
+export default function buildFromBngl(fileContent: string) {
+  console.log(fileContent);
+  const newLineR = /\r\n|\r|\n/;
+
+  const model = Object.assign(cloneDeep(constants.defaultEmptyModel), {
+    id: uuid(),
+  });
 
   const structuresR = /begin compartments(.*)end compartments/s;
   const parametersR = /begin parameters(.*)end parameters/s;
@@ -190,7 +185,18 @@ function buildFromBngl(fileContent) {
       .map((p) => p.match(/[^#]*/)[0])
       .map((p) => p.trim())
       .map((s) => s.split(/\t|\s/).filter((p) => p))
-      .map(partsToSpecies);
+      .map((parts) => {
+        const def = parts[0];
+
+        return {
+          name: words(parts[0].match(/(.*)(\(?|$)/)[1]).join('_'),
+          definition: def,
+          concentration: parts[1],
+          unit: modelTools.getDefaultSpecUnit(model, def),
+          annotation: '',
+          entityId: uuid(),
+        };
+      });
   }
 
   if (observablesR.test(fileContent)) {
@@ -232,39 +238,3 @@ function buildFromBngl(fileContent) {
 
   return model;
 }
-
-function parseExtendedBngl({ name, content }) {
-  const fileExt = name.split('.').slice(-1)[0];
-
-  const revisionData = {};
-
-  const collectionNames = [
-    'structures',
-    'molecules',
-    'species',
-    'reactions',
-    'diffusions',
-    'functions',
-    'observables',
-    'parameters',
-  ];
-
-  if (fileExt === 'bngl') {
-    const model = buildFromBngl(content);
-    collectionNames.forEach((collName) => {
-      revisionData[collName] = revisionData[collName] || [];
-      model[collName].forEach((entity) => {
-        const revisionEntity = { ...entity };
-        revisionEntity.entityId = uuidv4();
-        revisionData[collName].push(revisionEntity);
-      });
-    });
-  }
-
-  return revisionData;
-}
-
-export default {
-  buildFromBngl,
-  parseExtendedBngl,
-};

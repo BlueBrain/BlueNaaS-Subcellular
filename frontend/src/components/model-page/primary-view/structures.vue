@@ -56,7 +56,6 @@
 
   import bus from '@/services/event-bus';
 
-  import constants from '@/constants';
   import objStrSearchFilter from '@/tools/obj-str-search-filter';
   import findUniqName from '@/tools/find-uniq-name';
   import blockHeightWoPadding from '@/tools/block-height-wo-padding';
@@ -64,12 +63,10 @@
   import StructureForm from '@/components/shared/entities/structure-form.vue';
   import BnglText from '@/components/shared/bngl-text.vue';
 
-  const { StructureType } = constants;
-
   const defaultStructure = {
     name: '',
     valid: false,
-    type: StructureType.COMPARTMENT,
+    type: 'compartment',
     unit: {
       str: 'm³',
     },

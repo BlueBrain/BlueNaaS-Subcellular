@@ -31,3 +31,12 @@ export interface SimTrace {
   times: number[];
   values_by_observable: { [observable: string]: number[] }; //eslint-disable-line
 }
+
+export interface Structure {
+  name: string;
+  type: 'compartment' | 'membrane';
+  size: string;
+  parentName: string;
+  annotation: string;
+  entityId: string;
+}

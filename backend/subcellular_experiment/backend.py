@@ -17,6 +17,7 @@ from .db import Db
 from .geometry import create_geometry
 from .model_export import get_exported_model
 from .model_import import revision_from_excel
+from .viz import visualize
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
@@ -31,12 +32,15 @@ from .types import (
     UpdateSimulation,
     GetSimulations,
     GetExportedModel,
+    Model,
 )
+
+L = get_logger(__name__)
 
 
 if SENTRY_DSN is not None:
     sentry_sdk.init(
-        dsn="https://252f85f1037f47bea93b31981043dd4c@o224246.ingest.sentry.io/5561238",
+        dsn=SENTRY_DSN,
         integrations=[TornadoIntegration()],
     )
 
@@ -60,9 +64,9 @@ class WSHandler(WebSocketHandler):
         self.user_id = user_id
         L.debug("ws client has been connected")
 
-        sim_manager.add_client(self.user_id, self)
+        sim_manager.add_client(self.user_id, self)  # type: ignore
 
-    def check_origin(self, origin: str):  # pylint: disable=unused-argument
+    def check_origin(self, origin: str):
         return True
 
     @staticmethod
@@ -141,13 +145,19 @@ class WSHandler(WebSocketHandler):
                 cmdid=msg.cmdid,
             )
 
+        if msg.cmd == "visualize":
+            data = Model(**msg.data)
+            visualize(data.dict())
+
         if msg.cmd == "get_exported_model":
             model_data = GetExportedModel(**msg.data)
 
             model = ""
             error_msg = ""
             try:
-                model = get_exported_model(model_data.model.dict(), model_data.format)
+                model = get_exported_model(
+                    model_data.model.dict(exclude_none=True), model_data.format
+                )
             except Exception as error:
                 L.warning("Model export error")
                 error_msg = error.args[0] if len(error.args) > 0 else "Model export error"
@@ -164,7 +174,7 @@ class WSHandler(WebSocketHandler):
             try:
                 sbml = sbml_to_bngl(msg.data["sbml"])
             except (ValueError, KeyError) as e:
-                L.warnimg(f"Model import error {type(e)}: {e.args}")
+                L.warning(f"Model import error {type(e)}: {e.args}")
 
             await self.send_message("from_sbml", sbml, cmdid=msg.cmdid)
 
@@ -245,7 +255,7 @@ class SimRunnerWSHandler(WebSocketHandler):
         self.sim_worker = SimWorker(self)
         super().__init__(*args, **kwargs)
 
-    def check_origin(self, origin):  # pylint: disable=unused-argument
+    def check_origin(self, origin):
         L.debug("sim runner websocket client has been connected")
         return True
 
@@ -296,11 +306,11 @@ if not os.path.exists("/data/spatial-traces"):
 
 app = tornado.web.Application(
     [
-        (r"/ws", WSHandler),
-        (r"/sim", SimRunnerWSHandler),
-        (r"/health", HealthHandler),
+        ("/ws", WSHandler),
+        ("/sim", SimRunnerWSHandler),
+        ("/health", HealthHandler),
         (
-            r"/data/spatial-traces/(.*)",
+            "/data/spatial-traces/(.*)",
             tornado.web.StaticFileHandler,
             {"path": "/data/spatial-traces"},
         ),

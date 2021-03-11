@@ -31,6 +31,7 @@
     "three": "^0.113.2",
     "toggle-fullscreen": "^0.4.2",
     "uuid": "^3.4.0",
+    "uuidv4": "^6.2.6",
     "view-design": "^4.1.2",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",

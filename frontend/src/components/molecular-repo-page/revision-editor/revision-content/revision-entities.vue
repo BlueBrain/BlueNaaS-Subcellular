@@ -75,21 +75,21 @@
 
   import SpeciesTools from './forms/tools/species-tools.vue';
 
-  const { EntityType, entityTypeCollectionMap, formMode } = constants;
+  const { entityTypeCollectionMap, formMode } = constants;
 
   const formByEntityType = {
-    [EntityType.STRUCTURE]: StructureForm,
-    [EntityType.MOLECULE]: MoleculeForm,
-    [EntityType.SPECIES]: SpeciesForm,
-    [EntityType.REACTION]: ReactionForm,
-    [EntityType.DIFFUSION]: DiffusionForm,
-    [EntityType.OBSERVABLE]: ObservableForm,
-    [EntityType.PARAMETER]: ParameterForm,
-    [EntityType.FUNCTION]: FunctionForm,
+    structure: StructureForm,
+    molecule: MoleculeForm,
+    species: SpeciesForm,
+    reaction: ReactionForm,
+    diffusion: DiffusionForm,
+    observable: ObservableForm,
+    parameter: ParameterForm,
+    function: FunctionForm,
   };
 
   const toolByEntityType = {
-    [EntityType.SPECIES]: SpeciesTools,
+    species: SpeciesTools,
   };
 
   const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];

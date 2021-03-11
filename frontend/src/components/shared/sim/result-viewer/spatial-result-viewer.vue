@@ -145,7 +145,7 @@
     getSpatialStepTraceByIdx,
   } from '@/services/sim-data-storage';
 
-  const { StructureType, SimStatus } = constants;
+  const { SimStatus } = constants;
 
   export default {
     name: 'spatial-result-viewer',
@@ -217,11 +217,9 @@
           type: st.type,
         }));
 
-        this.structure.compartments = structure.filter(
-          (st) => st.type === StructureType.COMPARTMENT,
-        );
+        this.structure.compartments = structure.filter((st) => st.type === 'compartment');
 
-        this.structure.membranes = structure.filter((st) => st.type === StructureType.MEMBRANE);
+        this.structure.membranes = structure.filter((st) => st.type === 'membrane');
 
         // TODO: make simulation config immutable after simulation has been started
         const moleculeNames = this.sim.solverConf.spatialSampling.observables.map((o) => o.name);

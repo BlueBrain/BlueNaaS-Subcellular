@@ -32,10 +32,10 @@
 
   import SpeciesTools from './search-entities/tools/species-tools.vue';
 
-  const { entityTypeCollectionMap, EntityType } = constants;
+  const { entityTypeCollectionMap } = constants;
 
   const toolByEntityType = {
-    [EntityType.SPECIES]: SpeciesTools,
+    species: SpeciesTools,
   };
 
   const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];

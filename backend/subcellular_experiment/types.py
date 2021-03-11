@@ -115,7 +115,7 @@ class Function(Entity):
 
 
 class Species(Entity):
-    concentration: float
+    concentration: str
 
 
 class Reaction(Entity):
@@ -143,8 +143,8 @@ class Model(BaseModel):
     observables: List[Entity]
     reactions: List[Reaction]
     diffusions: List[Diffusion]
-    public: bool
-    nonBnglStructures: bool
+    public: Optional[bool]
+    nonBnglStructures: Optional[bool]
 
 
 class GetExportedModel(BaseModel):
