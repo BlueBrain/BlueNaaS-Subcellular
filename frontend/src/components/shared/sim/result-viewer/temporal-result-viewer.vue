@@ -1,15 +1,20 @@
 <template>
   <div ref="chart" class="temporal-graph-container">
+    <a
+      v-if="simulation.status === 'finished'"
+      style="color: black; position: absolute; right: 274px; z-index: 1"
+      :href="fileUrl"
+      download
+      >Download</a
+    >
     <Spin v-if="loading" fix />
   </div>
 </template>
 
 <script lang="ts">
   import Vue from 'vue';
-  import noop from 'lodash/noop';
   import throttle from 'lodash/throttle';
   import Plotly from 'plotly.js-basic-dist';
-  import { saveAs } from 'file-saver';
 
   import { getTrace, subscribeTrace, unsubscribeTrace } from '@/services/sim-data-storage';
   import socket from '@/services/websocket';
@@ -30,13 +35,6 @@
     hovermode: 'closest',
   };
 
-  const downloadCsvBtn = {
-    name: 'downloadCsv',
-    title: 'Download source as a CSV',
-    icon: Plotly.Icons.disk,
-    click: noop,
-  };
-
   const plotlyDefaultButtons = [
     'toImage',
     'zoom2d',
@@ -54,7 +52,7 @@
     displayModeBar: true,
     responsive: true,
     displaylogo: false,
-    modeBarButtons: [[downloadCsvBtn], plotlyDefaultButtons],
+    modeBarButtons: [plotlyDefaultButtons],
     toImageButtonOptions: {
       width: 1920,
       height: 1080,
@@ -123,7 +121,6 @@
       });
 
       subscribeTrace(this.simId, this.extendTraces);
-      downloadCsvBtn.click = () => this.downloadCsv();
 
       // If there is no data when mounting for this chart request it
       if (!this.trace) {
@@ -231,26 +228,6 @@
         if (length >= 1e3) return 10;
         return 1;
       },
-
-      downloadCsv() {
-        const chartData = this.getChartData();
-        const observableNames = chartData.map((data) => data.name);
-
-        const csvHeader = ['Time', ...observableNames].join(',').concat('\n');
-        const csvContent = chartData[0].x
-          .map((x, idx) => [x, ...chartData.map((data) => data.y[idx])].join(','))
-          .join('\n');
-        const csv = csvHeader + csvContent;
-
-        const csvBlob = new Blob([csv], { type: 'text/plain;charset=utf-8' });
-
-        const modelName = this.$store.state.model.name;
-        const simName = this.$store.state.model.simulations.find((s) => s.id === this.simId).name;
-        const daytime = new Date().toISOString();
-        const fileName = `${modelName}__${simName}__${daytime}.csv`;
-
-        saveAs(csvBlob, fileName);
-      },
     },
     computed: {
       simulation(): Simulation | undefined {
@@ -261,6 +238,9 @@
       },
       trace(): SimTrace | undefined {
         return getTrace(this.simId);
+      },
+      fileUrl() {
+        return `https://${window.location.host}/data/traces/${this.simId}.json`;
       },
     },
     watch: {

@@ -52,6 +52,7 @@
           entity: nodeArray[0].model,
         };
         this.$store.commit('setEntitySelection', selection);
+        this.$router.push({ path: '/model' });
       },
     },
     computed: {

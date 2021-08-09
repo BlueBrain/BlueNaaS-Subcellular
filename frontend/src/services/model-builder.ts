@@ -106,7 +106,6 @@ const partsToDiffusion = (parts: string[]) => {
 };
 
 export default function buildFromBngl(fileContent: string) {
-  console.log(fileContent);
   const newLineR = /\r\n|\r|\n/;
 
   const model = Object.assign(cloneDeep(constants.defaultEmptyModel), {

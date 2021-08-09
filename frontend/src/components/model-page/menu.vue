@@ -82,7 +82,8 @@
     methods: {
       onEntityTypeSelect(entityType) {
         this.$store.commit('resetEntitySelection');
-        const path = `/model/${entityType}`;
+        let path = `/model/${entityType}`;
+        if (entityType === 'viz') path = '/viz';
         if (path !== this.$router.currentRoute.path) {
           this.$router.push({ path });
         }

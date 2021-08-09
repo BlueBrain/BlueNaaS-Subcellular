@@ -11,13 +11,13 @@ import tornado.web
 import sentry_sdk
 from sentry_sdk.integrations.tornado import TornadoIntegration
 
-from .utils import ExtendedJSONEncoder
+from .utils import ExtendedJSONEncoder, umask
 from .sim_manager import SimManager, SimWorker
 from .db import Db
 from .geometry import create_geometry
 from .model_export import get_exported_model
 from .model_import import revision_from_excel
-from .viz import visualize
+from .viz import contact_map, reactivity_network
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
@@ -123,10 +123,9 @@ class WSHandler(WebSocketHandler):
             await db.delete_sim_trace(sim)
             await db.delete_sim_log(sim)
 
-            path = f"/data/spatial-traces/{sim.id}.json"
-
-            if os.path.exists(path):
-                os.remove(path)
+            for path in [f"/data/spatial-traces/{sim.id}.json", f"/data/straces/{sim.id}.json"]:
+                if os.path.exists(path):
+                    os.remove(path)
 
         if msg.cmd == "get_simulations":
             model_id = GetSimulations(**msg.data).modelId
@@ -145,9 +144,14 @@ class WSHandler(WebSocketHandler):
                 cmdid=msg.cmdid,
             )
 
-        if msg.cmd == "visualize":
+        if msg.cmd == "contact-map":
             data = Model(**msg.data)
-            visualize(data.dict())
+            await self.send_message("contact-map", contact_map(data.dict()))
+
+        if msg.cmd == "reactivity-network":
+            data = Model(**msg.data)
+            rn = reactivity_network(data.dict())
+            await self.send_message("reactivity-network", rn)
 
         if msg.cmd == "get_exported_model":
             model_data = GetExportedModel(**msg.data)
@@ -299,10 +303,14 @@ def on_terminate(signum: int, frame: FrameType):  # pylint: disable=unused-argum
 signal.signal(signal.SIGINT, on_terminate)
 signal.signal(signal.SIGTERM, on_terminate)
 
-if not os.path.exists("/data/spatial-traces"):
-    umask = os.umask(0)
-    os.makedirs("/data/spatial-traces", 0o777)
-    os.umask(umask)
+
+with umask():
+    if not os.path.exists("/data/spatial-traces"):
+        os.makedirs("/data/spatial-traces", 0o777)
+
+    if not os.path.exists("/data/traces"):
+        os.makedirs("/data/traces", 0o777)
+
 
 app = tornado.web.Application(
     [
@@ -313,6 +321,11 @@ app = tornado.web.Application(
             "/data/spatial-traces/(.*)",
             tornado.web.StaticFileHandler,
             {"path": "/data/spatial-traces"},
+        ),
+        (
+            "/data/traces/(.*)",
+            tornado.web.StaticFileHandler,
+            {"path": "/data/traces"},
         ),
     ],
     debug=os.getenv("DEBUG", None) or False,

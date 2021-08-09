@@ -45,18 +45,8 @@
   import toggleFullscreen from 'toggle-fullscreen';
 
   import ModelGeometryRenderer from '@/services/model-geometry-renderer';
+  import colors from '@/tools/colors';
   import bus from '@/services/event-bus';
-
-  const displayConf = {
-    default: {
-      meshSurfaceOpacity: 1,
-      meshWireframeOpacity: 0,
-    },
-    wireframe: {
-      meshSurfaceOpacity: 0.1,
-      meshWireframeOpacity: 0.5,
-    },
-  };
 
   export default {
     name: 'geometry-viewer',
@@ -64,6 +54,7 @@
       geometryData: {
         type: Object,
       },
+      structureType: String,
     },
     data() {
       return {
@@ -79,38 +70,29 @@
       };
     },
     mounted() {
-      this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
+      this.renderer = new ModelGeometryRenderer(this.$refs.canvas, this.$store);
+      bus.$on('layoutChange', this.renderer.onResize);
+      this.renderer.initGeometry(this.geometryData, this.structureType);
+      const structure = (this.geometryData.meta.structures || []).map((st, idx) => ({
+        name: st.name,
+        color: colors[idx].css(),
+        visible: true,
+        type: st.type,
+      }));
 
-      this.onLayoutChangeBinded = this.onLayoutChange.bind(this);
-      bus.$on('layoutChange', this.onLayoutChangeBinded);
-
-      setTimeout(() => this.initGeometry(), 10);
+      this.structure.compartments = structure.filter((st) => st.type === 'compartment');
+      this.structure.membranes = structure.filter((st) => st.type === 'membrane');
     },
     beforeDestroy() {
       bus.$off('layoutChange', this.onLayoutChangeBinded);
       this.renderer.destroy();
     },
     methods: {
-      initGeometry() {
-        this.renderer.initGeometry(this.geometryData, displayConf.default);
-        const structure = (this.geometryData.meta.structures || []).map((st, idx) => ({
-          name: st.name,
-          color: this.renderer.colors[idx].css(),
-          visible: true,
-          type: st.type,
-        }));
-
-        this.structure.compartments = structure.filter((st) => st.type === 'compartment');
-        this.structure.membranes = structure.filter((st) => st.type === 'membrane');
-      },
-      onLayoutChange() {
-        this.renderer.onResize();
-      },
       onVisibilityChange(comp) {
         this.renderer.setVisible(comp.name, comp.visible);
       },
       onDisplayModeChange(wireframe) {
-        this.renderer.setDisplayConf(displayConf[wireframe ? 'wireframe' : 'default']);
+        this.renderer.setWireFrame(wireframe);
       },
       async toggleFullscreen() {
         await toggleFullscreen(this.$refs.container);
@@ -123,7 +105,6 @@
     watch: {
       geometryData() {
         this.renderer.clearGeometry();
-        this.initGeometry();
       },
     },
   };

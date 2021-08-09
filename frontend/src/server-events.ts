@@ -8,3 +8,11 @@ bus.$on('ws:simStatus', (simStatus) => {
 bus.$on('ws:simProgress', (simProgress) => {
   store.commit('setSimProgress', simProgress);
 });
+
+bus.$on('ws:contact-map', (contactMap) => {
+  store.commit('setContactMap', contactMap);
+});
+
+bus.$on('ws:reactivity-network', (reactivityNetwork) => {
+  store.commit('setReactivityNetwork', reactivityNetwork);
+});

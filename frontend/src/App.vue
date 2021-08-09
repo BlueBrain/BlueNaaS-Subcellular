@@ -4,7 +4,6 @@
     <main>
       <router-view></router-view>
     </main>
-    <footer-component />
   </div>
 </template>
 
@@ -15,13 +14,11 @@
   import bus from './services/event-bus';
 
   import Header from './components/header.vue';
-  import Footer from './components/footer.vue';
 
   export default {
     name: 'app',
     components: {
       'header-component': Header,
-      'footer-component': Footer,
     },
     async mounted() {
       window.addEventListener('resize', () => bus.$emit('layoutChange'));

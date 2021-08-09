@@ -88,7 +88,9 @@ export default {
     geometry.meta.structures.forEach((structure) => {
       structure.size = structureSize[structure.name];
     });
+
     commit('setGeometry', geometry);
+    dispatch('saveModel');
     dispatch('setStructParamsFromGeometry');
   },
 

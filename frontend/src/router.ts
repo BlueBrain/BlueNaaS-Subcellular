@@ -102,15 +102,15 @@ export default new VueRouter({
               './components/model-page/primary-view/geometry.vue'
             ),
         },
-        {
-          path: 'viz',
-          component: () =>
-            import(
-              /* webpackChunkName: "model-viz" */
-              './components/model-page/primary-view/viz.vue'
-            ),
-        },
       ],
+    },
+    {
+      path: '/viz',
+      component: () =>
+        import(
+          /* webpackChunkName: "model-viz" */
+          './components/viz.vue'
+        ),
     },
     {
       path: '/molecular-repo',

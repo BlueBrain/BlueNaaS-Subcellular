@@ -24,6 +24,8 @@ const state: State = {
   },
   repoQueryHighlightVersionKey: null,
   simTraces: {},
+  selectMode: false,
+  selectedTetIdxs: [],
 };
 
 export default state;

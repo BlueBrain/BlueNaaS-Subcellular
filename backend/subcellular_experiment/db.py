@@ -1,4 +1,3 @@
-import os
 import re
 import asyncio
 
@@ -10,13 +9,13 @@ from sentry_sdk import capture_message
 
 from .model_to_bngl import ENTITY_TYPES
 from .logger import get_logger, log_many
-from .envvars import MONGO_URI
+from .envvars import MONGO_URI, DB_HOST, DB_PASSWORD
 from .types import SimId, Simulation, UpdateSimulation
 
 L = get_logger(__name__)
 
-DB_HOST = os.getenv("DB_HOST")
-L.debug("Using mongo host: {}".format(DB_HOST))
+
+L.debug(f"Using mongo host: {DB_HOST}")
 
 
 mol_def_r = re.compile(r"([a-zA-Z][a-zA-Z_0-9]*)\(")
@@ -88,7 +87,15 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
 
 class Db:
     def __init__(self):
-        self.mongo_client = AsyncIOMotorClient("mongodb://{}:27017/".format(DB_HOST))
+
+        uri = (
+            f"mongodb://admin:{DB_PASSWORD}@{DB_HOST}:27017/"
+            if DB_PASSWORD
+            else f"mongodb://{DB_HOST}:27017/"
+        )
+
+        self.mongo_client = AsyncIOMotorClient(uri)
+        L.debug(uri)
         L.debug("connected to db")
 
         if MONGO_URI is None:

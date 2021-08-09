@@ -5,12 +5,12 @@
       <span v-if="modelName">| Model: {{ modelName }}</span>
     </div>
 
-    <div class="menu-item ml-12">
+    <div class="menu-item ml-12" style="marginleft: 10px">
       <a
         href="https://humanbrainproject.github.io/hbp-sp6-guidebook/online_usecases/subcellular_level/subcellular_app/subcellular_app.html"
         target="_blank"
       >
-        <Icon type="md-help-circle" size="16" color="white" />
+        <span style="color: white">Help and Documentation</span>
       </a>
     </div>
 

@@ -35,6 +35,18 @@ export default {
     state.model.geometry = geometry;
   },
 
+  setSelectMode(state, mode) {
+    state.selectMode = mode;
+  },
+
+  addTetIdx(state, idx) {
+    if (!state.selectedTetIdxs.includes(idx)) state.selectedTetIdxs.push(idx);
+  },
+
+  resetSelectedTetIdxs(state) {
+    state.selectedTetIdxs = [];
+  },
+
   removeGeometry(state) {
     state.model.geometry = null;
 
@@ -114,6 +126,22 @@ export default {
     if (get(state, 'selectedEntity.entity.id') === status.simId) {
       Vue.set(state.selectedEntity, 'entity', cloneDeep(simulation));
     }
+  },
+
+  setContactMap(state, contactMap) {
+    Vue.set(state.model, 'contactMap', contactMap);
+  },
+
+  setContactMapConfig(state, cfg) {
+    Vue.set(state.model, 'graphCfg', cloneDeep(cfg));
+  },
+
+  setReactivityNetworkCfg(state, cfg) {
+    Vue.set(state.model, 'reactivityNetworkCfg', cloneDeep(cfg));
+  },
+
+  setReactivityNetwork(state, reactivityNetwork) {
+    Vue.set(state.model, 'reactivityNetwork', reactivityNetwork);
   },
 
   setSimulations(state, simulations) {

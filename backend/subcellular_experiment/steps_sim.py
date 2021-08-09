@@ -15,7 +15,7 @@ import steps.model as smodel
 import steps.geom as sgeom
 import steps.rng as srng
 import steps.solver as ssolver
-import steps.utilities.meshio as meshio
+from steps.utilities import meshio
 from typing_extensions import Literal
 
 from .model_to_bngl import model_to_bngl, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
@@ -112,25 +112,24 @@ class StepsSim:
 
             return comp_name
 
-        self.log("extend model observables with molecule definitions from stimulation")
-        stimuli = decompress_stimulation(self.sim_config["solverConf"]["stimulation"])
+        if solver_config.get("stimulation") is not None:
+            self.log("extend model observables with molecule definitions from stimulation")
+            stimuli = decompress_stimulation(solver_config["stimulation"])
 
-        # TODO: refactor weird use of simplify_string, remove stim_name
-        def stim_name(stim):
-            return "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
+            # TODO: refactor weird use of simplify_string, remove stim_name
+            def stim_name(stim):
+                return "{}{}".format(STIM_PREFIX, simplify_string(stim["target"]))
 
-        model_stim_observable_dict = {
-            stim_name(stim): {"name": stim_name(stim), "definition": stim["target"]}
-            for stim in stimuli
-            if stim["type"] in ["setConc", "clampConc"]
-        }
-        model_dict["observables"].extend(model_stim_observable_dict.values())
+            model_stim_observable_dict = {
+                stim_name(stim): {"name": stim_name(stim), "definition": stim["target"]}
+                for stim in stimuli
+                if stim["type"] in ["setConc", "clampConc"]
+            }
+            model_dict["observables"].extend(model_stim_observable_dict.values())
 
-        spatial_sampling_enabled = (
-            "spatialSampling" in solver_config and solver_config["spatialSampling"]["enabled"]
-        )
+        spatial_sampling = solver_config.get("spatialSampling", None) or {"enabled": False}
 
-        if spatial_sampling_enabled:
+        if spatial_sampling["enabled"]:
             self.log("extend model observables with molecule definitions for spatial sampling")
             spatial_sample_observables = [
                 {
@@ -592,7 +591,7 @@ class StepsSim:
             if re.match(rf"({DIFF_PREFIX}|{STIM_PREFIX}|{SPAT_PREFIX})\w+", observable.name) is None
         ]
         trace_observable_names = [observable.name for observable in trace_observables]
-        trace_values = np.zeros((len(tpnts), len(trace_observables)))
+        trace_values = np.zeros((len(sample_tpnt_set), len(trace_observables)))
 
         spatial_observables = [
             observable
@@ -686,7 +685,8 @@ class StepsSim:
         self.log("run sim")
         self.send_progress(SimStatus(status="started"))
 
-        for tidx, tpnt in enumerate(tpnts):
+        tidx = 0
+        for tpnt in tpnts:
 
             sim.run(tpnt)
 
@@ -724,14 +724,18 @@ class StepsSim:
                 }
 
                 sim_trace = SimTrace(
-                    index=tpnt, times=[tpnt], values_by_observable=values_by_observable
+                    index=tidx,
+                    times=[tpnt],
+                    values_by_observable=values_by_observable,
+                    persist=True,
                 )
 
                 self.send_progress(sim_trace)
-
                 # sample spatial molecule amounts if requested by user
+
                 if (
                     "spatialSampling" in solver_config
+                    and solver_config["spatialSampling"] is not None
                     and solver_config["spatialSampling"]["enabled"]
                 ):
 
@@ -741,8 +745,11 @@ class StepsSim:
                     time.sleep(0.02)
 
                     spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
+
                     for structure in solver_config["spatialSampling"]["structures"]:
+
                         structure_name: str = structure["name"]
+
                         geom_struct = get_geom_struct_by_model_struct_name(structure_name)
                         geom_idxs_key = (
                             "tetIdxs" if geom_struct["type"] == COMPARTMENT else "triIdxs"
@@ -779,40 +786,32 @@ class StepsSim:
                         SimSpatialStepTrace(stepIdx=tidx, t=tpnt, data=spatial_trace_data_dict)
                     )
 
-            num_points = len(tpnts)
-            progress = int((tidx + 1) / num_points * 100)
+                num_points = len(sample_tpnt_set)
+                progress = int((tidx + 1) / num_points * 100)
 
-            if (tidx) % math.ceil(len(tpnts) / 100) == 0:
-                self.log(f"done {progress}% (sim time: {tpnt} s)")
-                self.send_progress(SimProgress(progress=progress))
+                if (tidx) % math.ceil(num_points / 100) == 0:
+                    self.log(f"done {progress}% (sim time: {tpnt} s)")
+                    self.send_progress(SimProgress(progress=progress))
 
-        times_size_bytes = tpnts.itemsize * len(tpnts)
-        values_size_bytes = trace_values.size * trace_values.itemsize
-        total_size_bytes = times_size_bytes + values_size_bytes
+                tidx += 1
 
-        chunk_size = 1_000_000  # Roughly 1 MB
-        nchunks = total_size_bytes // chunk_size + 1
+        values = trace_values.T
 
-        elements_per_chunk = len(tpnts) // nchunks
+        # pylint: disable=unsubscriptable-object
+        values_by_observable = {
+            trace_observable_names[i]: values[i].tolist()
+            for i in range(len(trace_observable_names))
+        }
 
-        for chunk_idx in range(0, len(tpnts), elements_per_chunk):
-            times_chunk = tpnts[chunk_idx : chunk_idx + elements_per_chunk]
-            values_chunk = trace_values[chunk_idx : chunk_idx + elements_per_chunk].T
-
-            values_by_observable = {
-                trace_observable_names[i]: values_chunk[i].tolist()
-                for i in range(len(trace_observable_names))
-            }
-
-            self.send_progress(
-                SimTrace(
-                    index=chunk_idx,
-                    times=times_chunk.tolist(),
-                    values_by_observable=values_by_observable,
-                    persist=True,
-                    stream=False,
-                )
+        self.send_progress(
+            SimTrace(
+                index=0,
+                times=sorted(sample_tpnt_set),
+                values_by_observable=values_by_observable,
+                persist=False,
+                stream=False,
             )
+        )
 
         self.log("done")
         self.send_progress(SimStatus(status="finished"))

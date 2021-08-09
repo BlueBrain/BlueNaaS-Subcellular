@@ -30,8 +30,11 @@ run_dev:
 	docker-compose up --scale sim_worker=2
 
 docker_build_latest:
-	non-multi-stage-build/build.sh sc-svc:latest
-
+	docker build \
+    --build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
+	--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
+    -t sc-svc:latest \
+    .
 
 push_prod:
 	docker tag \

@@ -3,7 +3,7 @@
 $header-height: 28px;
 $footer-height: 46px;
 
-$main-height-delta: calc(#{$header-height} + #{$footer-height});
+$main-height-delta: calc(#{$header-height});
 $main-height: calc(100% - #{$main-height-delta});
 
 html {

@@ -28,3 +28,12 @@ def tempdir():
     finally:
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
+
+
+@contextmanager
+def umask(mask=0):
+    old_mask = os.umask(mask)
+    try:
+        yield
+    finally:
+        os.umask(old_mask)

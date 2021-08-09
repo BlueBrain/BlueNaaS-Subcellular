@@ -2,7 +2,7 @@ import os
 import json
 from typing import Dict
 
-import steps.utilities.meshio as meshio
+from steps.utilities import meshio
 import numpy as np
 
 from .logger import get_logger

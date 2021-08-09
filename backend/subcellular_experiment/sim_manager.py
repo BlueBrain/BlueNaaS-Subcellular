@@ -149,6 +149,9 @@ class SimManager:
         L.debug("scheduling a simulation")
         self.sim_conf_queue.append(sim_conf)
 
+        with open(f"/data/traces/{sim_conf.id}.json", "a") as file:
+            file.write("[]")
+
         spatial_sampling = sim_conf.solverConf.get("spatialSampling")
 
         if spatial_sampling and spatial_sampling["enabled"]:
@@ -271,10 +274,23 @@ class SimManager:
         user_id = sim_conf.userId
         sim_id = sim_conf.id
 
+        trace = sim_trace.dict()
+
+        if not sim_trace.stream:
+            with open(f"/data/traces/{sim_conf.id}.json", "a") as file:
+                file.seek(0, os.SEEK_END)
+                file.seek(file.tell() - 1, os.SEEK_SET)
+                file.truncate()
+
+                lead_char = ", " if trace["index"] > 0 else ""
+                trace_str = json.dumps({**trace, "simId": sim_conf.id})
+
+                file.write(f"{lead_char}{trace_str}]")
+
         if sim_trace.persist:
             await self.db.create_sim_trace(
                 {
-                    **sim_trace.dict(),
+                    **trace,
                     "simId": sim_id,
                     "userId": user_id,
                 }
@@ -315,6 +331,6 @@ class SimManager:
         self.worker_by_sim_id[worker.sim_conf.id] = worker
 
         L.debug("ready to run simulation, sending sim config to sim worker")
-        await worker.ws.send_message("run_sim", worker.sim_conf.dict())
+        await worker.ws.send_message("run_sim", worker.sim_conf.dict(exclude_none=True))
 
         await self.run_available()
