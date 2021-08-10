@@ -56,8 +56,9 @@
         store.commit('setContactMapConfig', cloneDeep(conf));
       });
 
-      this.graph.on('click', 'node', () => {
-        this.$router.push('/model/species');
+      this.graph.on('click', 'node', (e) => {
+        const isChild = !!e.target.data('parent');
+        if (!isChild) this.$router.push('/model/species');
       });
 
       if (this.viz) {
