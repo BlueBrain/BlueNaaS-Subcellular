@@ -15,6 +15,7 @@ import steps.model as smodel
 import steps.geom as sgeom
 import steps.rng as srng
 import steps.solver as ssolver
+from steps.mpi.solver import TetOpSplit
 from steps.utilities import meshio
 from typing_extensions import Literal
 
@@ -538,7 +539,12 @@ class StepsSim:
         rng.initialize(654)
 
         self.log("create STEPS solver")
-        sim = ssolver.Tetexact(steps_model, mesh, rng)
+
+        if self.sim_config["solver"] == "tetexact":
+            sim = ssolver.Tetexact(steps_model, mesh, rng)
+        else:
+            sim = TetOpSplit(steps_model, mesh, rng, False, [0] * mesh.ntets)
+
         sim.reset()
 
         # Sim params and targets for trace recording

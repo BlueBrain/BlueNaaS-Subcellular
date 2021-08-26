@@ -200,7 +200,7 @@ class SimWorker:
 
         if solver == "nfsim":
             sim: Union[NfSim, StepsSim] = NfSim(self.sim_config, self.sim_queue.put)
-        elif solver == "steps":
+        elif solver in ("tetexact", "tetopsplit"):
             sim = StepsSim(self.sim_config, self.sim_queue.put)
         else:
             raise NotImplementedError(f"solver {solver} is not supported")

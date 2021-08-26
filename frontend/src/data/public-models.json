@@ -2291,7 +2291,7 @@
         "modelId": "44133681-cadf-4161-99dc-56c8adf59dc9",
         "status": "created",
         "name": "Main STEPS example with stimuli",
-        "solver": "steps",
+        "solver": "tetexact",
         "solverConf": {
           "valid": true,
           "dt": 0.02,

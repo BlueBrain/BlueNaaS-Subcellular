@@ -114,7 +114,7 @@ const defaultEmptyRevision = {
 };
 
 const defaultSolverConfig = {
-  [SimSolver.STEPS]: {
+  tetexact: {
     dt: 0.01,
     tEnd: 10,
     stimulation: {
@@ -128,7 +128,21 @@ const defaultSolverConfig = {
       observables: [],
     },
   },
-  [SimSolver.NFSIM]: {
+  tetopsplit: {
+    dt: 0.01,
+    tEnd: 10,
+    stimulation: {
+      size: 0,
+      targetValues: [],
+      data: [],
+    },
+    spatialSampling: {
+      enabled: false,
+      structures: [],
+      observables: [],
+    },
+  },
+  nfsim: {
     dt: 0.01,
     tEnd: 10,
     stimulation: {

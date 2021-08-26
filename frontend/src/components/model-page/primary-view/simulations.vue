@@ -390,18 +390,10 @@
       },
       traceGraphBtnAvailable() {
         if (!this.selectedSimulation) return false;
-
         if (
-          this.selectedSimulation.solver === SimSolver.STEPS &&
           [SimStatus.STARTED, SimStatus.FINISHED, SimStatus.CANCELLED].includes(
             this.selectedSimulation.status,
           )
-        )
-          return true;
-
-        if (
-          this.selectedSimulation.solver === SimSolver.NFSIM &&
-          this.selectedSimulation.status === SimStatus.FINISHED
         )
           return true;
 
