@@ -64,35 +64,40 @@ def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
         progress_cb(SimStatus(status="error"))
         return
 
-    sim_traces = pd.read_csv("model.gdat")
-    observables = list(sim_traces.columns.tolist()[1:])
+    sim_traces = pd.read_csv("model.gdat", delim_whitespace=True)
+    observables = list(sim_traces.columns.tolist()[2:])
 
-    times = np.array(sim_traces.values.tolist())[:, 0]
-    values = np.array(sim_traces.values.tolist())[:, 1:]
+    print(len(observables))
+    times = np.array(sim_traces.values.tolist())[:, 1]
+    print(times)
 
-    # times_size_bytes = times.itemsize * len(times)
-    # values_size_bytes = values.size * values.itemsize
-    # total_size_bytes = times_size_bytes + values_size_bytes
+    values = np.array(sim_traces.values.tolist())[:, 2:]
 
-    # chunk_size = 1_000_000  # Roughly 1 MB
-    # nchunks = total_size_bytes // chunk_size + 1
+    times_size_bytes = times.itemsize * len(times)
+    values_size_bytes = values.size * values.itemsize
+    total_size_bytes = times_size_bytes + values_size_bytes
 
-    # elements_per_chunk = len(times) // nchunks
+    chunk_size = 1_000_000  # Roughly 1 MB
+    nchunks = total_size_bytes // chunk_size + 1
 
-    # for i in range(0, len(times), elements_per_chunk):
-    #     times_chunk = times[i : i + elements_per_chunk]
-    #     values_chunk = values[i : i + elements_per_chunk].T
+    elements_per_chunk = len(times) // nchunks
 
-    #     values_by_observable = {
-    #         observables[i]: values_chunk[i].tolist() for i in range(len(observables))
-    #     }
-    #     progress_cb(
-    #         SimTrace(
-    #             index=i,
-    #             times=[float(n) for n in times_chunk.tolist()],
-    #             values_by_observable=values_by_observable,
-    #             persist=True,
-    #         )
-    #     )
+    for i in range(0, len(times), elements_per_chunk):
+        times_chunk = times[i : i + elements_per_chunk]
+        values_chunk = values[i : i + elements_per_chunk].T
+
+        values_by_observable = {
+            observables[i]: [v if not math.isnan(v) else 0 for v in values_chunk[i].tolist()]
+            for i in range(len(observables))
+        }
+
+        progress_cb(
+            SimTrace(
+                index=i,
+                times=[float(n) for n in times_chunk.tolist()],
+                values_by_observable=values_by_observable,
+                persist=True,
+            )
+        )
 
     progress_cb(SimStatus(status="finished"))
