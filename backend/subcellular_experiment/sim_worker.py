@@ -22,6 +22,7 @@ from .sim import SimStatus, SimLogMessage, SimData
 from .utils import ExtendedJSONEncoder
 from .nf_sim import NfSim
 from .steps_sim import StepsSim
+from .bng import run_bng
 from .logger import get_logger, log_many
 from .envvars import SENTRY_DSN, MASTER_HOST
 
@@ -207,7 +208,7 @@ class SimWorker:
 
         L.debug("sim proc started")
         try:
-            sim.run()
+            run_bng(self.sim_config, self.sim_queue.put)
             self.sim_queue.put(None)
         except Exception as error:
             L.debug("Sim error")
