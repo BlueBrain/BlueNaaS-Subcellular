@@ -200,15 +200,20 @@ class SimWorker:
         solver = self.sim_config.get("solver")
 
         if solver == "nfsim":
-            sim: Union[NfSim, StepsSim] = NfSim(self.sim_config, self.sim_queue.put)
+            sim: Union[NfSim, StepsSim, None] = NfSim(self.sim_config, self.sim_queue.put)
         elif solver in ("tetexact", "tetopsplit"):
             sim = StepsSim(self.sim_config, self.sim_queue.put)
+        elif solver in ("ode", "ssa"):
+            sim = None
         else:
             raise NotImplementedError(f"solver {solver} is not supported")
 
         L.debug("sim proc started")
         try:
-            run_bng(self.sim_config, self.sim_queue.put)
+            if sim is not None:
+                sim.run()
+            else:
+                run_bng(self.sim_config, self.sim_queue.put)
             self.sim_queue.put(None)
         except Exception as error:
             L.debug("Sim error")
