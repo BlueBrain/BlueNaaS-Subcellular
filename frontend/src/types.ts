@@ -2,7 +2,7 @@ export interface Simulation {
   solver: 'steps' | 'NFsim';
 }
 
-export type Solver = 'nfsim' | 'tetexact' | 'tetopsplit';
+export type Solver = 'nfsim' | 'tetexact' | 'tetopsplit' | 'ode' | 'ssa';
 
 export interface Model {
   simulations: Simulation[];

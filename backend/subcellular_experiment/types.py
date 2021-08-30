@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 SimStatus = Literal["created", "queued", "init", "started", "error", "finished", "cancelled"]
 ModelFormat = Literal["bngl", "ebngl", "pysb_flat", "sbml"]
-SimSolver = Literal["tetexact", "tetopsplit", "nfsim"]
+SimSolver = Literal["tetexact", "tetopsplit", "nfsim", "ode", "ssa"]
 
 
 class SimConfig(BaseModel):

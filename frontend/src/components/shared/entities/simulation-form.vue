@@ -36,7 +36,7 @@
         @input="onSimulationChange"
       />
       <nfsim-conf-form
-        v-else-if="simulation.solver === 'nfsim'"
+        v-else-if="['nfsim', 'ode', 'ssa'].includes(simulation.solver)"
         v-model="simulation.solverConf"
         @input="onSimulationChange"
       />
@@ -57,18 +57,17 @@
 </template>
 
 <script lang="ts">
-  import constants from '@/constants';
   import { Solver } from '@/types'; //eslint-disable-line no-unused-vars
 
   import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
   import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue';
 
-  const { defaultSolverConfig } = constants;
-
   const solverLabel = {
     nfsim: 'NFsim',
     tetexact: 'STEPS: Tetexact',
     tetopsplit: 'STEPS: Tetoptsplit',
+    ode: 'BNG: ode',
+    ssa: 'BNG: ssa',
   };
 
   export default {
@@ -80,17 +79,27 @@
     },
     data() {
       return {
-        solvers: ['tetexact', 'tetopsplit', 'nfsim'],
+        solvers: ['tetexact', 'tetopsplit', 'nfsim', 'ode', 'ssa'],
         simulation: { ...this.value },
         solverLabel,
       };
     },
     methods: {
       onSolverChange() {
-        const { solver } = this.simulation;
         this.simulation.solverConf = {
           valid: true,
-          ...defaultSolverConfig[solver],
+          dt: 0.01,
+          tEnd: 10,
+          stimulation: {
+            size: 0,
+            targetValues: [],
+            data: [],
+          },
+          spatialSampling: {
+            enabled: false,
+            structures: [],
+            observables: [],
+          },
         };
         this.onSimulationChange();
       },
