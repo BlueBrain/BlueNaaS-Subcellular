@@ -71,8 +71,6 @@ def model_to_bngl(
     if write_xml_op:
         bngl_lines.append('writeXML({prefix=>"model"})')
 
-    bngl_lines.append(f'simulate({{method=>"ode",t_end=>10,n_steps=>200}})')
-
     return "\n".join(bngl_lines) + "\n"
 
 

@@ -23,6 +23,12 @@ def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
         progress_cb(SimLogMessage(message=message, source=source))
 
     bngl = model_to_bngl(sim_config["model"], write_xml_op=True)
+
+    solver_cfg = sim_config["solverConf"]
+    t_end = solver_cfg["tEnd"]
+    n_steps = math.floor(t_end / solver_cfg["dt"])
+    bngl += f'\nsimulate({{method=>"{sim_config["solver"]}",t_end=>{t_end},n_steps=>{n_steps}}})'
+
     log(bngl, source="model_bngl")
 
     L.debug(bngl)
@@ -67,10 +73,7 @@ def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
     sim_traces = pd.read_csv("model.gdat", delim_whitespace=True)
     observables = list(sim_traces.columns.tolist()[2:])
 
-    print(len(observables))
     times = np.array(sim_traces.values.tolist())[:, 1]
-    print(times)
-
     values = np.array(sim_traces.values.tolist())[:, 2:]
 
     times_size_bytes = times.itemsize * len(times)
