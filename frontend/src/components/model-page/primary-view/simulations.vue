@@ -114,7 +114,7 @@
   import objStrSearchFilter from '@/tools/obj-str-search-filter';
   import blockHeightWoPadding from '@/tools/block-height-wo-padding';
 
-  const { SimSolver, SimStatus } = constants;
+  const { SimStatus } = constants;
 
   const searchProps = ['name'];
 
