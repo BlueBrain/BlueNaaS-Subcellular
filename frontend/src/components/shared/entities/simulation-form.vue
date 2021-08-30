@@ -16,12 +16,12 @@
           <FormItem label="Solver *">
             <i-select v-model="simulation.solver" @on-change="onSolverChange">
               <i-option
-                v-for="simSolver in SimSolver"
+                v-for="simSolver of solvers"
                 :value="simSolver"
                 :key="simSolver"
-                :disabled="!solverState(simSolver).enabled"
+                :disabled="Boolean(getInvalidReason(simSolver))"
               >
-                {{ getSolverSelectLabel(simSolver) }}
+                {{ `${solverLabel[simSolver]} ${getInvalidReason(simSolver)}` }}
               </i-option>
             </i-select>
           </FormItem>
@@ -31,12 +31,12 @@
 
     <div v-if="simulation.solverConf">
       <steps-conf-form
-        v-if="simulation.solver === SimSolver.STEPS"
+        v-if="simulation.solver === 'tetexact' || simulation.solver === 'tetopsplit'"
         v-model="simulation.solverConf"
         @input="onSimulationChange"
       />
       <nfsim-conf-form
-        v-else-if="simulation.solver === SimSolver.NFSIM"
+        v-else-if="simulation.solver === 'nfsim'"
         v-model="simulation.solverConf"
         @input="onSimulationChange"
       />
@@ -56,17 +56,19 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
   import constants from '@/constants';
+  import { Solver } from '@/types'; //eslint-disable-line no-unused-vars
 
   import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
   import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue';
 
-  const { defaultSolverConfig, SimSolver } = constants;
+  const { defaultSolverConfig } = constants;
 
   const solverLabel = {
-    [SimSolver.NFSIM]: 'NFsim',
-    [SimSolver.STEPS]: 'STEPS',
+    nfsim: 'NFsim',
+    tetexact: 'STEPS: Tetexact',
+    tetopsplit: 'STEPS: Tetoptsplit',
   };
 
   export default {
@@ -78,8 +80,9 @@
     },
     data() {
       return {
-        SimSolver,
+        solvers: ['tetexact', 'tetopsplit', 'nfsim'],
         simulation: { ...this.value },
+        solverLabel,
       };
     },
     methods: {
@@ -103,14 +106,17 @@
       focus() {
         this.$refs.nameInput.focus();
       },
-      getSolverSelectLabel(solver) {
-        const solverState = this.solverState(solver);
-        return solverLabel[solver] + (solverState.reason ? ` (${solverState.reason})` : '');
+      getInvalidReason(solver: Solver) {
+        if (!this.solvers.includes(solver)) throw new Error(`Unrecognized solver ${solver}`);
+        if (solver === 'nfsim' && this.model.nonBnglStructures) return 'Non compliant BNG structs';
+        if ((solver === 'tetexact' || solver === 'tetopsplit') && !this.model.geometry)
+          return 'No geometry provided';
+        return '';
       },
     },
     computed: {
-      solverState() {
-        return this.$store.getters.solverState;
+      model() {
+        return this.$store.state.model;
       },
     },
     watch: {

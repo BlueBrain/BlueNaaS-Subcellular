@@ -1,7 +1,3 @@
-import constants from '@/constants';
-
-const { SimSolver } = constants;
-
 const collectionNames = [
   'structures',
   'molecules',
@@ -13,45 +9,7 @@ const collectionNames = [
   'parameters',
 ];
 
-class SolverState {
-  /**
-   * Create solverState instance
-   *
-   * @param {Boolean} enabled
-   * @param {Str} reason
-   */
-
-  reason: string;
-  enabled: boolean;
-  constructor(enabled: boolean, reason = '') {
-    this.enabled = enabled;
-    this.reason = reason;
-  }
-}
-
-function getStepsSolverState(state) {
-  if (!state.model.geometry) {
-    return new SolverState(false, 'No geometry provided');
-  }
-
-  return new SolverState(true);
-}
-
-function getNfsimSolverState(state) {
-  if (state.model.nonBnglStructures) {
-    return new SolverState(false, 'Non compliant BNG structs');
-  }
-
-  return new SolverState(true);
-}
-
 export default {
-  solverState: (state) => (solver) => {
-    if (solver === SimSolver.NFSIM) return getNfsimSolverState(state);
-    if (solver === SimSolver.STEPS) return getStepsSolverState(state);
-
-    throw new Error(`Unrecognised solver ${solver}`);
-  },
   queryResultVersions: (state) => {
     if (!state.repoQueryResult) return [];
 

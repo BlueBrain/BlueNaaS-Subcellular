@@ -7,13 +7,14 @@ from pydantic import BaseModel
 
 SimStatus = Literal["created", "queued", "init", "started", "error", "finished", "cancelled"]
 ModelFormat = Literal["bngl", "ebngl", "pysb_flat", "sbml"]
+SimSolver = Literal["tetexact", "tetopsplit", "nfsim"]
 
 
 class SimConfig(BaseModel):
     userId: str
     status: str
     solverConf: dict
-    solver: Literal["steps", "nfsim"]
+    solver: SimSolver
     simId: str
     progress: Optional[int]
     name: str
@@ -79,7 +80,7 @@ class Simulation(BaseModel):
     userId: str
     name: str
     progress: Optional[float]
-    solver: Literal["steps", "nfsim"]
+    solver: SimSolver
     solverConf: SolverConfig
     status: SimStatus
     valid: str
@@ -92,7 +93,7 @@ class UpdateSimulation(BaseModel):
     userId: Optional[str]
     name: Optional[str]
     progress: Optional[float]
-    solver: Optional[Literal["steps", "nfsim"]]
+    solver: Optional[SimSolver]
     solverConf: Optional[SolverConfig]
     status: Optional[SimStatus]
     valid: Optional[bool]

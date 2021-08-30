@@ -114,7 +114,7 @@
   import objStrSearchFilter from '@/tools/obj-str-search-filter';
   import blockHeightWoPadding from '@/tools/block-height-wo-padding';
 
-  const { SimSolver, SimStatus } = constants;
+  const { SimStatus } = constants;
 
   const searchProps = ['name'];
 
@@ -390,18 +390,10 @@
       },
       traceGraphBtnAvailable() {
         if (!this.selectedSimulation) return false;
-
         if (
-          this.selectedSimulation.solver === SimSolver.STEPS &&
           [SimStatus.STARTED, SimStatus.FINISHED, SimStatus.CANCELLED].includes(
             this.selectedSimulation.status,
           )
-        )
-          return true;
-
-        if (
-          this.selectedSimulation.solver === SimSolver.NFSIM &&
-          this.selectedSimulation.status === SimStatus.FINISHED
         )
           return true;
 

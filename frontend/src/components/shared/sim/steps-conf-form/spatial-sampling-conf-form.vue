@@ -31,8 +31,8 @@
   import constants from '@/constants';
   import BnglText from '@/components/shared/bngl-text';
 
-  const { SimSolver, defaultSolverConfig } = constants;
-  const { spatialSampling } = defaultSolverConfig[SimSolver.STEPS];
+  const { defaultSolverConfig } = constants;
+  const { spatialSampling } = defaultSolverConfig.tetexact;
 
   const observableColumns = [
     {

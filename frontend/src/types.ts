@@ -2,6 +2,8 @@ export interface Simulation {
   solver: 'steps' | 'NFsim';
 }
 
+export type Solver = 'nfsim' | 'tetexact' | 'tetopsplit';
+
 export interface Model {
   simulations: Simulation[];
 }
