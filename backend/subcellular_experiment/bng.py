@@ -6,9 +6,9 @@ from typing import Callable, Any, Optional
 import numpy as np
 import pandas as pd
 
-from .sim import SimStatus, SimTrace, SimLogMessage, decompress_stimulation
+from .sim import SimStatus, SimTrace, SimLogMessage
 from .model_to_bngl import model_to_bngl
-from .settings import BNG_PATH, NFSIM_PATH
+from .settings import BNG_PATH
 from .logger import get_logger
 from .utils import tempdir
 
