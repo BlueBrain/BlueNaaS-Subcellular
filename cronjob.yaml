@@ -1,7 +1,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: pgbackup
+  name: subcellbkp
 spec:
   schedule: "*/60 * * * *"
   concurrencyPolicy: "Forbid"
@@ -21,26 +21,26 @@ spec:
               persistentVolumeClaim:
                 claimName: subcellular-backup
           containers:
-            - name: pgbackup
-              image: postgres
+            - name: subcellbkp
+              image: docker-registry.ebrains.eu/bsp-epfl/mongo_backup
               env:
-                - name: PGPASSWORD
-                  value: "i5J43RmPm6oCVU2Y"
-                - name: PGDATABASE
-                  value: "subcellular-app"
+                - name: OS_USERNAME
+                  value: "gbarrios"
+                - name: OS_PROJECT_ID
+                  value: "c0a333ecf7c045809321ce9d9ecdfdea"
+                - name: OS_AUTH_TYPE
+                  value: "token"
+                - name: OS_PROTOCOL
+                  value: "openid"
+                - name: OS_TOKEN
+                  value: "gAAAAABhMTI_jmxkkipzd2Nx6bfXtBWR15awhihhzTeVSb02OXx15bHaMdwlSF9BnERlRT9m6UGTbp1-eOeaWvSjtWP6POPYBbrGzbsfgwjBS9uO47CBAbcG-RLHX1LRqV1kAou8CU_gFZpow6znj_TtCTCXWyvzFlUwOY9eWk628_ONXCzluW-MLFz4FN2kzBz83DbJ0U5e"
+                - name: OS_IDENTITY_API_VERSION
+                  value: "3"
+                - name: OS_IDENTITY_PROVIDER
+                  value: "cscskc"
               command:
                 [
-                  "pg_dump",
-                  "-h",
-                  "172.30.12.27",
-                  "-p",
-                  "5432",
-                  "-U",
-                  "user3XX",
-                  "-w",
-                  "-f",
-                  "/subcellular-backup/backup.sql"
-
+                  "/backup.sh"
                 ]
               volumeMounts:
                 - name: subcellular-backup
