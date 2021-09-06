@@ -23,25 +23,7 @@ spec:
           containers:
             - name: subcellbkp
               image: docker-registry.ebrains.eu/bsp-epfl/mongo_backup
-              env:
-                - name: OS_USERNAME
-                  value: "gbarrios"
-                - name: OS_PROJECT_ID
-                  value: "c0a333ecf7c045809321ce9d9ecdfdea"
-                - name: OS_AUTH_TYPE
-                  value: "token"
-                - name: OS_PROTOCOL
-                  value: "openid"
-                - name: OS_TOKEN
-                  value: "gAAAAABhMTI_jmxkkipzd2Nx6bfXtBWR15awhihhzTeVSb02OXx15bHaMdwlSF9BnERlRT9m6UGTbp1-eOeaWvSjtWP6POPYBbrGzbsfgwjBS9uO47CBAbcG-RLHX1LRqV1kAou8CU_gFZpow6znj_TtCTCXWyvzFlUwOY9eWk628_ONXCzluW-MLFz4FN2kzBz83DbJ0U5e"
-                - name: OS_IDENTITY_API_VERSION
-                  value: "3"
-                - name: OS_IDENTITY_PROVIDER
-                  value: "cscskc"
-              command:
-                [
-                  "/backup.sh"
-                ]
+              command: ["/backup.sh"]
               volumeMounts:
                 - name: subcellular-backup
                   mountPath: /subcellular-backup
