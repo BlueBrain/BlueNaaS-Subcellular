@@ -193,7 +193,6 @@
       }) {
         if (this.trace) this.loading = false;
         if (!this.trace) return;
-
         const start = xstart && floorDiv(xstart, this.dt);
         const end = xend && floorDiv(xend, this.dt);
 

@@ -73,7 +73,7 @@ def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
     sim_traces = pd.read_csv("model.gdat", delim_whitespace=True)
     observables = list(sim_traces.columns.tolist()[2:])
 
-    times = np.array(sim_traces.values.tolist())[:, 1]
+    times = np.array(sim_traces.values.tolist())[:, 0]
     values = np.array(sim_traces.values.tolist())[:, 2:]
 
     times_size_bytes = times.itemsize * len(times)
