@@ -1,4 +1,4 @@
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Union
 
 from typing_extensions import Literal
 from tornado import websocket
@@ -18,7 +18,7 @@ class SimConfig(BaseModel):
     simId: str
     progress: Optional[int]
     name: str
-    modelId: str
+    modelId: Optional[str]
     model: dict
     id: str
     annotation: str
@@ -46,7 +46,7 @@ class Structure(BaseModel):
     _checked: Optional[bool]
     annotation: str
     geometryStructureName: str
-    geometryStructureSize: float
+    geometryStructureSize: Union[float, int, Literal[""]]
     name: str
     parentName: str
     size: float
@@ -134,7 +134,7 @@ class Diffusion(BaseModel):
 
 
 class Model(BaseModel):
-    id: str
+    id: Optional[str]
     name: str
     structures: List[Structure]
     parameters: List[Entity]

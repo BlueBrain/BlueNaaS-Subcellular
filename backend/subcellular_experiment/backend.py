@@ -154,6 +154,7 @@ class WSHandler(WebSocketHandler):
             await self.send_message("reactivity-network", rn)
 
         if msg.cmd == "get_exported_model":
+
             model_data = GetExportedModel(**msg.data)
 
             model = ""
