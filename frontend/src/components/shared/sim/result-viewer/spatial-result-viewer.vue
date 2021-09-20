@@ -323,7 +323,7 @@
         }
 
         this.lastSpatialStepTrace = spatialStepTrace;
-        console.log(this.lastSpatialStepTrace)
+        console.log(this.lastSpatialStepTrace);
         this.renderer.renderMolecules(this.lastSpatialStepTrace);
       },
       onStructureVisibilityChange(comp) {
