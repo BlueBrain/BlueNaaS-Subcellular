@@ -94,7 +94,7 @@
       },
       spatialViewerAvailable() {
         return (
-          this.sim.solver === SimSolver.STEPS &&
+          this.sim.solver === 'tetexact' &&
           get(this.sim, 'solverConf.spatialSampling.enabled') &&
           !!this.geometry
         );
