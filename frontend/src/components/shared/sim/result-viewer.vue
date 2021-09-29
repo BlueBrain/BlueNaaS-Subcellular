@@ -42,11 +42,8 @@
 <script>
   import get from 'lodash/get';
 
-  import constants from '@/constants';
   import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue';
   import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue';
-
-  const { SimSolver } = constants;
 
   const view = {
     temporal: 'Temporal',
@@ -94,7 +91,7 @@
       },
       spatialViewerAvailable() {
         return (
-          this.sim.solver === SimSolver.STEPS &&
+          this.sim.solver === 'tetexact' &&
           get(this.sim, 'solverConf.spatialSampling.enabled') &&
           !!this.geometry
         );
