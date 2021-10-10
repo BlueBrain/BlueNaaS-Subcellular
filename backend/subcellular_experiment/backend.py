@@ -7,7 +7,7 @@ import signal
 
 import tornado.ioloop
 import tornado.websocket
-import tornado.web
+from tornado.web import RequestHandler, Application, StaticFileHandler
 import sentry_sdk
 from sentry_sdk.integrations.tornado import TornadoIntegration
 
@@ -291,7 +291,14 @@ class SimRunnerWSHandler(WebSocketHandler):
             L.exception(e)
 
 
-class HealthHandler(tornado.web.RequestHandler):
+class RunSimulationHandler(WebSocketHandler, RequestHandler):
+    def post(self) -> None:
+        data = tornado.escape.json_decode(self.request.body)
+        sim_conf = SimConfig(**data)
+        asyncio.create_task(sim_manager.schedule_sim(sim_conf))
+
+
+class HealthHandler(RequestHandler):
     def get(self) -> None:
         self.write("ok")
 
@@ -313,14 +320,14 @@ with umask():
         os.makedirs("/data/traces", 0o777)
 
 
-app = tornado.web.Application(
+app = Application(
     [
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
         ("/health", HealthHandler),
         (
             "/data/spatial-traces/(.*)",
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {"path": "/data/spatial-traces"},
         ),
         (
@@ -328,6 +335,7 @@ app = tornado.web.Application(
             tornado.web.StaticFileHandler,
             {"path": "/data/traces"},
         ),
+        ("/run_sim", RunSimulationHandler),
     ],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,
