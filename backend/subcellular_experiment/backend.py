@@ -291,11 +291,18 @@ class SimRunnerWSHandler(WebSocketHandler):
             L.exception(e)
 
 
-class RunSimulationHandler(WebSocketHandler, RequestHandler):
-    def post(self) -> None:
+class RunSimulationHandler(RequestHandler):
+    async def post(self) -> None:
         data = tornado.escape.json_decode(self.request.body)
         sim_conf = SimConfig(**data)
-        asyncio.create_task(sim_manager.schedule_sim(sim_conf))
+        await sim_manager.schedule_sim(sim_conf)
+
+
+class GetSimTracesHandler(RequestHandler):
+    async def get(self) -> None:
+        sim_id = self.get_argument("sim_id")
+        traces = await db.get_sim_trace(sim_id)
+        self.write(json.dumps(traces, cls=ExtendedJSONEncoder))
 
 
 class HealthHandler(RequestHandler):
@@ -336,6 +343,7 @@ app = Application(
             {"path": "/data/traces"},
         ),
         ("/run_sim", RunSimulationHandler),
+        ("/get_sim_traces", GetSimTracesHandler),
     ],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,
