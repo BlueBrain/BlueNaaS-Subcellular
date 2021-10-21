@@ -356,7 +356,7 @@ app = Application(
     [
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
-        ("/health", HealthHandler),
+        ("/api/health", HealthHandler),
         (
             "/data/spatial-traces/(.*)",
             StaticFileHandler,
