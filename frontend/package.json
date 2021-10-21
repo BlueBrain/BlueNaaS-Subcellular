@@ -16,6 +16,7 @@
     "@types/plotly.js": "^1.54.2",
     "@types/uuid": "^8.3.0",
     "ajv": "^6.11.0",
+    "axios": "^0.23.0",
     "chroma-js": "^2.1.0",
     "codemirror": "^5.51.0",
     "core-js": "^3.6.4",

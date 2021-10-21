@@ -291,6 +291,31 @@ class SimRunnerWSHandler(WebSocketHandler):
             L.exception(e)
 
 
+class ModelsHandler(RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        self.set_header(
+            "Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type"
+        )
+
+    async def get(self) -> None:
+        user_id = self.get_argument("user_id", "")
+        models = await db.db.models.find({"userId": user_id}).to_list(None)
+        self.write(json.dumps(models, cls=ExtendedJSONEncoder))
+
+    async def options(self) -> None:
+        self.set_status(204)
+        self.finish()
+
+    async def post(self) -> None:
+        data = tornado.escape.json_decode(self.request.body)
+        res = await db.db.models.update_one({"_id": data["id"]}, {"$set": data}, True)
+        id_ = str(getattr(res, "inserted_id", data["id"]))
+        self.write({"id": id_})
+
+
 class RunSimulationHandler(RequestHandler):
     async def post(self) -> None:
         data = tornado.escape.json_decode(self.request.body)
@@ -344,6 +369,7 @@ app = Application(
         ),
         ("/run_sim", RunSimulationHandler),
         ("/get_sim_traces", GetSimTracesHandler),
+        ("/models", ModelsHandler),
     ],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,

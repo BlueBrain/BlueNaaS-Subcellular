@@ -4,6 +4,7 @@ import pick from 'lodash/pick';
 import saveAs from 'file-saver';
 import uuidv4 from 'uuid/v4';
 import { decode, encode } from '@msgpack/msgpack';
+import axios from 'axios';
 
 import * as Sentry from '@sentry/browser';
 
@@ -70,6 +71,12 @@ export default {
   async saveModel({ state, commit }) {
     const models = cloneDeep(state.dbModels);
     const currentModel = { ...state.model };
+    currentModel.userId = state.user.id;
+
+    const res = await axios.post('http://127.0.0.1:8888/models', currentModel);
+
+    currentModel.id = res.data.id;
+
     if (currentModel.geometry) {
       const geometryId = currentModel.geometry.id;
       await storage.setItem(`geometry:${geometryId}`, currentModel.geometry);
@@ -77,8 +84,8 @@ export default {
     }
 
     models[currentModel.name] = currentModel;
-    await storage.setItem('models', models);
     commit('updateDbModels', cloneDeep(models));
+    await storage.setItem('models', models);
   },
 
   async createGeometry({ state, commit, dispatch }, geometry) {
