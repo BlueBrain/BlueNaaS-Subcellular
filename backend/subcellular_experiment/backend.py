@@ -8,6 +8,7 @@ import signal
 import tornado.ioloop
 import tornado.websocket
 import tornado.web
+from tornado.web import StaticFileHandler
 import sentry_sdk
 from sentry_sdk.integrations.tornado import TornadoIntegration
 
@@ -315,17 +316,18 @@ with umask():
 
 app = tornado.web.Application(
     [
+        ("/docs(.*)", StaticFileHandler, {"path": "docs", "default_filename": "docs.html"}),
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
         ("/health", HealthHandler),
         (
             "/data/spatial-traces/(.*)",
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {"path": "/data/spatial-traces"},
         ),
         (
             "/data/traces/(.*)",
-            tornado.web.StaticFileHandler,
+            StaticFileHandler,
             {"path": "/data/traces"},
         ),
     ],

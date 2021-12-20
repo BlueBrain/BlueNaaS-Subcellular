@@ -5,7 +5,7 @@
   "author": "NSE(Neuroscientific Software Engineering) <bbp-ou-nse@groupes.epfl.ch> (http://bluebrain.epfl.ch)",
   "scripts": {
     "serve": "vue-cli-service serve --open",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service --openssl-legacy-provider build",
     "prettier": "npx prettier --write src",
     "lint": "npx prettier --check src && vue-cli-service lint --no-fix && npx tsc --noEmit"
   },
