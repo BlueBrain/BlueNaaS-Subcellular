@@ -18,18 +18,18 @@
 </template>
 
 <script>
-import capitalize from 'lodash/capitalize';
-import get from 'lodash/get';
+import capitalize from 'lodash/capitalize'
+import get from 'lodash/get'
 
-import constants from '@/constants';
+import constants from '@/constants'
 
-const { validationMessageType: msgType } = constants;
+const { validationMessageType: msgType } = constants
 
 const tagType = {
   [msgType.INFO]: 'default',
   [msgType.WARNING]: 'warning',
   [msgType.ERROR]: 'error',
-};
+}
 
 const columns = [
   {
@@ -72,28 +72,28 @@ const columns = [
     title: 'Message',
     render: (h, params) => h('span', `${params.row.context}: ${params.row.text}`),
   },
-];
+]
 
 export default {
   name: 'error-management',
   data() {
     return {
       columns,
-    };
+    }
   },
   computed: {
     validationMessages() {
-      return get(this.$store.state.revision, 'validationMessages', []);
+      return get(this.$store.state.revision, 'validationMessages', [])
     },
     infoMsgNum() {
-      return this.validationMessages.filter((m) => m.type === msgType.INFO).length;
+      return this.validationMessages.filter((m) => m.type === msgType.INFO).length
     },
     warnMsgNum() {
-      return this.validationMessages.filter((m) => m.type === msgType.WARNING).length;
+      return this.validationMessages.filter((m) => m.type === msgType.WARNING).length
     },
     errMsgNum() {
-      return this.validationMessages.filter((m) => m.type === msgType.ERROR).length;
+      return this.validationMessages.filter((m) => m.type === msgType.ERROR).length
     },
   },
-};
+}
 </script>

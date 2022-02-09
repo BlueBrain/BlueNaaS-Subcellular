@@ -1,9 +1,6 @@
 <template>
   <div class="h-100 w-100 pos-relative" ref="container">
-    <div
-      class="compartment-agenda-container"
-      v-if="structure.compartments.length || structure.membranes.length"
-    >
+    <div class="compartment-agenda-container" v-if="structure.compartments.length || structure.membranes.length">
       <div class="comp-type-agenda" v-for="(label, stType) in structureTypeLabel" :key="stType">
         <div v-if="structure[stType].length">
           <p class="mb-6">{{ label }}:</p>
@@ -42,10 +39,10 @@
 </template>
 
 <script>
-import toggleFullscreen from 'toggle-fullscreen';
+import toggleFullscreen from 'toggle-fullscreen'
 
-import ModelGeometryRenderer from '@/services/model-geometry-renderer';
-import bus from '@/services/event-bus';
+import ModelGeometryRenderer from '@/services/model-geometry-renderer'
+import bus from '@/services/event-bus'
 
 const displayConf = {
   default: {
@@ -56,7 +53,7 @@ const displayConf = {
     meshSurfaceOpacity: 0.1,
     meshWireframeOpacity: 0.5,
   },
-};
+}
 
 export default {
   name: 'geometry-viewer',
@@ -76,57 +73,57 @@ export default {
         membranes: 'Membranes',
       },
       displayWireframeMode: false,
-    };
+    }
   },
   mounted() {
-    this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
+    this.renderer = new ModelGeometryRenderer(this.$refs.canvas)
 
-    this.onLayoutChangeBinded = this.onLayoutChange.bind(this);
-    bus.$on('layoutChange', this.onLayoutChangeBinded);
+    this.onLayoutChangeBinded = this.onLayoutChange.bind(this)
+    bus.$on('layoutChange', this.onLayoutChangeBinded)
 
-    setTimeout(() => this.initGeometry(), 10);
+    setTimeout(() => this.initGeometry(), 10)
   },
   beforeDestroy() {
-    bus.$off('layoutChange', this.onLayoutChangeBinded);
-    this.renderer.destroy();
+    bus.$off('layoutChange', this.onLayoutChangeBinded)
+    this.renderer.destroy()
   },
   methods: {
     initGeometry() {
-      this.renderer.initGeometry(this.geometryData, displayConf.default);
+      this.renderer.initGeometry(this.geometryData, displayConf.default)
       const structure = (this.geometryData.meta.structures || []).map((st, idx) => ({
         name: st.name,
         color: this.renderer.colors[idx].css(),
         visible: true,
         type: st.type,
-      }));
+      }))
 
-      this.structure.compartments = structure.filter((st) => st.type === 'compartment');
-      this.structure.membranes = structure.filter((st) => st.type === 'membrane');
+      this.structure.compartments = structure.filter((st) => st.type === 'compartment')
+      this.structure.membranes = structure.filter((st) => st.type === 'membrane')
     },
     onLayoutChange() {
-      this.renderer.onResize();
+      this.renderer.onResize()
     },
     onVisibilityChange(comp) {
-      this.renderer.setVisible(comp.name, comp.visible);
+      this.renderer.setVisible(comp.name, comp.visible)
     },
     onDisplayModeChange(wireframe) {
-      this.renderer.setDisplayConf(displayConf[wireframe ? 'wireframe' : 'default']);
+      this.renderer.setDisplayConf(displayConf[wireframe ? 'wireframe' : 'default'])
     },
     async toggleFullscreen() {
-      await toggleFullscreen(this.$refs.container);
+      await toggleFullscreen(this.$refs.container)
       // TODO: investigate more, refactor
       // workaround for Safari where size of the container
       // is not updated immediately after entering full screen mode
-      setTimeout(() => this.renderer.onResize(), 500);
+      setTimeout(() => this.renderer.onResize(), 500)
     },
   },
   watch: {
     geometryData() {
-      this.renderer.clearGeometry();
-      this.initGeometry();
+      this.renderer.clearGeometry()
+      this.initGeometry()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

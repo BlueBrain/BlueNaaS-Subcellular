@@ -1,13 +1,13 @@
-import get from 'lodash/get';
+import get from 'lodash/get'
 
-import constants from '@/constants';
+import constants from '@/constants'
 
-import BnglText from '@/components/shared/bngl-text.vue';
+import BnglText from '@/components/shared/bngl-text.vue'
 
 const Type = {
   EDITOR: 'editor',
   VIEWER: 'viewer',
-};
+}
 
 /**
  * Create a column config for concentrations given a list of concentration sources.
@@ -21,14 +21,14 @@ const Type = {
  */
 function getConcentrationColumnConfig(
   config: {
-    visibleConcSources?: any;
-    concSources?: any;
-  } = {},
+    visibleConcSources?: any
+    concSources?: any
+  } = {}
 ) {
-  const concSources = config.visibleConcSources || config.concSources;
+  const concSources = config.visibleConcSources || config.concSources
 
   if (!concSources || concSources.length === 1) {
-    const source = get(config, 'concSources[0]', 'default');
+    const source = get(config, 'concSources[0]', 'default')
     return {
       title: `Concentration ${source !== 'default' ? `(${source})` : ''}`,
       render: (h, params) =>
@@ -38,7 +38,7 @@ function getConcentrationColumnConfig(
             value: params.row.concentration[source],
           },
         }),
-    };
+    }
   }
 
   return {
@@ -54,7 +54,7 @@ function getConcentrationColumnConfig(
           },
         }),
     })),
-  };
+  }
 }
 
 function build(configType, structureType, config = {}) {
@@ -380,7 +380,7 @@ function build(configType, structureType, config = {}) {
         tooltip: true,
       },
     ],
-  };
+  }
 
   const revisionEditorColumnConfig = {
     structure: [
@@ -795,14 +795,14 @@ function build(configType, structureType, config = {}) {
         align: 'center',
       },
     ],
-  };
+  }
 
   return configType === Type.VIEWER
     ? revisionSearchColumnConfig[structureType]
-    : revisionEditorColumnConfig[structureType];
+    : revisionEditorColumnConfig[structureType]
 }
 
 export default {
   build,
   Type,
-};
+}

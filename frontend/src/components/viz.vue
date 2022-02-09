@@ -1,11 +1,5 @@
 <template>
-  <Split
-    class="split-container p-12"
-    v-model="split.vertical"
-    min="200px"
-    :max="0.4"
-    @input="onLayoutChange"
-  >
+  <Split class="split-container p-12" v-model="split.vertical" min="200px" :max="0.4" @input="onLayoutChange">
     <div slot="left">
       <div slot="top">
         <model-menu />
@@ -32,13 +26,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue from 'vue'
 
-import bus from '@/services/event-bus';
-import ModelMenu from './model-page/menu.vue';
-import DbView from './model-page/db.vue';
-import ContactMap from './contact-map.vue';
-import ReactivityNetwork from './reactivity-network.vue';
+import bus from '@/services/event-bus'
+import ModelMenu from './model-page/menu.vue'
+import DbView from './model-page/db.vue'
+import ContactMap from './contact-map.vue'
+import ReactivityNetwork from './reactivity-network.vue'
 
 export default Vue.extend({
   name: 'viz',
@@ -49,7 +43,7 @@ export default Vue.extend({
         leftHorizontal: 0.5,
         rightHorizontal: 0.5,
       },
-    };
+    }
   },
   components: {
     'model-menu': ModelMenu,
@@ -60,10 +54,10 @@ export default Vue.extend({
 
   methods: {
     onLayoutChange() {
-      bus.$emit('layoutChange');
+      bus.$emit('layoutChange')
     },
   },
-});
+})
 </script>
 
 <style lang="scss" scoped>

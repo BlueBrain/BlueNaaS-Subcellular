@@ -24,10 +24,7 @@
             </i-col>
             <i-col span="12">
               <div class="geometry-viewer-container h-100">
-                <geometry-viewer
-                  v-if="geometry && geometry.initialized"
-                  :geometry-data="geometry"
-                />
+                <geometry-viewer v-if="geometry && geometry.initialized" :geometry-data="geometry" />
               </div>
             </i-col>
           </Row>
@@ -50,9 +47,7 @@
       </div>
     </div>
     <div class="block-footer">
-      <i-button v-if="!geometry" type="default" @click="showNewGeometryModal">
-        Add geometry
-      </i-button>
+      <i-button v-if="!geometry" type="default" @click="showNewGeometryModal"> Add geometry </i-button>
 
       <i-button v-else type="warning" @click="removeGeometry"> Remove geometry </i-button>
     </div>
@@ -69,9 +64,7 @@
     >
       <new-geometry-form v-if="modelVisible" ref="newGeometryForm" v-model="newModelGeometry" />
       <div slot="footer">
-        <i-button class="mr-6" type="text" :disabled="saving" @click="hideNewGeometryModal">
-          Cancel
-        </i-button>
+        <i-button class="mr-6" type="text" :disabled="saving" @click="hideNewGeometryModal"> Cancel </i-button>
         <i-button
           type="primary"
           :loading="saving"
@@ -86,8 +79,8 @@
 </template>
 
 <script>
-import NewGeometryForm from '@/components/shared/new-geometry-form.vue';
-import GeometryViewer from '@/components/shared/geometry-viewer.vue';
+import NewGeometryForm from '@/components/shared/new-geometry-form.vue'
+import GeometryViewer from '@/components/shared/geometry-viewer.vue'
 
 export default {
   name: 'geometry-component',
@@ -100,39 +93,39 @@ export default {
       modelVisible: false,
       newModelGeometry: null,
       saving: false,
-    };
+    }
   },
   methods: {
     onModalVisibleChange(visible) {
-      if (!visible) this.reset();
+      if (!visible) this.reset()
     },
     showNewGeometryModal() {
-      this.modelVisible = true;
+      this.modelVisible = true
     },
     reset() {
-      this.newModelGeometry = null;
-      this.saving = false;
-      this.$refs.newGeometryForm.reset();
+      this.newModelGeometry = null
+      this.saving = false
+      this.$refs.newGeometryForm.reset()
     },
     hideNewGeometryModal() {
-      this.modelVisible = false;
-      this.reset();
+      this.modelVisible = false
+      this.reset()
     },
     async onOk() {
-      this.saving = true;
-      await this.$store.dispatch('createGeometry', this.newModelGeometry);
-      this.hideNewGeometryModal();
+      this.saving = true
+      await this.$store.dispatch('createGeometry', this.newModelGeometry)
+      this.hideNewGeometryModal()
     },
     removeGeometry() {
-      this.$store.dispatch('removeGeometry');
+      this.$store.dispatch('removeGeometry')
     },
   },
   computed: {
     geometry() {
-      return this.$store.state.model.geometry;
+      return this.$store.state.model.geometry
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

@@ -124,9 +124,9 @@
     }
   },
   "prettier": {
-    "printWidth": 100,
+    "printWidth": 120,
     "singleQuote": true,
-    "trailingComma": "all"
+    "semi": false
   },
   "postcss": {
     "plugins": {

@@ -29,40 +29,40 @@
 </template>
 
 <script>
-import get from 'lodash/get';
+import get from 'lodash/get'
 
-const defaultMode = 'text';
+const defaultMode = 'text'
 
 export default {
   name: 'file-import',
   props: ['fileFormats', 'errorMsg', 'descriptionText', 'loading', 'disabled'],
   methods: {
     beforeUpload(file) {
-      const reader = new FileReader();
-      reader.onload = (e) => this.onFileRead(file.name, e.target.result);
+      const reader = new FileReader()
+      reader.onload = (e) => this.onFileRead(file.name, e.target.result)
 
-      const ext = file.name.split('.').pop().toLowerCase();
+      const ext = file.name.split('.').pop().toLowerCase()
 
-      const fileFormat = this.fileFormats.find((format) => format.extension === ext);
+      const fileFormat = this.fileFormats.find((format) => format.extension === ext)
 
-      const mode = get(fileFormat, 'mode', defaultMode);
+      const mode = get(fileFormat, 'mode', defaultMode)
 
       switch (mode) {
         case 'text':
-          reader.readAsText(file);
-          break;
+          reader.readAsText(file)
+          break
         case 'binary':
-          reader.readAsArrayBuffer(file);
-          break;
+          reader.readAsArrayBuffer(file)
+          break
         default:
-          throw new Error(`Unknown file read mode ${mode} for file ${file.name}`);
+          throw new Error(`Unknown file read mode ${mode} for file ${file.name}`)
       }
 
       // prevent default action to upload data to remote api
-      return false;
+      return false
     },
     onFileRead(name, content) {
-      this.$emit('on-file-read', { name, content });
+      this.$emit('on-file-read', { name, content })
     },
   },
   computed: {
@@ -71,13 +71,13 @@ export default {
       return this.fileFormats
         .map((f) => `${f.type}, `)
         .join('')
-        .slice(0, -2);
+        .slice(0, -2)
     },
     supportedExtensions() {
-      return this.fileFormats.map((f) => f.extension);
+      return this.fileFormats.map((f) => f.extension)
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

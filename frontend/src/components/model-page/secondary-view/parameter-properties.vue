@@ -2,34 +2,22 @@
   <div class="p-12">
     <h3>Parameter properties</h3>
 
-    <parameter-form
-      class="mt-12"
-      ref="parameterForm"
-      v-model="tmpEntity"
-      @on-submit="applyParameterChange"
-    />
+    <parameter-form class="mt-12" ref="parameterForm" v-model="tmpEntity" @on-submit="applyParameterChange" />
 
     <div class="action-block">
-      <i-button
-        class="mr-12"
-        type="warning"
-        :disabled="!parameterEdited"
-        @click="resetParameterChange"
-      >
+      <i-button class="mr-12" type="warning" :disabled="!parameterEdited" @click="resetParameterChange">
         Reset
       </i-button>
 
-      <i-button type="primary" :disabled="!parameterEdited" @click="applyParameterChange">
-        Apply
-      </i-button>
+      <i-button type="primary" :disabled="!parameterEdited" @click="applyParameterChange"> Apply </i-button>
     </div>
   </div>
 </template>
 
 <script>
-import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by'
 
-import ParameterForm from '@/components/shared/entities/parameter-form.vue';
+import ParameterForm from '@/components/shared/entities/parameter-form.vue'
 
 export default {
   name: 'parameter-properties',
@@ -39,45 +27,40 @@ export default {
   data() {
     return {
       tmpEntity: this.getTmpEntity(),
-    };
+    }
   },
   mounted() {
-    this.focusNameInput();
+    this.focusNameInput()
   },
   methods: {
     focusNameInput() {
-      this.$nextTick(() => this.$refs.parameterForm.focus());
+      this.$nextTick(() => this.$refs.parameterForm.focus())
     },
     applyParameterChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity);
+      this.$store.commit('modifySelectedEntity', this.tmpEntity)
     },
     resetParameterChange() {
-      this.tmpEntity = this.getTmpEntity();
+      this.tmpEntity = this.getTmpEntity()
     },
     getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity };
+      return { ...this.$store.state.selectedEntity.entity }
     },
   },
   computed: {
     parameterEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, [
-        'name',
-        'definition',
-        'unit',
-        'annotation',
-      ]);
+      return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'definition', 'unit', 'annotation'])
     },
     selection() {
-      return this.$store.state.selectedEntity;
+      return this.$store.state.selectedEntity
     },
   },
   watch: {
     selection() {
-      this.tmpEntity = this.getTmpEntity();
-      this.focusNameInput();
+      this.tmpEntity = this.getTmpEntity()
+      this.focusNameInput()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

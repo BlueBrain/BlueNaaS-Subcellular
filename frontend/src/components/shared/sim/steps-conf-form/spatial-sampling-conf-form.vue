@@ -26,13 +26,13 @@
 </template>
 
 <script>
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash/cloneDeep'
 
-import constants from '@/constants';
-import BnglText from '@/components/shared/bngl-text';
+import constants from '@/constants'
+import BnglText from '@/components/shared/bngl-text'
 
-const { defaultSolverConfig } = constants;
-const { spatialSampling } = defaultSolverConfig.tetexact;
+const { defaultSolverConfig } = constants
+const { spatialSampling } = defaultSolverConfig.tetexact
 
 const observableColumns = [
   {
@@ -55,7 +55,7 @@ const observableColumns = [
         },
       }),
   },
-];
+]
 
 const structureColumns = [
   {
@@ -72,7 +72,7 @@ const structureColumns = [
     title: 'Type',
     key: 'type',
   },
-];
+]
 
 export default {
   name: 'spatial-sampling-conf',
@@ -88,19 +88,19 @@ export default {
       // sim config saved in older versions of the app
       // doesn't have this property
       conf: Object.assign(cloneDeep(spatialSampling), this.value || {}),
-    };
+    }
   },
   methods: {
     onStructureSelectionChange(structures) {
-      this.conf.structures = structures;
-      this.onChange();
+      this.conf.structures = structures
+      this.onChange()
     },
     onObservableSelectionChange(observables) {
-      this.conf.observables = observables;
-      this.onChange();
+      this.conf.observables = observables
+      this.onChange()
     },
     onChange() {
-      this.$emit('input', { ...this.conf });
+      this.$emit('input', { ...this.conf })
     },
   },
   computed: {
@@ -108,21 +108,21 @@ export default {
       return this.$store.state.model.structures.map((st) => ({
         ...st,
         _checked: !!this.conf.structures.find((s) => s.name === st.name),
-      }));
+      }))
     },
     observables() {
       return this.$store.state.model.observables.map((ob) => ({
         ...ob,
         _checked: !!this.conf.observables.find((o) => o.name === ob.name),
-      }));
+      }))
     },
   },
   watch: {
     value() {
-      this.conf = Object.assign(cloneDeep(spatialSampling), this.value || {});
+      this.conf = Object.assign(cloneDeep(spatialSampling), this.value || {})
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

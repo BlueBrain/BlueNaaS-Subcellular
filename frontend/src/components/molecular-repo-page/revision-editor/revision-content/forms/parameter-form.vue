@@ -21,13 +21,7 @@
       </FormItem>
 
       <FormItem prop="description" label="Description">
-        <i-input
-          type="textarea"
-          ref="descriptionInput"
-          autosize
-          v-model="parameter.description"
-          @input="onChange"
-        />
+        <i-input type="textarea" ref="descriptionInput" autosize v-model="parameter.description" @input="onChange" />
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
@@ -38,7 +32,7 @@
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
   name: 'parameter-form',
@@ -49,28 +43,28 @@ export default {
   data() {
     return {
       parameter: { ...this.value },
-    };
+    }
   },
   methods: {
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
+      this.$refs.definitionInput.refresh()
     },
     onDefinitionInputTab() {
-      this.$refs.descriptionInput.focus();
+      this.$refs.descriptionInput.focus()
     },
     onChange() {
       // TODO: add validation
-      this.parameter.valid = true;
-      this.$emit('input', this.parameter);
+      this.parameter.valid = true
+      this.$emit('input', this.parameter)
     },
   },
   watch: {
     value() {
-      this.parameter = { ...this.value };
+      this.parameter = { ...this.value }
     },
   },
-};
+}
 </script>

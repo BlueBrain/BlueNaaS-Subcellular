@@ -20,19 +20,19 @@
 </template>
 
 <script>
-import groupBy from 'lodash/groupBy';
+import groupBy from 'lodash/groupBy'
 
-import constants from '@/constants';
+import constants from '@/constants'
 
-const { validationMessageType: msgType } = constants;
+const { validationMessageType: msgType } = constants
 
-const msgTypes = [msgType.ERROR, msgType.WARNING, msgType.INFO];
+const msgTypes = [msgType.ERROR, msgType.WARNING, msgType.INFO]
 
 const badgeStatusByMsgType = {
   [msgType.ERROR]: 'error',
   [msgType.WARNING]: 'warning',
   [msgType.INFO]: 'default',
-};
+}
 
 export default {
   name: 'entity-status',
@@ -41,27 +41,27 @@ export default {
     return {
       msgTypes,
       badgeStatusByMsgType,
-    };
+    }
   },
   computed: {
     noValidationMessages() {
-      return !this.entity.validationMessages.length;
+      return !this.entity.validationMessages.length
     },
     tagType() {
-      if (this.msgTypeMap[msgType.ERROR]) return 'error';
-      if (this.msgTypeMap[msgType.WARNING]) return 'warning';
+      if (this.msgTypeMap[msgType.ERROR]) return 'error'
+      if (this.msgTypeMap[msgType.WARNING]) return 'warning'
 
-      return 'default';
+      return 'default'
     },
     tagLabel() {
-      if (this.msgTypeMap[msgType.ERROR]) return 'ERR';
-      if (this.msgTypeMap[msgType.WARNING]) return 'WARN';
+      if (this.msgTypeMap[msgType.ERROR]) return 'ERR'
+      if (this.msgTypeMap[msgType.WARNING]) return 'WARN'
 
-      return 'INFO';
+      return 'INFO'
     },
     msgTypeMap() {
-      return groupBy(this.entity.validationMessages, 'type');
+      return groupBy(this.entity.validationMessages, 'type')
     },
   },
-};
+}
 </script>

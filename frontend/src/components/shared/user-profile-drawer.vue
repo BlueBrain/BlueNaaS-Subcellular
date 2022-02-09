@@ -20,17 +20,15 @@
 
     <div class="userprofile-drawer-footer">
       <i-button class="mr-12" @click="hideUserProfile"> Cancel </i-button>
-      <i-button type="primary" :disabled="!saveBtnActive" @click="onSaveUserProfileBtnClick">
-        Ok
-      </i-button>
+      <i-button type="primary" :disabled="!saveBtnActive" @click="onSaveUserProfileBtnClick"> Ok </i-button>
     </div>
   </Drawer>
 </template>
 
 <script>
-import pick from 'lodash/pick';
+import pick from 'lodash/pick'
 
-import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by'
 
 const userProfileDrawerStyle = {
   height: 'calc(100% - 28px)',
@@ -38,7 +36,7 @@ const userProfileDrawerStyle = {
   paddingBottom: '28px',
   position: 'static',
   color: 'red',
-};
+}
 
 export default {
   name: 'user-profile-drawer',
@@ -51,36 +49,36 @@ export default {
         email: null,
       },
       userProfileVisible: false,
-    };
+    }
   },
   methods: {
     onSaveUserProfileBtnClick() {
-      this.$store.dispatch('setUser', { ...this.user, ...this.tmpUser });
-      this.hideUserProfile();
+      this.$store.dispatch('setUser', { ...this.user, ...this.tmpUser })
+      this.hideUserProfile()
     },
     hideUserProfile() {
-      this.userProfileVisible = false;
-      this.onUserProfileVisibilityChange();
+      this.userProfileVisible = false
+      this.onUserProfileVisibilityChange()
     },
     onUserProfileVisibilityChange() {
-      this.$emit('input', false);
+      this.$emit('input', false)
     },
   },
   computed: {
     user() {
-      return this.$store.state.user;
+      return this.$store.state.user
     },
     saveBtnActive() {
-      return !isEqualBy(this.user, this.tmpUser, ['fullName', 'email']);
+      return !isEqualBy(this.user, this.tmpUser, ['fullName', 'email'])
     },
   },
   watch: {
     value() {
-      this.userProfileVisible = this.value;
-      this.tmpUser = pick(this.user, ['fullName', 'email']);
+      this.userProfileVisible = this.value
+      this.tmpUser = pick(this.user, ['fullName', 'email'])
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

@@ -8,12 +8,12 @@
 </template>
 
 <script>
-import './styles.scss';
-import './server-events';
+import './styles.scss'
+import './server-events'
 
-import bus from './services/event-bus';
+import bus from './services/event-bus'
 
-import Header from './components/header.vue';
+import Header from './components/header.vue'
 
 export default {
   name: 'app',
@@ -21,14 +21,14 @@ export default {
     'header-component': Header,
   },
   async mounted() {
-    window.addEventListener('resize', () => bus.$emit('layoutChange'));
-    await this.$store.dispatch('init');
+    window.addEventListener('resize', () => bus.$emit('layoutChange'))
+    await this.$store.dispatch('init')
 
-    const { publicModel } = this.$route.query;
+    const { publicModel } = this.$route.query
     if (publicModel) {
-      this.$router.replace({ query: {} });
-      await this.$store.dispatch('loadPublicModelByName', publicModel);
+      this.$router.replace({ query: {} })
+      await this.$store.dispatch('loadPublicModelByName', publicModel)
     }
   },
-};
+}
 </script>

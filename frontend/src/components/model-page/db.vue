@@ -10,16 +10,14 @@
     </div>
 
     <div class="block-footer">
-      <i-button class="mb-12" type="primary" long to="/molecular-repo">
-        Open molecular repository
-      </i-button>
+      <i-button class="mb-12" type="primary" long to="/molecular-repo"> Open molecular repository </i-button>
     </div>
   </div>
 </template>
 
 <script>
-import get from 'lodash/get';
-import publicModels from '@/data/public-models';
+import get from 'lodash/get'
+import publicModels from '@/data/public-models'
 
 export default {
   name: 'db-component',
@@ -41,26 +39,26 @@ export default {
           })),
         },
       ],
-    };
+    }
   },
   methods: {
     onSelectChange(nodeArray) {
-      if (get(nodeArray, '[0].type') !== 'model') return;
+      if (get(nodeArray, '[0].type') !== 'model') return
 
       const selection = {
         type: 'dbModel',
         entity: nodeArray[0].model,
-      };
-      this.$store.commit('setEntitySelection', selection);
-      this.$router.push({ path: '/model' });
+      }
+      this.$store.commit('setEntitySelection', selection)
+      this.$router.push({ path: '/model' })
     },
   },
   computed: {
     modelNames() {
-      return Object.keys(this.$store.state.dbModels);
+      return Object.keys(this.$store.state.dbModels)
     },
     dbModels() {
-      return this.$store.state.dbModels;
+      return this.$store.state.dbModels
     },
   },
   watch: {
@@ -69,10 +67,10 @@ export default {
         title: n,
         type: 'model',
         model: this.dbModels[n],
-      }));
+      }))
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

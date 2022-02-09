@@ -18,22 +18,16 @@
       <unit-select ref="unitSelect" v-model="parameter.unit" @input="onParameterChange" />
     </FormItem>
     <FormItem label="Annotation">
-      <i-input
-        size="small"
-        type="textarea"
-        autosize
-        v-model="parameter.annotation"
-        @input="onParameterChange"
-      />
+      <i-input size="small" type="textarea" autosize v-model="parameter.annotation" @input="onParameterChange" />
     </FormItem>
   </i-form>
 </template>
 
 <script>
-import constants from '@/constants';
+import constants from '@/constants'
 
-import BnglInput from '@/components/shared/bngl-input.vue';
-import UnitSelect from '@/components/shared/unit-select.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
+import UnitSelect from '@/components/shared/unit-select.vue'
 
 export default {
   name: 'parameter-form',
@@ -46,33 +40,33 @@ export default {
     return {
       constants,
       parameter: { ...this.value },
-    };
+    }
   },
   methods: {
     onParameterChange() {
-      this.parameter.valid = this.isValid();
-      this.$emit('input', this.parameter);
+      this.parameter.valid = this.isValid()
+      this.$emit('input', this.parameter)
     },
     isValid() {
-      return this.parameter.name.trim() && this.parameter.definition;
+      return this.parameter.name.trim() && this.parameter.definition
     },
     onDefinitionInputTab() {
-      this.$refs.unitSelect.focus();
+      this.$refs.unitSelect.focus()
     },
     onSubmit() {
-      this.$emit('on-submit');
+      this.$emit('on-submit')
     },
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
+      this.$refs.definitionInput.refresh()
     },
   },
   watch: {
     value() {
-      this.parameter = { ...this.value };
+      this.parameter = { ...this.value }
     },
   },
-};
+}
 </script>

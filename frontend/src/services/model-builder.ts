@@ -1,10 +1,10 @@
-import words from 'lodash/words';
-import cloneDeep from 'lodash/cloneDeep';
-import { v4 as uuid } from 'uuid';
+import words from 'lodash/words'
+import cloneDeep from 'lodash/cloneDeep'
+import { v4 as uuid } from 'uuid'
 
-import constants from '@/constants';
-import modelTools from '@/tools/model-tools';
-import { Structure } from '@/types';
+import constants from '@/constants'
+import modelTools from '@/tools/model-tools'
+import { Structure } from '@/types'
 
 function sPartsToStructure(sParts: string[]): Structure {
   return {
@@ -14,7 +14,7 @@ function sPartsToStructure(sParts: string[]): Structure {
     parentName: sParts[3] ? sParts[3] : '-',
     annotation: '',
     entityId: uuid(),
-  };
+  }
 }
 
 const pPartsToParameter = (pParts: string[]) => ({
@@ -22,11 +22,11 @@ const pPartsToParameter = (pParts: string[]) => ({
   definition: pParts.slice(1).join(' '),
   annotation: '',
   entityId: uuid(),
-});
+})
 
 const lineToFunction = (line: string) => {
-  const functionR = /(\w+)\((\w*)\)\s*=?\s*(.*)/;
-  const functionMatch = line.match(functionR);
+  const functionR = /(\w+)\((\w*)\)\s*=?\s*(.*)/
+  const functionMatch = line.match(functionR)
 
   const func = {
     name: functionMatch[1],
@@ -34,10 +34,10 @@ const lineToFunction = (line: string) => {
     definition: functionMatch[3],
     annotation: '',
     entityId: uuid(),
-  };
+  }
 
-  return func;
-};
+  return func
+}
 
 const mPartsToMolecule = (mParts) => {
   const molecule = {
@@ -45,29 +45,29 @@ const mPartsToMolecule = (mParts) => {
     definition: mParts[0],
     annotation: '',
     entityId: uuid(),
-  };
+  }
 
-  return molecule;
-};
+  return molecule
+}
 
 function getRegex(line: string) {
   if (line.includes('TotalRate'))
-    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+\(\))\s+TotalRate#?(?<annotation>.*?)$/; // Functional reaction
+    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+\(\))\s+TotalRate#?(?<annotation>.*?)$/ // Functional reaction
 
   if (line.includes('<->'))
     // Bidirectional reaction
-    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)\s*,\s*(?<kr>\S+)#?(?<annotation>.*?)$/;
+    return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)\s*,\s*(?<kr>\S+)#?(?<annotation>.*?)$/
 
-  return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)#?(?<annotation>.*?)$/; // Unidirectional reaction
+  return /^((?<name>\w*)\s?:)?\s*(?<definition>.*)\s+(?<kf>\S+)#?(?<annotation>.*?)$/ // Unidirectional reaction
 }
 
 const lineToReaction = (line: string) => {
-  const reactionR = getRegex(line);
+  const reactionR = getRegex(line)
 
-  const reactionGroups = line.match(reactionR)?.groups;
+  const reactionGroups = line.match(reactionR)?.groups
 
   if (!reactionGroups) {
-    throw new Error('Wrongly formatted bngl');
+    throw new Error('Wrongly formatted bngl')
   }
 
   return {
@@ -77,23 +77,23 @@ const lineToReaction = (line: string) => {
     kr: reactionGroups.kr || '',
     annotation: reactionGroups.annotation || '',
     entityId: uuid(),
-  };
-};
+  }
+}
 
 const partsToObservable = (parts: string[]) => ({
   name: parts[1],
   definition: parts[2],
   annotation: '',
   entityId: uuid(),
-});
+})
 
 const partsToDiffusion = (parts: string[]) => {
-  const specPrefixCompR = /^@(\w+):(\w+\(.*\))$/;
-  const specSuffixCompR = /^(\w+\(.*\))@(\w+)$/;
+  const specPrefixCompR = /^@(\w+):(\w+\(.*\))$/
+  const specSuffixCompR = /^(\w+\(.*\))@(\w+)$/
 
-  const definition = parts[1];
-  const prefixNotation = specPrefixCompR.test(definition);
-  const defParsed = definition.match(prefixNotation ? specPrefixCompR : specSuffixCompR);
+  const definition = parts[1]
+  const prefixNotation = specPrefixCompR.test(definition)
+  const defParsed = definition.match(prefixNotation ? specPrefixCompR : specSuffixCompR)
 
   return {
     name: parts[0],
@@ -102,24 +102,24 @@ const partsToDiffusion = (parts: string[]) => {
     diffusionConstant: parts[2],
     annotation: '',
     entityId: uuid(),
-  };
-};
+  }
+}
 
 export default function buildFromBngl(fileContent: string) {
-  const newLineR = /\r\n|\r|\n/;
+  const newLineR = /\r\n|\r|\n/
 
   const model = Object.assign(cloneDeep(constants.defaultEmptyModel), {
     id: uuid(),
-  });
+  })
 
-  const structuresR = /begin compartments(.*)end compartments/s;
-  const parametersR = /begin parameters(.*)end parameters/s;
-  const functionsR = /begin functions(.*)end functions/s;
-  const moleculesR = /begin molecule types(.*)end molecule types/s;
-  const speciesR = /begin\s*\w*\s*species\s*\n(.*)end\s*\w*\s*species/s;
-  const reactionsR = /begin reaction rules(.*)end reaction rules/s;
-  const observablesR = /begin observables(.*)end observables/s;
-  const diffusionsR = /begin diffusions(.*)end diffusions/s;
+  const structuresR = /begin compartments(.*)end compartments/s
+  const parametersR = /begin parameters(.*)end parameters/s
+  const functionsR = /begin functions(.*)end functions/s
+  const moleculesR = /begin molecule types(.*)end molecule types/s
+  const speciesR = /begin\s*\w*\s*species\s*\n(.*)end\s*\w*\s*species/s
+  const reactionsR = /begin reaction rules(.*)end reaction rules/s
+  const observablesR = /begin observables(.*)end observables/s
+  const diffusionsR = /begin diffusions(.*)end diffusions/s
 
   if (structuresR.test(fileContent)) {
     model.structures = fileContent
@@ -131,7 +131,7 @@ export default function buildFromBngl(fileContent: string) {
       .map((p) => p.match(/[^#]*/)[0])
       .map((p) => p.trim())
       .map((s) => s.split(/\t|\s/).filter((p) => p))
-      .map(sPartsToStructure);
+      .map(sPartsToStructure)
   }
 
   if (parametersR.test(fileContent)) {
@@ -145,7 +145,7 @@ export default function buildFromBngl(fileContent: string) {
       .map((p) => p.trim())
       .filter((p) => p)
       .map((p) => p.split(/\t|\s/).filter((p) => p))
-      .map(pPartsToParameter);
+      .map(pPartsToParameter)
   }
 
   if (functionsR.test(fileContent)) {
@@ -157,7 +157,7 @@ export default function buildFromBngl(fileContent: string) {
       .filter((f) => !f.startsWith('#'))
       .map((p) => p.match(/[^#]*/)[0])
       .map((p) => p.trim())
-      .map(lineToFunction);
+      .map(lineToFunction)
   }
 
   if (moleculesR.test(fileContent)) {
@@ -171,7 +171,7 @@ export default function buildFromBngl(fileContent: string) {
       .map((p) => p.trim())
       .filter((p) => p)
       .map((m) => m.split(/\t|\s/).filter((p) => p))
-      .map(mPartsToMolecule);
+      .map(mPartsToMolecule)
   }
 
   if (speciesR.test(fileContent)) {
@@ -185,7 +185,7 @@ export default function buildFromBngl(fileContent: string) {
       .map((p) => p.trim())
       .map((s) => s.split(/\t|\s/).filter((p) => p))
       .map((parts) => {
-        const def = parts[0];
+        const def = parts[0]
 
         return {
           name: words(parts[0].match(/(.*)(\(?|$)/)[1]).join('_'),
@@ -194,8 +194,8 @@ export default function buildFromBngl(fileContent: string) {
           unit: modelTools.getDefaultSpecUnit(model, def),
           annotation: '',
           entityId: uuid(),
-        };
-      });
+        }
+      })
   }
 
   if (observablesR.test(fileContent)) {
@@ -208,7 +208,7 @@ export default function buildFromBngl(fileContent: string) {
       .map((p) => p.match(/[^#]*/)[0])
       .map((p) => p.trim())
       .map((o) => o.split(/\t|\s/).filter((p) => p))
-      .map(partsToObservable);
+      .map(partsToObservable)
   }
 
   model.reactions = fileContent
@@ -220,7 +220,7 @@ export default function buildFromBngl(fileContent: string) {
     .filter((r) => r)
     .map((p) => p.match(/[^#]*/)[0])
     .map((p) => p.trim())
-    .map(lineToReaction);
+    .map(lineToReaction)
 
   if (diffusionsR.test(fileContent)) {
     model.diffusions = fileContent
@@ -232,8 +232,8 @@ export default function buildFromBngl(fileContent: string) {
       .map((d) => d.match(/[^#]*/)[0])
       .map((d) => d.trim())
       .map((d) => d.split(/\t|\s/).filter((p) => p))
-      .map(partsToDiffusion);
+      .map(partsToDiffusion)
   }
 
-  return model;
+  return model
 }

@@ -1,4 +1,4 @@
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash/isEqual'
 
 /**
  * Compare two objects by a subset of their properties
@@ -10,7 +10,7 @@ import isEqual from 'lodash/isEqual';
  * @returns {Boolean}
  */
 function isEqualBy(o1, o2, props) {
-  return props.reduce((acc, prop) => acc && isEqual(o1[prop], o2[prop]), true);
+  return props.reduce((acc, prop) => acc && isEqual(o1[prop], o2[prop]), true)
 }
 
-export default isEqualBy;
+export default isEqualBy

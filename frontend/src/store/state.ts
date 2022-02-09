@@ -1,10 +1,10 @@
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash/cloneDeep'
 
-import constants from '@/constants';
-import { State } from '@/types';
+import constants from '@/constants'
+import { State } from '@/types'
 
-const model = cloneDeep(constants.defaultEmptyModel);
-const revision = cloneDeep(constants.defaultEmptyRevision);
+const model = cloneDeep(constants.defaultEmptyModel)
+const revision = cloneDeep(constants.defaultEmptyRevision)
 
 const state: State = {
   model,
@@ -26,6 +26,6 @@ const state: State = {
   simTraces: {},
   selectMode: false,
   selectedTetIdxs: [],
-};
+}
 
-export default state;
+export default state

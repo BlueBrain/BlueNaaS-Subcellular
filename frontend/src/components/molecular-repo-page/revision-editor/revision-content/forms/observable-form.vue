@@ -21,20 +21,14 @@
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
-        <i-input
-          type="textarea"
-          ref="commentsInput"
-          autosize
-          v-model="observable.comments"
-          @input="onChange"
-        />
+        <i-input type="textarea" ref="commentsInput" autosize v-model="observable.comments" @input="onChange" />
       </FormItem>
     </i-form>
   </div>
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
   name: 'observable-form',
@@ -45,28 +39,28 @@ export default {
   data() {
     return {
       observable: { ...this.value },
-    };
+    }
   },
   methods: {
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
+      this.$refs.definitionInput.refresh()
     },
     onDefinitionInputTab() {
-      this.$refs.commentsInput.focus();
+      this.$refs.commentsInput.focus()
     },
     onChange() {
       // TODO: add validation
-      this.observable.valid = true;
-      this.$emit('input', this.observable);
+      this.observable.valid = true
+      this.$emit('input', this.observable)
     },
   },
   watch: {
     value() {
-      this.observable = { ...this.value };
+      this.observable = { ...this.value }
     },
   },
-};
+}
 </script>

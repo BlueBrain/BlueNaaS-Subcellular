@@ -19,12 +19,7 @@
       <Row>
         <i-col span="12">
           <i-button type="primary" @click="addDiffusion"> New Diffusion </i-button>
-          <i-button
-            class="ml-24"
-            type="warning"
-            :disabled="removeBtnDisabled"
-            @click="removeDiffusion"
-          >
+          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeDiffusion">
             Delete
           </i-button>
         </i-col>
@@ -34,11 +29,7 @@
       </Row>
     </div>
 
-    <Modal
-      v-model="newDiffusionModalVisible"
-      title="New Diffusion"
-      class-name="vertical-center-modal"
-    >
+    <Modal v-model="newDiffusionModalVisible" title="New Diffusion" class-name="vertical-center-modal">
       <diffusion-form ref="diffusionForm" v-model="newDiffusion" @on-submit="onOk" />
       <div slot="footer">
         <i-button class="mr-6" type="text" @click="hideNewDiffusionModal"> Cancel </i-button>
@@ -49,17 +40,17 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import get from 'lodash/get';
+import { mapState } from 'vuex'
+import get from 'lodash/get'
 
-import bus from '@/services/event-bus';
+import bus from '@/services/event-bus'
 
-import BnglText from '@/components/shared/bngl-text.vue';
-import DiffusionForm from '@/components/shared/entities/diffusion-form.vue';
+import BnglText from '@/components/shared/bngl-text.vue'
+import DiffusionForm from '@/components/shared/entities/diffusion-form.vue'
 
-import findUniqName from '@/tools/find-uniq-name';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import blockHeightWoPadding from '@/tools/block-height-wo-padding';
+import findUniqName from '@/tools/find-uniq-name'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultDiffusion = {
   valid: false,
@@ -68,9 +59,9 @@ const defaultDiffusion = {
   diffusionConstant: '',
   compartment: '',
   annotation: '',
-};
+}
 
-const searchProps = ['name', 'speciesDefinition', 'compartment'];
+const searchProps = ['name', 'speciesDefinition', 'compartment']
 
 export default {
   name: 'diffusion-component',
@@ -119,67 +110,63 @@ export default {
           render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
         },
       ],
-    };
+    }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
-    bus.$on('layoutChange', () => this.computeTableHeight());
+    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
-    bus.$off('layoutChange');
+    bus.$off('layoutChange')
   },
   methods: {
     addDiffusion() {
       this.newDiffusion = {
         ...defaultDiffusion,
         name: findUniqName(this.diffusions, 'diff'),
-      };
-      this.showNewDiffusionModal();
+      }
+      this.showNewDiffusionModal()
 
       this.$nextTick(() => {
-        this.$refs.diffusionForm.refresh();
-        this.$refs.diffusionForm.focus();
-      });
+        this.$refs.diffusionForm.refresh()
+        this.$refs.diffusionForm.focus()
+      })
     },
     removeDiffusion() {
-      this.$store.commit('removeSelectedEntity');
+      this.$store.commit('removeSelectedEntity')
     },
     onDiffusionSelect(diffusion, index) {
       this.$store.commit('setEntitySelection', {
         index,
         type: 'diffusion',
         entity: diffusion,
-      });
+      })
     },
     onOk() {
-      this.hideNewDiffusionModal();
-      this.$store.commit('addDiffusion', this.newDiffusion);
+      this.hideNewDiffusionModal()
+      this.$store.commit('addDiffusion', this.newDiffusion)
     },
     hideNewDiffusionModal() {
-      this.newDiffusionModalVisible = false;
+      this.newDiffusionModalVisible = false
     },
     showNewDiffusionModal() {
-      this.newDiffusionModalVisible = true;
+      this.newDiffusionModalVisible = true
     },
     computeTableHeight() {
-      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
+      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
     diffusions(state) {
-      return state.model.diffusions;
+      return state.model.diffusions
     },
     filteredDiffusions() {
-      return this.diffusions.filter((e) =>
-        objStrSearchFilter(this.searchStr, e, { include: searchProps }),
-      );
+      return this.diffusions.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
-      return this.searchStr
-        ? 'No matching diffusions'
-        : 'Create a diffusion by using buttons below';
+      return this.searchStr ? 'No matching diffusions' : 'Create a diffusion by using buttons below'
     },
     removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'diffusion',
   }),
-};
+}
 </script>

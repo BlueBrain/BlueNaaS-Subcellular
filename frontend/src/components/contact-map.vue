@@ -3,23 +3,23 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import cytoscape from 'cytoscape';
-import coseBilkent from 'cytoscape-cose-bilkent';
+import Vue from 'vue'
+import cytoscape from 'cytoscape'
+import coseBilkent from 'cytoscape-cose-bilkent'
 
-import cloneDeep from 'lodash/cloneDeep';
-import socket from '@/services/websocket';
+import cloneDeep from 'lodash/cloneDeep'
+import socket from '@/services/websocket'
 
-import store from '../store';
+import store from '../store'
 
-cytoscape.use(coseBilkent);
+cytoscape.use(coseBilkent)
 
 export default Vue.extend({
   name: 'contact-map',
 
   created() {
     if (this.model?.id !== null && !this.viz) {
-      socket.request('contact-map', this.model);
+      socket.request('contact-map', this.model)
     }
   },
 
@@ -32,10 +32,10 @@ export default Vue.extend({
           style: { label: 'data(label)' },
         },
       ],
-    });
+    })
 
     this.graph.on('scrollzoom dragpan', () => {
-      const conf = this.config || { viewport: {}, nodes: {} };
+      const conf = this.config || { viewport: {}, nodes: {} }
       store.commit('setContactMapConfig', {
         ...conf,
         viewport: {
@@ -43,36 +43,36 @@ export default Vue.extend({
           zoom: this.graph.zoom(),
           pan: this.graph.pan(),
         },
-      });
-    });
+      })
+    })
 
     this.graph.on('dragfreeon', 'node', () => {
-      const conf = this.config || { viewport: {}, nodes: {} };
+      const conf = this.config || { viewport: {}, nodes: {} }
 
       for (const node of this.graph.nodes()) {
-        conf.nodes[node.id()] = node.position();
+        conf.nodes[node.id()] = node.position()
       }
 
-      store.commit('setContactMapConfig', cloneDeep(conf));
-    });
+      store.commit('setContactMapConfig', cloneDeep(conf))
+    })
 
     this.graph.on('click', 'node', (e) => {
-      const isChild = !!e.target.data('parent');
-      if (!isChild) this.$router.push('/model/species');
-    });
+      const isChild = !!e.target.data('parent')
+      if (!isChild) this.$router.push('/model/species')
+    })
 
     if (this.viz) {
-      this.draw();
+      this.draw()
     }
   },
 
   methods: {
     draw() {
-      const data = cloneDeep(this.viz);
-      const nodes = this.config?.nodes;
-      const viewport = this.config?.viewport;
+      const data = cloneDeep(this.viz)
+      const nodes = this.config?.nodes
+      const viewport = this.config?.viewport
 
-      if (!data) return;
+      if (!data) return
 
       const elements = [
         ...data.nodes.map((node) => {
@@ -86,7 +86,7 @@ export default Vue.extend({
               x: nodes[node.id]?.x,
               y: nodes[node.id]?.y,
             },
-          };
+          }
         }),
         ...data.edges.map((edge) => {
           return {
@@ -94,50 +94,50 @@ export default Vue.extend({
               source: edge.source,
               target: edge.target,
             },
-          };
+          }
         }),
-      ];
+      ]
 
-      this.graph.add(elements);
+      this.graph.add(elements)
 
-      const cfg = { nodes: [], viewport: {} };
+      const cfg = { nodes: [], viewport: {} }
       if (!this.config) {
         const layout = this.graph.layout({
           name: 'cose-bilkent',
-        });
-        layout.run();
+        })
+        layout.run()
 
         for (const node of this.graph.nodes()) {
           cfg.nodes[node.data().id] = {
             x: node.position().x,
             y: node.position().y,
-          };
+          }
         }
-        store.commit('setContactMapConfig', cfg);
+        store.commit('setContactMapConfig', cfg)
       }
 
       if (viewport) {
-        if (viewport.zoom) this.graph.zoom(viewport.zoom);
-        if (viewport.pan) this.graph.pan(viewport.pan);
+        if (viewport.zoom) this.graph.zoom(viewport.zoom)
+        if (viewport.pan) this.graph.pan(viewport.pan)
       }
     },
   },
 
   computed: {
     model() {
-      return this.$store.state.model;
+      return this.$store.state.model
     },
     viz() {
-      return this.$store.state.model.contactMap;
+      return this.$store.state.model.contactMap
     },
     config() {
-      return this.$store.state.model.graphCfg;
+      return this.$store.state.model.graphCfg
     },
   },
   watch: {
     viz() {
-      this.draw();
+      this.draw()
     },
   },
-});
+})
 </script>

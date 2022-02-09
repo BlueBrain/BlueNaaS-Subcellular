@@ -24,11 +24,7 @@
           <h3 class="mt-24 mb-12">Entity types</h3>
 
           <i-select v-model="query.entityTypes" transfer multiple filterable>
-            <i-option
-              v-for="(label, entityType) in entityLabels"
-              :key="entityType"
-              :value="entityType"
-            >
+            <i-option v-for="(label, entityType) in entityLabels" :key="entityType" :value="entityType">
               {{ label }}
             </i-option>
           </i-select>
@@ -48,13 +44,7 @@
           </Dropdown>
         </i-col>
         <i-col span="8" push="8">
-          <i-button
-            type="primary"
-            long
-            :disabled="!searchBtnEnabled"
-            :loading="loading"
-            @click="onSearchClick"
-          >
+          <i-button type="primary" long :disabled="!searchBtnEnabled" :loading="loading" @click="onSearchClick">
             Search
           </i-button>
         </i-col>
@@ -72,11 +62,7 @@
       </Row>
     </Card>
 
-    <Modal
-      v-model="importFilterModalVisible"
-      title="Import filter from a JSON file"
-      class-name="vertical-center-modal"
-    >
+    <Modal v-model="importFilterModalVisible" title="Import filter from a JSON file" class-name="vertical-center-modal">
       <file-import
         :file-formats="[{ extension: 'json', type: 'JSON' }]"
         :error-msg="filterImportError"
@@ -90,18 +76,18 @@
 </template>
 
 <script>
-import { saveAs } from 'file-saver';
-import Ajv from 'ajv';
+import { saveAs } from 'file-saver'
+import Ajv from 'ajv'
 
-import repoFilterSchema from '@/schemas/repo-filter.json';
+import repoFilterSchema from '@/schemas/repo-filter.json'
 
-import FileImport from '@/components/shared/file-import.vue';
+import FileImport from '@/components/shared/file-import.vue'
 
-import RevisionSelect from './repo-search/revision-select.vue';
-import SearchContent from './repo-search/search-content.vue';
-import RevisionMerge from './repo-search/revision-merge.vue';
+import RevisionSelect from './repo-search/revision-select.vue'
+import SearchContent from './repo-search/search-content.vue'
+import RevisionMerge from './repo-search/revision-merge.vue'
 
-const validateFilter = new Ajv().compile(repoFilterSchema);
+const validateFilter = new Ajv().compile(repoFilterSchema)
 
 const entityLabels = {
   parameter: 'Parameters',
@@ -111,7 +97,7 @@ const entityLabels = {
   observable: 'Observables',
   function: 'Functions',
   reaction: 'Reactions',
-};
+}
 
 export default {
   name: 'repo-search',
@@ -141,79 +127,79 @@ export default {
       result: {
         selectedEntity: null,
       },
-    };
+    }
   },
   beforeDestroy() {
-    this.$store.commit('resetMolecularRepo');
+    this.$store.commit('resetMolecularRepo')
   },
   methods: {
     onSearchClick() {
-      this.$store.commit('setQueryLoading', true);
+      this.$store.commit('setQueryLoading', true)
       setTimeout(async () => {
-        await this.$store.dispatch('queryMolecularRepo', this.query);
-        this.$store.commit('setQueryLoading', false);
-      }, 100);
+        await this.$store.dispatch('queryMolecularRepo', this.query)
+        this.$store.commit('setQueryLoading', false)
+      }, 100)
     },
     onFilterActionClick(action) {
       if (action === 'save') {
         const blob = new Blob([JSON.stringify(this.query)], {
           type: 'text/plain;charset=utf-8',
-        });
-        saveAs(blob, 'filter.json');
+        })
+        saveAs(blob, 'filter.json')
       } else {
-        this.showImportFilterModal();
+        this.showImportFilterModal()
       }
     },
     hideImportFilterModal() {
-      this.importFilterModalVisible = false;
+      this.importFilterModalVisible = false
     },
     showImportFilterModal() {
-      this.importFilterModalVisible = true;
+      this.importFilterModalVisible = true
     },
     onFilterFileRead({ content }) {
-      let filter = null;
+      let filter = null
       try {
-        filter = JSON.parse(content);
+        filter = JSON.parse(content)
       } catch (error) {
-        this.filterImportError = "Can't parse file as JSON";
+        this.filterImportError = "Can't parse file as JSON"
       }
 
-      if (!filter) return;
+      if (!filter) return
 
-      const schemaValid = validateFilter(filter);
+      const schemaValid = validateFilter(filter)
       if (!schemaValid) {
-        const [errObj] = validateFilter.errors;
-        this.filterImportError = `error: ${errObj.dataPath} ${errObj.message}`;
-        return;
+        const [errObj] = validateFilter.errors
+        this.filterImportError = `error: ${errObj.dataPath} ${errObj.message}`
+        return
       }
 
-      this.query = filter;
-      this.hideImportFilterModal();
-      this.$Notice.success({ title: 'Filter successfully imported' });
+      this.query = filter
+      this.hideImportFilterModal()
+      this.$Notice.success({ title: 'Filter successfully imported' })
     },
   },
   computed: {
     searchResultEntityTypes() {
-      return Object.keys(this.$store.state.molecularRepo.queryResult || {});
+      return Object.keys(this.$store.state.molecularRepo.queryResult || {})
     },
     repoQueryResult() {
-      return !!this.$store.state.repoQueryResult;
+      return !!this.$store.state.repoQueryResult
     },
     searchBtnEnabled() {
-      return this.query.versions.length && this.query.entityTypes.length;
+      return this.query.versions.length && this.query.entityTypes.length
     },
     loading() {
-      return this.$store.state.revision.loading;
+      return this.$store.state.revision.loading
     },
     queryResultVersions() {
-      return this.$store.getters.queryResultVersions;
+      return this.$store.getters.queryResultVersions
     },
     queryResultEmpty() {
-      const result = this.$store.state.repoQueryResult;
-      return !result || Object.values(result).every((entities) => !entities.length);
+      const result = this.$store.state.repoQueryResult
+      return !result || Object.values(result).every((entities) => !entities.length)
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

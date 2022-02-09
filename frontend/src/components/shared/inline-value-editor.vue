@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import isNil from 'lodash/isNil';
+import isNil from 'lodash/isNil'
 
 export default {
   name: 'inline-value-editor',
@@ -43,43 +43,43 @@ export default {
       editMode: false,
       enteringEditMode: false,
       currentValue: this.value,
-    };
+    }
   },
   methods: {
     onEnter() {
-      if (!this.valid) return;
+      if (!this.valid) return
 
-      this.emitChange();
-      this.exitEditMode();
+      this.emitChange()
+      this.exitEditMode()
     },
     onEsc() {
-      this.exitEditMode();
+      this.exitEditMode()
     },
     onBlur() {
       // workaround for bug in Firefox where inserted into DOM number input emits blur event
       // see https://bugzilla.mozilla.org/show_bug.cgi?id=981248
-      if (this.enteringEditMode) return;
+      if (this.enteringEditMode) return
 
-      if (this.valid && this.editMode) this.emitChange();
+      if (this.valid && this.editMode) this.emitChange()
 
-      this.exitEditMode();
+      this.exitEditMode()
     },
     emitChange() {
-      const typedValue = this.type === 'number' ? parseFloat(this.currentValue) : this.currentValue;
+      const typedValue = this.type === 'number' ? parseFloat(this.currentValue) : this.currentValue
 
-      this.$emit('input', typedValue);
+      this.$emit('input', typedValue)
     },
     enterEditMode() {
-      this.enteringEditMode = true;
-      this.editMode = true;
-      this.currentValue = this.value;
+      this.enteringEditMode = true
+      this.editMode = true
+      this.currentValue = this.value
       this.$nextTick(() => {
-        this.$refs.input.focus();
-        this.enteringEditMode = false;
-      });
+        this.$refs.input.focus()
+        this.enteringEditMode = false
+      })
     },
     exitEditMode() {
-      this.editMode = false;
+      this.editMode = false
     },
   },
   computed: {
@@ -89,10 +89,10 @@ export default {
         (isNil(this.max) || parseFloat(this.currentValue) <= this.max) &&
         (isNil(this.minLength) || this.minLength <= this.currentValue.length) &&
         (isNil(this.maxLength) || this.currentValue.length <= this.maxLength)
-      );
+      )
     },
   },
-};
+}
 </script>
 
 <style lang="scss">

@@ -80,12 +80,7 @@
           :disabled="!previousStepAvailable"
           @click="onPreviousStepClick"
         />
-        <Button
-          type="dashed"
-          icon="ios-skip-forward"
-          :disabled="!nextStepAvailable"
-          @click="onNextStepClick"
-        />
+        <Button type="dashed" icon="ios-skip-forward" :disabled="!nextStepAvailable" @click="onNextStepClick" />
       </ButtonGroup>
       <Slider
         class="video-progress-slider inline-block ml-24"
@@ -133,19 +128,19 @@
 </template>
 
 <script>
-import throttle from 'lodash/throttle';
+import throttle from 'lodash/throttle'
 
-import ModelGeometryRenderer from '@/services/model-geometry-renderer';
-import constants from '@/constants';
-import bus from '@/services/event-bus';
+import ModelGeometryRenderer from '@/services/model-geometry-renderer'
+import constants from '@/constants'
+import bus from '@/services/event-bus'
 import {
   subscribeSpatialTrace,
   unsubscribeSpatialTrace,
   getLastSpatialStepIdx,
   getSpatialStepTraceByIdx,
-} from '@/services/sim-data-storage';
+} from '@/services/sim-data-storage'
 
-const { SimStatus } = constants;
+const { SimStatus } = constants
 
 export default {
   name: 'spatial-result-viewer',
@@ -174,209 +169,207 @@ export default {
         compartments: 'Compartments',
         membranes: 'Membranes',
       },
-    };
+    }
   },
   created() {
-    this.progressCtrl.live = this.liveAvailable;
+    this.progressCtrl.live = this.liveAvailable
   },
   async mounted() {
-    this.renderer = new ModelGeometryRenderer(this.$refs.canvas);
+    this.renderer = new ModelGeometryRenderer(this.$refs.canvas)
 
-    bus.$on('layoutChange', this.onLayoutChange);
+    bus.$on('layoutChange', this.onLayoutChange)
 
-    subscribeSpatialTrace(this.simId, throttle(this.onSpatialStepTrace, 250));
+    subscribeSpatialTrace(this.simId, throttle(this.onSpatialStepTrace, 250))
 
-    const lastStepIdx = await getLastSpatialStepIdx(this.simId);
-    this.simulatedStepsN = lastStepIdx + 1;
+    const lastStepIdx = await getLastSpatialStepIdx(this.simId)
+    this.simulatedStepsN = lastStepIdx + 1
 
     if (this.liveAvailable) {
-      this.progressCtrl.stepIdx = lastStepIdx;
-      this.progressCtrl.live = true;
+      this.progressCtrl.stepIdx = lastStepIdx
+      this.progressCtrl.live = true
     } else {
-      this.progressCtrl.stepIdx = 0;
+      this.progressCtrl.stepIdx = 0
     }
 
     setTimeout(() => {
-      this.initGeometry();
+      this.initGeometry()
 
-      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx);
-    }, 10);
+      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx)
+    }, 10)
   },
   beforeDestroy() {
-    bus.$off('layoutChange', this.onLayoutChange);
-    unsubscribeSpatialTrace(this.simId);
-    this.renderer.destroy();
+    bus.$off('layoutChange', this.onLayoutChange)
+    unsubscribeSpatialTrace(this.simId)
+    this.renderer.destroy()
   },
   methods: {
     initGeometry() {
-      this.renderer.initGeometry(this.geometry, this.displayConf);
+      this.renderer.initGeometry(this.geometry, this.displayConf)
       const structure = (this.geometry.meta.structures || []).map((st, idx) => ({
         name: st.name,
         color: this.renderer.colors[idx].css(),
         visible: true,
         type: st.type,
-      }));
+      }))
 
-      this.structure.compartments = structure.filter((st) => st.type === 'compartment');
+      this.structure.compartments = structure.filter((st) => st.type === 'compartment')
 
-      this.structure.membranes = structure.filter((st) => st.type === 'membrane');
+      this.structure.membranes = structure.filter((st) => st.type === 'membrane')
 
       // TODO: make simulation config immutable after simulation has been started
-      const moleculeNames = this.sim.solverConf.spatialSampling.observables.map((o) => o.name);
+      const moleculeNames = this.sim.solverConf.spatialSampling.observables.map((o) => o.name)
 
-      this.renderer.initMolecules(moleculeNames);
+      this.renderer.initMolecules(moleculeNames)
 
       this.molecules = Object.entries(this.renderer.moleculeConfig).map(([name, mol]) => ({
         name,
         color: mol.color.css(),
         visible: true,
-      }));
+      }))
     },
     onLayoutChange() {
-      this.renderer.onResize();
+      this.renderer.onResize()
     },
     onSpatialStepTrace(spatialStepTrace) {
-      this.lastSpatialStepTrace = spatialStepTrace;
+      this.lastSpatialStepTrace = spatialStepTrace
 
-      this.simulatedStepsN = this.lastSpatialStepTrace.stepIdx + 1;
+      this.simulatedStepsN = this.lastSpatialStepTrace.stepIdx + 1
 
       if (this.progressCtrl.live) {
-        this.progressCtrl.stepIdx = this.lastSpatialStepTrace.stepIdx;
-        this.renderer.renderMolecules(this.lastSpatialStepTrace);
+        this.progressCtrl.stepIdx = this.lastSpatialStepTrace.stepIdx
+        this.renderer.renderMolecules(this.lastSpatialStepTrace)
       }
     },
     onNextStepClick() {
-      if (this.progressCtrl.replaying) this.stopReplay();
+      if (this.progressCtrl.replaying) this.stopReplay()
       if (this.progressCtrl.live) {
-        this.progressCtrl.live = false;
+        this.progressCtrl.live = false
       }
 
-      this.progressCtrl.stepIdx += 1;
-      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx);
+      this.progressCtrl.stepIdx += 1
+      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx)
     },
     onPreviousStepClick() {
-      if (this.progressCtrl.replaying) this.stopReplay();
+      if (this.progressCtrl.replaying) this.stopReplay()
       if (this.progressCtrl.live) {
-        this.progressCtrl.live = false;
+        this.progressCtrl.live = false
       }
 
-      this.progressCtrl.stepIdx -= 1;
-      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx);
+      this.progressCtrl.stepIdx -= 1
+      this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx)
     },
     onPlayToggle() {
-      this.progressCtrl.replaying = !this.progressCtrl.replaying;
+      this.progressCtrl.replaying = !this.progressCtrl.replaying
 
       if (this.progressCtrl.replaying) {
-        this.startReplay();
+        this.startReplay()
       } else {
-        this.stopReplay();
+        this.stopReplay()
       }
     },
     startReplay() {
-      this.progressCtrl.replaying = true;
-      this.replayRun();
+      this.progressCtrl.replaying = true
+      this.replayRun()
     },
     async replayRun() {
-      if (!this.progressCtrl.replaying) return;
+      if (!this.progressCtrl.replaying) return
 
       if (this.progressCtrl.stepIdx + 1 === this.simulatedStepsN) {
         if (this.liveAvailable) {
-          this.progressCtrl.live = true;
-          return;
+          this.progressCtrl.live = true
+          return
         }
 
-        this.stopReplay();
+        this.stopReplay()
       }
 
-      this.progressCtrl.stepIdx += 1;
-      await this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx);
+      this.progressCtrl.stepIdx += 1
+      await this.renderMoleculesByStepIdx(this.progressCtrl.stepIdx)
 
       // TODO: start fetching data for next frame right after render and then make an appropriate
       // timeout by given step trace fetch time and pfs
-      if (!this.progressCtrl.replaying) return;
+      if (!this.progressCtrl.replaying) return
 
-      const timeout = 1000 / this.progressCtrl.replayFps;
-      this.replayTimer = setTimeout(() => this.replayRun(), timeout);
+      const timeout = 1000 / this.progressCtrl.replayFps
+      this.replayTimer = setTimeout(() => this.replayRun(), timeout)
     },
     stopReplay() {
-      this.progressCtrl.replaying = false;
-      clearTimeout(this.replayTimer);
+      this.progressCtrl.replaying = false
+      clearTimeout(this.replayTimer)
     },
     onProgressInput(stepIdx) {
-      if (this.progressCtrl.stepIdx === stepIdx) return;
-      this.progressCtrl.live = false;
-      this.renderMoleculesByStepIdx(stepIdx);
+      if (this.progressCtrl.stepIdx === stepIdx) return
+      this.progressCtrl.live = false
+      this.renderMoleculesByStepIdx(stepIdx)
     },
     onProgressChange(stepIdx) {
-      this.progressCtrl.live = false;
+      this.progressCtrl.live = false
       if (this.progressCtrl.replaying) {
-        this.stopReplay();
+        this.stopReplay()
       }
 
-      this.renderMoleculesByStepIdx(stepIdx);
+      this.renderMoleculesByStepIdx(stepIdx)
     },
     async renderMoleculesByStepIdx(stepIdx) {
-      const spatialStepTrace = await getSpatialStepTraceByIdx(this.simId, stepIdx);
+      const spatialStepTrace = await getSpatialStepTraceByIdx(this.simId, stepIdx)
       if (!spatialStepTrace) {
-        console.warn(`No spatial trace is found for stepIdx: ${stepIdx}`);
-        return;
+        console.warn(`No spatial trace is found for stepIdx: ${stepIdx}`)
+        return
       }
 
-      this.lastSpatialStepTrace = spatialStepTrace;
-      console.log(this.lastSpatialStepTrace);
-      this.renderer.renderMolecules(this.lastSpatialStepTrace);
+      this.lastSpatialStepTrace = spatialStepTrace
+      console.log(this.lastSpatialStepTrace)
+      this.renderer.renderMolecules(this.lastSpatialStepTrace)
     },
     onStructureVisibilityChange(comp) {
-      this.renderer.setVisible(comp.name, comp.visible);
-      this.renderer.renderMolecules(this.lastSpatialStepTrace);
+      this.renderer.setVisible(comp.name, comp.visible)
+      this.renderer.renderMolecules(this.lastSpatialStepTrace)
     },
     onDisplayConfChange() {
-      this.renderer.setDisplayConf(this.displayConf);
+      this.renderer.setDisplayConf(this.displayConf)
     },
     onMoleculeVisibilityChange(molecule) {
       this.renderer.setMoleculeConfig(molecule.name, {
         visible: molecule.visible,
-      });
-      this.renderer.renderMolecules(this.lastSpatialStepTrace);
+      })
+      this.renderer.renderMolecules(this.lastSpatialStepTrace)
     },
 
     toggleLive() {
-      this.progressCtrl.live = !this.progressCtrl.live;
+      this.progressCtrl.live = !this.progressCtrl.live
 
       if (this.progressCtrl.live) {
         if (this.progressCtrl.replaying) {
-          this.stopReplay();
+          this.stopReplay()
         }
 
-        this.progressCtrl.stepIdx = this.simulatedStepsN;
-        this.renderMoleculesByStepIdx(this.simId, this.progressCtrl.stepIdx);
+        this.progressCtrl.stepIdx = this.simulatedStepsN
+        this.renderMoleculesByStepIdx(this.simId, this.progressCtrl.stepIdx)
       }
     },
   },
   computed: {
     fileUrl() {
-      return `https://${window.location.host}/data/spatial-traces/${this.simId}.json`;
+      return `https://${window.location.host}/data/spatial-traces/${this.simId}.json`
     },
     geometry() {
-      return this.$store.state.model.geometry;
+      return this.$store.state.model.geometry
     },
 
     sim() {
-      return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
+      return this.$store.state.model.simulations.find((sim) => sim.id === this.simId)
     },
     liveAvailable() {
-      return [SimStatus.READY_TO_RUN, SimStatus.INIT, SimStatus.QUEUED, SimStatus.STARTED].includes(
-        this.sim.status,
-      );
+      return [SimStatus.READY_TO_RUN, SimStatus.INIT, SimStatus.QUEUED, SimStatus.STARTED].includes(this.sim.status)
     },
     previousStepAvailable() {
-      return this.progressCtrl.stepIdx > 0;
+      return this.progressCtrl.stepIdx > 0
     },
     nextStepAvailable() {
-      return this.progressCtrl.stepIdx + 1 < this.simulatedStepsN;
+      return this.progressCtrl.stepIdx + 1 < this.simulatedStepsN
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

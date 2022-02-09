@@ -1,11 +1,5 @@
 <template>
-  <Split
-    class="split-container p-12"
-    v-model="split.vertical"
-    min="200px"
-    :max="0.4"
-    @input="onLayoutChange"
-  >
+  <Split class="split-container p-12" v-model="split.vertical" min="200px" :max="0.4" @input="onLayoutChange">
     <div slot="left">
       <Split v-model="split.leftHorizontal" mode="vertical" min="250px" max="250px">
         <div slot="top">
@@ -18,13 +12,7 @@
     </div>
 
     <div slot="right">
-      <Split
-        v-model="split.rightHorizontal"
-        mode="vertical"
-        min="200px"
-        max="160px"
-        @input="onLayoutChange"
-      >
+      <Split v-model="split.rightHorizontal" mode="vertical" min="200px" max="160px" @input="onLayoutChange">
         <div slot="top" class="pl-6">
           <primary-view />
         </div>
@@ -37,12 +25,12 @@
 </template>
 
 <script>
-import bus from '@/services/event-bus';
+import bus from '@/services/event-bus'
 
-import ModelMenu from './model-page/menu.vue';
-import PrimaryView from './model-page/primary-view.vue';
-import DbView from './model-page/db.vue';
-import SecondaryView from './model-page/secondary-view.vue';
+import ModelMenu from './model-page/menu.vue'
+import PrimaryView from './model-page/primary-view.vue'
+import DbView from './model-page/db.vue'
+import SecondaryView from './model-page/secondary-view.vue'
 
 export default {
   name: 'model-view',
@@ -59,14 +47,14 @@ export default {
         leftHorizontal: 0.5,
         rightHorizontal: 0.5,
       },
-    };
+    }
   },
   methods: {
     onLayoutChange() {
-      bus.$emit('layoutChange');
+      bus.$emit('layoutChange')
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

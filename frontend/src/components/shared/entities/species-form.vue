@@ -37,9 +37,9 @@
 </template>
 
 <script>
-import constants from '@/constants';
+import constants from '@/constants'
 
-import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
   name: 'species-form',
@@ -51,34 +51,34 @@ export default {
     return {
       constants,
       species: { ...this.value },
-    };
+    }
   },
   methods: {
     onSpeciesChange() {
-      this.species.valid = this.isValid();
-      this.$emit('input', this.species);
+      this.species.valid = this.isValid()
+      this.$emit('input', this.species)
     },
     isValid() {
-      return this.species.name.trim() && this.species.definition && this.species.concentration;
+      return this.species.name.trim() && this.species.definition && this.species.concentration
     },
     onDefinitionInputTab() {
-      this.$refs.concentrationInput.focus();
+      this.$refs.concentrationInput.focus()
     },
     onConcentrationInputTab() {
-      this.$refs.annotationInput.focus();
+      this.$refs.annotationInput.focus()
     },
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
-      this.$refs.concentrationInput.refresh();
+      this.$refs.definitionInput.refresh()
+      this.$refs.concentrationInput.refresh()
     },
   },
   watch: {
     value() {
-      this.species = { ...this.value };
+      this.species = { ...this.value }
     },
   },
-};
+}
 </script>

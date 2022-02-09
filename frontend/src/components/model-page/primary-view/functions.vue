@@ -19,12 +19,7 @@
       <Row>
         <i-col span="12">
           <i-button type="primary" @click="addFunction"> New Function </i-button>
-          <i-button
-            class="ml-24"
-            type="warning"
-            :disabled="removeBtnDisabled"
-            @click="removeFunction"
-          >
+          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeFunction">
             Delete
           </i-button>
         </i-col>
@@ -34,12 +29,7 @@
       </Row>
     </div>
 
-    <Modal
-      v-model="newFunctionModalVisible"
-      title="New Function"
-      class-name="vertical-center-modal"
-      @on-ok="onOk"
-    >
+    <Modal v-model="newFunctionModalVisible" title="New Function" class-name="vertical-center-modal" @on-ok="onOk">
       <function-form ref="functionForm" v-model="newFunction" />
       <div slot="footer">
         <i-button class="mr-6" type="text" @click="hideNewFunctionModal"> Cancel </i-button>
@@ -50,17 +40,17 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import get from 'lodash/get';
+import { mapState } from 'vuex'
+import get from 'lodash/get'
 
-import bus from '@/services/event-bus';
+import bus from '@/services/event-bus'
 
-import BnglText from '@/components/shared/bngl-text.vue';
-import FunctionForm from '@/components/shared/entities/function-form.vue';
+import BnglText from '@/components/shared/bngl-text.vue'
+import FunctionForm from '@/components/shared/entities/function-form.vue'
 
-import findUniqName from '@/tools/find-uniq-name';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import blockHeightWoPadding from '@/tools/block-height-wo-padding';
+import findUniqName from '@/tools/find-uniq-name'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultFunction = {
   name: '',
@@ -68,9 +58,9 @@ const defaultFunction = {
   definition: '',
   argument: '',
   annotation: '',
-};
+}
 
-const searchProps = ['name', 'definition'];
+const searchProps = ['name', 'definition']
 
 export default {
   name: 'function-component',
@@ -110,65 +100,63 @@ export default {
           render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
         },
       ],
-    };
+    }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
-    bus.$on('layoutChange', () => this.computeTableHeight());
+    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
-    bus.$off('layoutChange');
+    bus.$off('layoutChange')
   },
   methods: {
     addFunction() {
       this.newFunction = {
         ...defaultFunction,
         name: findUniqName(this.functions, 'f'),
-      };
-      this.showNewFunctionModal();
+      }
+      this.showNewFunctionModal()
 
       this.$nextTick(() => {
-        this.$refs.functionForm.refresh();
-        this.$refs.functionForm.focus();
-      });
+        this.$refs.functionForm.refresh()
+        this.$refs.functionForm.focus()
+      })
     },
     showNewFunctionModal() {
-      this.newFunctionModalVisible = true;
+      this.newFunctionModalVisible = true
     },
     hideNewFunctionModal() {
-      this.newFunctionModalVisible = false;
+      this.newFunctionModalVisible = false
     },
     removeFunction() {
-      this.$store.commit('removeSelectedEntity');
+      this.$store.commit('removeSelectedEntity')
     },
     onFunctionSelect(func, index) {
       this.$store.commit('setEntitySelection', {
         index,
         type: 'function',
         entity: func,
-      });
+      })
     },
     onOk() {
-      this.hideNewFunctionModal();
-      this.$store.commit('addFunction', this.newFunction);
+      this.hideNewFunctionModal()
+      this.$store.commit('addFunction', this.newFunction)
     },
     computeTableHeight() {
-      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
+      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
     functions(state) {
-      return state.model.functions;
+      return state.model.functions
     },
     filteredFunctions() {
-      return this.functions.filter((e) =>
-        objStrSearchFilter(this.searchStr, e, { include: searchProps }),
-      );
+      return this.functions.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
-      return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below';
+      return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below'
     },
     removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'function',
   }),
-};
+}
 </script>

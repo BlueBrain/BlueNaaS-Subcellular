@@ -17,11 +17,11 @@
 </template>
 
 <script>
-import throttle from 'lodash/throttle';
+import throttle from 'lodash/throttle'
 
-import { requestLog, subscribeLog, unsubscribeLog } from '@/services/sim-data-storage';
+import { requestLog, subscribeLog, unsubscribeLog } from '@/services/sim-data-storage'
 
-const MAX_LINES = 2000;
+const MAX_LINES = 2000
 
 const logTypeLabel = {
   bng_stdout: 'BioNetGen stdout',
@@ -32,18 +32,18 @@ const logTypeLabel = {
   model_rnf: 'NFSim run script',
   system: 'System',
   rnf: '.rnf',
-};
+}
 
 export default {
   name: 'sim-log-viewer',
   props: ['simId'],
   mounted() {
-    this.init();
-    const updateLogThrottled = throttle(this.updateLog.bind(this), 250);
-    subscribeLog(this.simId, updateLogThrottled);
+    this.init()
+    const updateLogThrottled = throttle(this.updateLog.bind(this), 250)
+    subscribeLog(this.simId, updateLogThrottled)
   },
   beforeDestroy() {
-    unsubscribeLog(this.simId);
+    unsubscribeLog(this.simId)
   },
   data() {
     return {
@@ -52,48 +52,48 @@ export default {
       logType: '',
       logContent: '',
       follow: true,
-    };
+    }
   },
   methods: {
     async init(log = null) {
       if (log) {
-        this.log = log;
+        this.log = log
       } else {
-        this.log = await requestLog(this.simId);
+        this.log = await requestLog(this.simId)
       }
 
-      this.logTypes = Object.keys(this.log);
-      this.logType = this.logTypes[0] || '';
-      this.logContent = this.logType ? this.getLogStr(this.logType) : '';
+      this.logTypes = Object.keys(this.log)
+      this.logType = this.logTypes[0] || ''
+      this.logContent = this.logType ? this.getLogStr(this.logType) : ''
 
-      this.scrollToBottom();
+      this.scrollToBottom()
     },
     onLogTypeChange(logType) {
-      this.logContent = this.getLogStr(logType);
+      this.logContent = this.getLogStr(logType)
     },
     scrollToBottom() {
       this.$nextTick(() => {
-        const logContainer = this.$refs.log;
-        logContainer.scrollTop = logContainer.scrollHeight;
-      });
+        const logContainer = this.$refs.log
+        logContainer.scrollTop = logContainer.scrollHeight
+      })
     },
     getLogStr(type) {
-      return this.log[type].slice(-MAX_LINES).join('\n');
+      return this.log[type].slice(-MAX_LINES).join('\n')
     },
     updateLog(log) {
       if (!this.logType) {
-        this.init(log);
+        this.init(log)
       } else {
-        this.log = log;
-        this.logContent = this.getLogStr(this.logType);
+        this.log = log
+        this.logContent = this.getLogStr(this.logType)
       }
 
-      if (!this.follow) return;
+      if (!this.follow) return
 
-      this.scrollToBottom();
+      this.scrollToBottom()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

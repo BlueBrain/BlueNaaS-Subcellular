@@ -27,9 +27,9 @@
 </template>
 
 <script>
-import constants from '@/constants';
+import constants from '@/constants'
 
-import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
   name: 'molecule-form',
@@ -41,30 +41,30 @@ export default {
     return {
       constants,
       molecule: { ...this.value },
-    };
+    }
   },
   methods: {
     onMoleculeChange() {
-      this.molecule.valid = this.isValid();
-      this.$emit('input', this.molecule);
+      this.molecule.valid = this.isValid()
+      this.$emit('input', this.molecule)
     },
     isValid() {
-      return this.molecule.name.trim() && this.molecule.definition;
+      return this.molecule.name.trim() && this.molecule.definition
     },
     onDefinitionInputTab() {
-      this.$refs.annotationInput.focus();
+      this.$refs.annotationInput.focus()
     },
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
+      this.$refs.definitionInput.refresh()
     },
   },
   watch: {
     value() {
-      this.molecule = { ...this.value };
+      this.molecule = { ...this.value }
     },
   },
-};
+}
 </script>

@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue';
+import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue'
 
 export default {
   name: 'header-component',
@@ -34,22 +34,22 @@ export default {
   data() {
     return {
       userProfileVisible: false,
-    };
+    }
   },
   methods: {
     showUserProfile() {
-      this.userProfileVisible = true;
+      this.userProfileVisible = true
     },
   },
   computed: {
     modelName() {
-      return this.$store.state.model.name;
+      return this.$store.state.model.name
     },
     user() {
-      return this.$store.state.user;
+      return this.$store.state.user
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

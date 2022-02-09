@@ -26,19 +26,19 @@
 </template>
 
 <script>
-import constants from '@/constants';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import contentConfig from '../../revision-editor/revision-content/content-config';
+import constants from '@/constants'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import contentConfig from '../../revision-editor/revision-content/content-config'
 
-import SpeciesTools from './search-entities/tools/species-tools.vue';
+import SpeciesTools from './search-entities/tools/species-tools.vue'
 
-const { entityTypeCollectionMap } = constants;
+const { entityTypeCollectionMap } = constants
 
 const toolByEntityType = {
   species: SpeciesTools,
-};
+}
 
-const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];
+const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId']
 
 export default {
   name: 'search-entities',
@@ -49,54 +49,50 @@ export default {
       tableColumns: [],
       selection: [],
       filterStr: '',
-    };
+    }
   },
   mounted() {
-    this.initTableColumnConfig();
+    this.initTableColumnConfig()
   },
   methods: {
     onSelectionChange(selection) {
-      this.selection = selection;
+      this.selection = selection
     },
     onRemoveSelectedClick() {
       this.$store.commit('removeQueryResultEntities', {
         type: this.entityType,
         entities: this.selection,
-      });
+      })
     },
     rowClassName(row, index) {
-      return row.style ? `demo-table-${row.style}-${index % 2 ? 'odd' : 'even'}-row` : '';
+      return row.style ? `demo-table-${row.style}-${index % 2 ? 'odd' : 'even'}-row` : ''
     },
     initTableColumnConfig() {
-      this.tableColumns = contentConfig.build(
-        contentConfig.Type.VIEWER,
-        this.entityType,
-        this.queryConfig,
-      );
+      this.tableColumns = contentConfig.build(contentConfig.Type.VIEWER, this.entityType, this.queryConfig)
     },
   },
   computed: {
     loading() {
-      return this.$store.state.revision.loading;
+      return this.$store.state.revision.loading
     },
     entities() {
-      return this.$store.state.repoQueryResult[
-        entityTypeCollectionMap[this.entityType]
-      ].filter((e) => objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps }));
+      return this.$store.state.repoQueryResult[entityTypeCollectionMap[this.entityType]].filter((e) =>
+        objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps })
+      )
     },
     queryConfig() {
-      return this.$store.state.repoQueryConfig;
+      return this.$store.state.repoQueryConfig
     },
   },
   watch: {
     queryConfig: {
       handler() {
-        this.initTableColumnConfig();
+        this.initTableColumnConfig()
       },
       deep: true,
     },
   },
-};
+}
 </script>
 
 <style lang="scss">

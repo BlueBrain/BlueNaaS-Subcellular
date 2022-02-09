@@ -38,23 +38,23 @@ export default {
   data() {
     return {
       structure: { ...this.value },
-    };
+    }
   },
   methods: {
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {},
     onChange() {
       // TODO: add validation
-      this.structure.valid = true;
-      this.$emit('input', this.structure);
+      this.structure.valid = true
+      this.$emit('input', this.structure)
     },
   },
   watch: {
     value() {
-      this.structure = { ...this.value };
+      this.structure = { ...this.value }
     },
   },
-};
+}
 </script>

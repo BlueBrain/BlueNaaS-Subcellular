@@ -1,16 +1,16 @@
-const defaultConfig = {};
+const defaultConfig = {}
 
 const devConfig = {
   server: {
     host: 'localhost',
     port: 8888,
   },
-};
+}
 
-const prodConfig = {};
+const prodConfig = {}
 
-const prodMode = process.env.NODE_ENV === 'production';
+const prodMode = process.env.NODE_ENV === 'production'
 
-const config = { ...defaultConfig, ...(prodMode ? prodConfig : devConfig) };
+const config = { ...defaultConfig, ...(prodMode ? prodConfig : devConfig) }
 
-export default config;
+export default config

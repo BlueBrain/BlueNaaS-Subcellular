@@ -25,11 +25,7 @@
       </i-select>
     </div>
 
-    <Modal
-      title="Edit revision concentrations"
-      v-model="editModalVisible"
-      class-name="vertical-center-modal"
-    >
+    <Modal title="Edit revision concentrations" v-model="editModalVisible" class-name="vertical-center-modal">
       <div slot="footer">
         <i-button type="primary" @click="closeEditModal"> Ok </i-button>
       </div>
@@ -39,10 +35,7 @@
         <div class="mt-12" v-for="(source, sourceIndex) in sources" :key="source">
           <Row :gutter="12" class="line-border mb-6">
             <i-col span="22">
-              <inline-value-editor
-                v-model="sources[sourceIndex]"
-                @input="renameSource(sourceIndex, $event)"
-              />
+              <inline-value-editor v-model="sources[sourceIndex]" @input="renameSource(sourceIndex, $event)" />
             </i-col>
             <i-col span="2" class="text-right">
               <i-button
@@ -67,9 +60,7 @@
     >
       <div slot="footer">
         <i-button @click="closeImportModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!importBtnAvailable" @click="onImportBtnClick">
-          Import
-        </i-button>
+        <i-button type="primary" :disabled="!importBtnAvailable" @click="onImportBtnClick"> Import </i-button>
       </div>
       <concentration-import ref="concImport" v-model="importBtnAvailable" />
     </Modal>
@@ -77,9 +68,9 @@
 </template>
 
 <script>
-import findUniqName from '@/tools/find-uniq-name';
-import InlineValueEditor from '@/components/shared/inline-value-editor';
-import ConcentrationImport from './species-tools/concentration-import.vue';
+import findUniqName from '@/tools/find-uniq-name'
+import InlineValueEditor from '@/components/shared/inline-value-editor'
+import ConcentrationImport from './species-tools/concentration-import.vue'
 
 export default {
   name: 'species-tools',
@@ -90,34 +81,34 @@ export default {
       importBtnAvailable: false,
       visibleConcSources: [],
       sources: [],
-    };
+    }
   },
   components: {
     'inline-value-editor': InlineValueEditor,
     'concentration-import': ConcentrationImport,
   },
   mounted() {
-    this.init();
+    this.init()
   },
   methods: {
     initEditModal() {
-      this.init();
-      this.editModalVisible = true;
+      this.init()
+      this.editModalVisible = true
     },
     initImportModal() {
-      this.$refs.concImport.init();
-      this.importModalVisible = true;
+      this.$refs.concImport.init()
+      this.importModalVisible = true
     },
     init() {
-      this.sources = this.globalConcSources.slice();
+      this.sources = this.globalConcSources.slice()
       // by default show only first 5 concentrations
-      this.visibleConcSources = this.sources.slice(0, 5);
+      this.visibleConcSources = this.sources.slice(0, 5)
     },
     closeEditModal() {
-      this.editModalVisible = false;
+      this.editModalVisible = false
     },
     closeImportModal() {
-      this.importModalVisible = false;
+      this.importModalVisible = false
     },
     renameSource(sourceIndex, newSource) {
       setTimeout(
@@ -126,52 +117,52 @@ export default {
             sourceIndex,
             newSource,
           }),
-        40,
-      );
+        40
+      )
     },
     removeSource(sourceIndex) {
-      this.$store.dispatch('removeRevConcSource', sourceIndex);
+      this.$store.dispatch('removeRevConcSource', sourceIndex)
     },
     addSource() {
       const sourceNameCollection = this.globalConcSources.map((s) => ({
         name: s,
-      }));
-      const newSource = findUniqName(sourceNameCollection, 'newSource');
+      }))
+      const newSource = findUniqName(sourceNameCollection, 'newSource')
 
-      this.sources.push(newSource);
-      setTimeout(() => this.$store.dispatch('addRevConcSource', newSource), 40);
+      this.sources.push(newSource)
+      setTimeout(() => this.$store.dispatch('addRevConcSource', newSource), 40)
     },
     onVisibleConcSourcesChange(sources) {
-      setTimeout(() => this.$store.commit('setRevisionVisibleConcSources', sources), 40);
+      setTimeout(() => this.$store.commit('setRevisionVisibleConcSources', sources), 40)
     },
     onConcDropdownClick(name) {
       if (name === 'edit') {
-        this.initEditModal();
+        this.initEditModal()
       } else {
-        this.initImportModal();
+        this.initImportModal()
       }
     },
     onImportBtnClick() {
       // TODO: this logic should be placed in concentration-import component
-      this.$refs.concImport.doImport();
-      this.importModalVisible = false;
+      this.$refs.concImport.doImport()
+      this.importModalVisible = false
       this.$Notice.success({
         title: 'Import successfull',
         desc: 'Concentrations have been updated',
-      });
+      })
     },
   },
   computed: {
     globalConcSources() {
-      return this.$store.state.revision.config.concSources;
+      return this.$store.state.revision.config.concSources
     },
   },
   watch: {
     globalConcSources() {
-      this.init();
+      this.init()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

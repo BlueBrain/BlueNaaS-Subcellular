@@ -4,12 +4,7 @@
       <Row>
         <i-col span="12">
           <FormItem label="Name *">
-            <i-input
-              size="small"
-              ref="nameInput"
-              v-model="simulation.name"
-              @input="onSimulationChange"
-            />
+            <i-input size="small" ref="nameInput" v-model="simulation.name" @input="onSimulationChange" />
           </FormItem>
         </i-col>
         <i-col span="12">
@@ -44,23 +39,17 @@
 
     <i-form :label-width="100" @submit.native.prevent>
       <FormItem label="Annotation">
-        <i-input
-          size="small"
-          type="textarea"
-          autosize
-          v-model="simulation.annotation"
-          @input="onSimulationChange"
-        />
+        <i-input size="small" type="textarea" autosize v-model="simulation.annotation" @input="onSimulationChange" />
       </FormItem>
     </i-form>
   </div>
 </template>
 
 <script lang="ts">
-import { Solver } from '@/types'; //eslint-disable-line no-unused-vars
+import { Solver } from '@/types' //eslint-disable-line no-unused-vars
 
-import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue';
-import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue';
+import StepsConfForm from '@/components/shared/sim/steps-conf-form.vue'
+import NfsimConfForm from '@/components/shared/sim/nfsim-conf-form.vue'
 
 const solverLabel = {
   nfsim: 'NFsim',
@@ -68,7 +57,7 @@ const solverLabel = {
   tetopsplit: 'STEPS: Tetoptsplit',
   ode: 'BNG: ode',
   ssa: 'BNG: ssa',
-};
+}
 
 export default {
   name: 'simulation-form',
@@ -82,7 +71,7 @@ export default {
       solvers: ['tetexact', 'tetopsplit', 'nfsim', 'ode', 'ssa'],
       simulation: { ...this.value },
       solverLabel,
-    };
+    }
   },
   methods: {
     onSolverChange() {
@@ -100,38 +89,35 @@ export default {
           structures: [],
           observables: [],
         },
-      };
-      this.onSimulationChange();
+      }
+      this.onSimulationChange()
     },
     onSimulationChange() {
-      this.simulation.valid = this.isValid();
-      this.$emit('input', this.simulation);
+      this.simulation.valid = this.isValid()
+      this.$emit('input', this.simulation)
     },
     isValid() {
-      return (
-        this.simulation.name.trim() && this.simulation.solverConf.valid && this.simulation.solver
-      );
+      return this.simulation.name.trim() && this.simulation.solverConf.valid && this.simulation.solver
     },
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     getInvalidReason(solver: Solver) {
-      if (!this.solvers.includes(solver)) throw new Error(`Unrecognized solver ${solver}`);
-      if (solver === 'nfsim' && this.model.nonBnglStructures) return 'Non compliant BNG structs';
-      if ((solver === 'tetexact' || solver === 'tetopsplit') && !this.model.geometry)
-        return 'No geometry provided';
-      return '';
+      if (!this.solvers.includes(solver)) throw new Error(`Unrecognized solver ${solver}`)
+      if (solver === 'nfsim' && this.model.nonBnglStructures) return 'Non compliant BNG structs'
+      if ((solver === 'tetexact' || solver === 'tetopsplit') && !this.model.geometry) return 'No geometry provided'
+      return ''
     },
   },
   computed: {
     model() {
-      return this.$store.state.model;
+      return this.$store.state.model
     },
   },
   watch: {
     value() {
-      this.simulation = { ...this.value };
+      this.simulation = { ...this.value }
     },
   },
-};
+}
 </script>

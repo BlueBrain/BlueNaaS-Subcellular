@@ -71,12 +71,12 @@
                   </p>
                   <p>
                     geometry.json should contain: <br />
-                    * <strong>scale</strong>: mesh scale * <strong>meshNameRoot</strong>: name of
-                    TetGen files (without extension) <br />
-                    * <strong>structures</strong>: collection of objects with name, type
-                    ("compartment" or "membrane") and tetIdxs(comp)|triIdxs(memb) defined<br />
-                    * <strong>freeDiffusionBoundaries</strong>: collection of objects with name and
-                    triIdxs params defined
+                    * <strong>scale</strong>: mesh scale * <strong>meshNameRoot</strong>: name of TetGen files (without
+                    extension) <br />
+                    * <strong>structures</strong>: collection of objects with name, type ("compartment" or "membrane")
+                    and tetIdxs(comp)|triIdxs(memb) defined<br />
+                    * <strong>freeDiffusionBoundaries</strong>: collection of objects with name and triIdxs params
+                    defined
                   </p>
                 </div>
               </Poptip>
@@ -100,26 +100,26 @@
 </template>
 
 <script>
-import get from 'lodash/get';
-import Ajv from 'ajv';
+import get from 'lodash/get'
+import Ajv from 'ajv'
 
-import geometryMetaSchema from '@/schemas/geometry-meta.json';
+import geometryMetaSchema from '@/schemas/geometry-meta.json'
 
-import ModelGeometry from '@/services/model-geometry';
-import GeometryViewer from './geometry-viewer.vue';
+import ModelGeometry from '@/services/model-geometry'
+import GeometryViewer from './geometry-viewer.vue'
 
-const validateGeometryMeta = new Ajv().compile(geometryMetaSchema);
-const uploadComponentFormat = ['node', 'ele', 'face', 'json'];
+const validateGeometryMeta = new Ajv().compile(geometryMetaSchema)
+const uploadComponentFormat = ['node', 'ele', 'face', 'json']
 const meshTypeMap = {
   node: 'nodes',
   face: 'faces',
   ele: 'elements',
-};
+}
 
 const geomMetaStructProp = {
   compartment: 'tetIdxs',
   membrane: 'triIdxs',
-};
+}
 
 // TODO: refactor
 export default {
@@ -129,7 +129,7 @@ export default {
     'geometry-viewer': GeometryViewer,
   },
   data() {
-    const modelGeometry = new ModelGeometry();
+    const modelGeometry = new ModelGeometry()
 
     return {
       uploadComponentFormat,
@@ -137,153 +137,135 @@ export default {
       loading: false,
       tetGenFileNameBase: null,
       error: '',
-    };
+    }
   },
   methods: {
     beforeUpload(file) {
-      const reader = new FileReader();
-      reader.onload = (e) => this.onFileRead(file.name, e.target.result);
-      reader.readAsText(file);
-      this.error = '';
+      const reader = new FileReader()
+      reader.onload = (e) => this.onFileRead(file.name, e.target.result)
+      reader.readAsText(file)
+      this.error = ''
 
       // prevent default action to upload data to remote api
-      return false;
+      return false
     },
     reset() {
-      this.modelGeometry = new ModelGeometry();
-      this.loading = false;
+      this.modelGeometry = new ModelGeometry()
+      this.loading = false
     },
     onFileRead(fileName, fileContent) {
-      const [fileExtension] = fileName.split('.').slice(-1);
+      const [fileExtension] = fileName.split('.').slice(-1)
 
       if (fileExtension === 'json') {
-        this.processJson(fileName, fileContent);
-        return;
+        this.processJson(fileName, fileContent)
+        return
       }
 
-      this.processMeshFile(fileName, fileContent);
+      this.processMeshFile(fileName, fileContent)
     },
     processJson(name, content) {
-      let geometryMeta = null;
+      let geometryMeta = null
       try {
-        geometryMeta = JSON.parse(content);
+        geometryMeta = JSON.parse(content)
       } catch (error) {
-        this.error = `Can't parse ${name}, check if it's valid json file`;
+        this.error = `Can't parse ${name}, check if it's valid json file`
       }
 
-      if (!geometryMeta) return;
+      if (!geometryMeta) return
 
       // json schema validation
-      const schemaValid = validateGeometryMeta(geometryMeta);
+      const schemaValid = validateGeometryMeta(geometryMeta)
       if (!schemaValid) {
-        const [errObj] = validateGeometryMeta.errors;
-        this.error = `geometry.json error: ${errObj.dataPath} ${errObj.message}`;
-        return;
+        const [errObj] = validateGeometryMeta.errors
+        this.error = `geometry.json error: ${errObj.dataPath} ${errObj.message}`
+        return
       }
 
       // structure type and indexes property according to validation
       // TODO: move to json schema validation if possible
       const validateStructure = (st) => {
-        const valid =
-          (st.type === 'compartment' && st.tetIdxs.length) ||
-          (st.type === 'membrane' && st.triIdxs.length);
+        const valid = (st.type === 'compartment' && st.tetIdxs.length) || (st.type === 'membrane' && st.triIdxs.length)
 
         if (!valid) {
-          this.error = `geometry.json error: ${st.name} should contain ${
-            geomMetaStructProp[st.type]
-          } property`;
+          this.error = `geometry.json error: ${st.name} should contain ${geomMetaStructProp[st.type]} property`
         }
 
-        return valid;
-      };
-      if (!geometryMeta.structures.some((st) => validateStructure(st))) return;
+        return valid
+      }
+      if (!geometryMeta.structures.some((st) => validateStructure(st))) return
 
       // TODO: DRY
       if (this.tetGenFileNameBase && this.tetGenFileNameBase !== geometryMeta.meshNameRoot) {
-        this.error = this.getMeshNameMismatchErrorStr(
-          geometryMeta.meshNameRoot,
-          this.tetGenFileNameBase,
-        );
-        return;
+        this.error = this.getMeshNameMismatchErrorStr(geometryMeta.meshNameRoot, this.tetGenFileNameBase)
+        return
       }
 
       if (!this.tetGenFileNameBase) {
-        this.tetGenFileNameBase = get(this.modelGeometry, 'meta.meshNameRoot');
+        this.tetGenFileNameBase = get(this.modelGeometry, 'meta.meshNameRoot')
       }
 
-      this.modelGeometry.addMeta(geometryMeta);
+      this.modelGeometry.addMeta(geometryMeta)
 
       if (this.modelGeometry.hasCompleteRawMesh) {
-        this.initModelGeometry();
+        this.initModelGeometry()
       }
     },
     processMeshFile(name, content) {
-      const [fileExtension] = name.split('.').slice(-1);
+      const [fileExtension] = name.split('.').slice(-1)
 
-      const fileNameBase = name.split('.').slice(0, -1).join('.');
+      const fileNameBase = name.split('.').slice(0, -1).join('.')
       if (this.tetGenFileNameBase && this.tetGenFileNameBase !== fileNameBase) {
-        this.error = this.getMeshNameMismatchErrorStr(
-          this.geometry.meshNameRoot,
-          this.tetGenFileNameBase,
-        );
-        return;
+        this.error = this.getMeshNameMismatchErrorStr(this.geometry.meshNameRoot, this.tetGenFileNameBase)
+        return
       }
 
       if (!this.tetGenFileNameBase) {
-        this.tetGenFileNameBase = fileNameBase;
+        this.tetGenFileNameBase = fileNameBase
       }
 
-      this.modelGeometry.mesh.volume.raw[meshTypeMap[fileExtension]] = content;
+      this.modelGeometry.mesh.volume.raw[meshTypeMap[fileExtension]] = content
 
       if (this.modelGeometry.hasCompleteRawMesh) {
-        this.initModelGeometry();
+        this.initModelGeometry()
       }
     },
     async initModelGeometry() {
-      this.loading = true;
-      await this.modelGeometry.init({ removeRawMesh: false });
-      this.loading = false;
+      this.loading = true
+      await this.modelGeometry.init({ removeRawMesh: false })
+      this.loading = false
     },
     getMeshNameMismatchErrorStr(meshNameRoot, tetgenMeshName) {
       return (
-        `meshNameRoot property of JSON file: ${meshNameRoot}, ` +
-        `doesn't match mesh file names: ${tetgenMeshName}`
-      );
+        `meshNameRoot property of JSON file: ${meshNameRoot}, ` + `doesn't match mesh file names: ${tetgenMeshName}`
+      )
     },
     removeFile(type) {
-      const rawMesh = this.modelGeometry.mesh.volume.raw;
-      rawMesh[type] = null;
+      const rawMesh = this.modelGeometry.mesh.volume.raw
+      rawMesh[type] = null
 
-      this.modelGeometry.initialized = false;
+      this.modelGeometry.initialized = false
 
-      if (
-        !Object.values(rawMesh).reduce((acc, c) => acc && c, true) &&
-        !this.modelGeometry.meshNameRoot
-      ) {
-        this.tetGenFileNameBase = null;
+      if (!Object.values(rawMesh).reduce((acc, c) => acc && c, true) && !this.modelGeometry.meshNameRoot) {
+        this.tetGenFileNameBase = null
       }
 
-      this.onChange();
+      this.onChange()
     },
     removeGeometry() {
-      this.modelGeometry.meta = null;
-      this.modelGeometry.initialized = false;
-      this.onChange();
+      this.modelGeometry.meta = null
+      this.modelGeometry.initialized = false
+      this.onChange()
     },
     onChange() {
-      this.$emit('input', this.modelGeometry);
+      this.$emit('input', this.modelGeometry)
     },
   },
   computed: {
     geometryValid() {
-      return !!(
-        this.modelGeometry.hasCompleteRawMesh &&
-        this.modelGeometry.meta &&
-        this.modelGeometry.name
-      );
+      return !!(this.modelGeometry.hasCompleteRawMesh && this.modelGeometry.meta && this.modelGeometry.name)
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

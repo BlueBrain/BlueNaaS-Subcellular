@@ -19,12 +19,7 @@
       <Row>
         <i-col span="12">
           <i-button type="primary" @click="addObservable"> New Observable </i-button>
-          <i-button
-            class="ml-24"
-            type="warning"
-            :disabled="removeBtnDisabled"
-            @click="removeObservable"
-          >
+          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeObservable">
             Delete
           </i-button>
         </i-col>
@@ -34,12 +29,7 @@
       </Row>
     </div>
 
-    <Modal
-      v-model="newObservableModalVisible"
-      title="New Reaction"
-      class-name="vertical-center-modal"
-      @on-ok="onOk"
-    >
+    <Modal v-model="newObservableModalVisible" title="New Reaction" class-name="vertical-center-modal" @on-ok="onOk">
       <observable-form ref="observableForm" v-model="newObservable" />
       <div slot="footer">
         <i-button class="mr-6" type="text" @click="hideNewObservableModal"> Cancel </i-button>
@@ -50,26 +40,26 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import get from 'lodash/get';
+import { mapState } from 'vuex'
+import get from 'lodash/get'
 
-import bus from '@/services/event-bus';
+import bus from '@/services/event-bus'
 
-import BnglText from '@/components/shared/bngl-text.vue';
-import ObservableForm from '@/components/shared/entities/observable-form.vue';
+import BnglText from '@/components/shared/bngl-text.vue'
+import ObservableForm from '@/components/shared/entities/observable-form.vue'
 
-import findUniqName from '@/tools/find-uniq-name';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import blockHeightWoPadding from '@/tools/block-height-wo-padding';
+import findUniqName from '@/tools/find-uniq-name'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultObservable = {
   name: '',
   valid: false,
   definition: '',
   annotation: '',
-};
+}
 
-const searchProps = ['name', 'definition'];
+const searchProps = ['name', 'definition']
 
 export default {
   name: 'observables-component',
@@ -103,67 +93,63 @@ export default {
           render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
         },
       ],
-    };
+    }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
-    bus.$on('layoutChange', () => this.computeTableHeight());
+    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
-    bus.$off('layoutChange');
+    bus.$off('layoutChange')
   },
   methods: {
     addObservable() {
       this.newObservable = {
         ...defaultObservable,
         name: findUniqName(this.observables, 'o'),
-      };
-      this.showNewObservableModal();
+      }
+      this.showNewObservableModal()
 
       this.$nextTick(() => {
-        this.$refs.observableForm.refresh();
-        this.$refs.observableForm.focus();
-      });
+        this.$refs.observableForm.refresh()
+        this.$refs.observableForm.focus()
+      })
     },
     showNewObservableModal() {
-      this.newObservableModalVisible = true;
+      this.newObservableModalVisible = true
     },
     hideNewObservableModal() {
-      this.newObservableModalVisible = false;
+      this.newObservableModalVisible = false
     },
     removeObservable() {
-      this.$store.commit('removeSelectedEntity');
+      this.$store.commit('removeSelectedEntity')
     },
     onObservableSelect(observable, index) {
       this.$store.commit('setEntitySelection', {
         index,
         type: 'observable',
         entity: observable,
-      });
+      })
     },
     onOk() {
-      this.hideNewObservableModal();
-      this.$store.commit('addObservable', this.newObservable);
+      this.hideNewObservableModal()
+      this.$store.commit('addObservable', this.newObservable)
     },
     computeTableHeight() {
-      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
+      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
     observables(state) {
-      return state.model.observables;
+      return state.model.observables
     },
     filteredEntities() {
-      return this.observables.filter((e) =>
-        objStrSearchFilter(this.searchStr, e, { include: searchProps }),
-      );
+      return this.observables.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
-      return this.searchStr
-        ? 'No matching observables'
-        : 'Create a observable by using buttons below';
+      return this.searchStr ? 'No matching observables' : 'Create a observable by using buttons below'
     },
     removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'observable',
   }),
-};
+}
 </script>

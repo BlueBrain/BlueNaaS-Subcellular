@@ -81,23 +81,23 @@ export default {
   name: 'model-menu',
   methods: {
     onEntityTypeSelect(entityType) {
-      this.$store.commit('resetEntitySelection');
-      let path = `/model/${entityType}`;
-      if (entityType === 'viz') path = '/viz';
+      this.$store.commit('resetEntitySelection')
+      let path = `/model/${entityType}`
+      if (entityType === 'viz') path = '/viz'
       if (path !== this.$router.currentRoute.path) {
-        this.$router.push({ path });
+        this.$router.push({ path })
       }
     },
   },
   computed: {
     model() {
-      return this.$store.state.model;
+      return this.$store.state.model
     },
     currentEntityType() {
-      return this.$route.path.split('/')[2];
+      return this.$route.path.split('/')[2]
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

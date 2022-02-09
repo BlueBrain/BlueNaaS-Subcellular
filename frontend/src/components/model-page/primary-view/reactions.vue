@@ -19,12 +19,7 @@
       <Row>
         <i-col span="12">
           <i-button type="primary" @click="addReaction"> New Reaction </i-button>
-          <i-button
-            class="ml-24"
-            type="warning"
-            :disabled="removeBtnDisabled"
-            @click="removeReaction"
-          >
+          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeReaction">
             Delete
           </i-button>
         </i-col>
@@ -34,12 +29,7 @@
       </Row>
     </div>
 
-    <Modal
-      v-model="newReactionModalVisible"
-      title="New Reaction"
-      class-name="vertical-center-modal"
-      @on-ok="onOk"
-    >
+    <Modal v-model="newReactionModalVisible" title="New Reaction" class-name="vertical-center-modal" @on-ok="onOk">
       <reaction-form ref="reactionForm" v-model="newReaction" />
       <div slot="footer">
         <i-button class="mr-6" type="text" @click="hideNewReactionModal"> Cancel </i-button>
@@ -50,17 +40,17 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import get from 'lodash/get';
+import { mapState } from 'vuex'
+import get from 'lodash/get'
 
-import bus from '@/services/event-bus';
+import bus from '@/services/event-bus'
 
-import BnglText from '@/components/shared/bngl-text.vue';
-import ReactionForm from '@/components/shared/entities/reaction-form.vue';
+import BnglText from '@/components/shared/bngl-text.vue'
+import ReactionForm from '@/components/shared/entities/reaction-form.vue'
 
-import findUniqName from '@/tools/find-uniq-name';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import blockHeightWoPadding from '@/tools/block-height-wo-padding';
+import findUniqName from '@/tools/find-uniq-name'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultReaction = {
   name: '',
@@ -69,9 +59,9 @@ const defaultReaction = {
   kf: '',
   kr: '',
   annotation: '',
-};
+}
 
-const searchProps = ['name', 'definition'];
+const searchProps = ['name', 'definition']
 
 export default {
   name: 'reactions-component',
@@ -126,33 +116,33 @@ export default {
             }),
         },
       ],
-    };
+    }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
-    bus.$on('layoutChange', () => this.computeTableHeight());
+    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
-    bus.$off('layoutChange');
+    bus.$off('layoutChange')
   },
   methods: {
     addReaction() {
       this.newReaction = {
         ...defaultReaction,
         name: findUniqName(this.reactions, 'r'),
-      };
-      this.showNewReactionModal();
+      }
+      this.showNewReactionModal()
 
       this.$nextTick(() => {
-        this.$refs.reactionForm.refresh();
-        this.$refs.reactionForm.focus();
-      });
+        this.$refs.reactionForm.refresh()
+        this.$refs.reactionForm.focus()
+      })
     },
     showNewReactionModal() {
-      this.newReactionModalVisible = true;
+      this.newReactionModalVisible = true
     },
     hideNewReactionModal() {
-      this.newReactionModalVisible = false;
+      this.newReactionModalVisible = false
     },
     onChange(index) {
       return (definition) => {
@@ -161,42 +151,40 @@ export default {
           entityIndex: index,
           keyName: 'definition',
           value: definition,
-        });
-      };
+        })
+      }
     },
     removeReaction() {
-      this.$store.commit('removeSelectedEntity');
+      this.$store.commit('removeSelectedEntity')
     },
     onReactionSelect(reaction, index) {
       this.$store.commit('setEntitySelection', {
         index,
         type: 'reaction',
         entity: reaction,
-      });
+      })
     },
     onOk() {
-      this.hideNewReactionModal();
-      this.$store.commit('addReaction', this.newReaction);
+      this.hideNewReactionModal()
+      this.$store.commit('addReaction', this.newReaction)
     },
     computeTableHeight() {
-      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
+      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
     reactions(state) {
-      return state.model.reactions;
+      return state.model.reactions
     },
     filteredReactions() {
-      return this.reactions.filter((e) =>
-        objStrSearchFilter(this.searchStr, e, { include: searchProps }),
-      );
+      return this.reactions.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
-      return this.searchStr ? 'No matching reactions' : 'Create a reaction by using buttons below';
+      return this.searchStr ? 'No matching reactions' : 'Create a reaction by using buttons below'
     },
     removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'reaction',
   }),
-};
+}
 </script>
 
 <style lang="scss">

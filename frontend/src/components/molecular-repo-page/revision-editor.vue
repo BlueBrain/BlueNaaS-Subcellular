@@ -46,12 +46,12 @@
 </template>
 
 <script>
-import socket from '@/services/websocket';
+import socket from '@/services/websocket'
 
-import FileImportButton from './revision-editor/file-import-button.vue';
-import RevisionImport from './revision-editor/revision-import.vue';
-import RevisionContent from './revision-editor/revision-content.vue';
-import ErrorManagement from './revision-editor/error-management.vue';
+import FileImportButton from './revision-editor/file-import-button.vue'
+import RevisionImport from './revision-editor/revision-import.vue'
+import RevisionContent from './revision-editor/revision-content.vue'
+import ErrorManagement from './revision-editor/error-management.vue'
 
 export default {
   name: 'revision-editor',
@@ -65,62 +65,62 @@ export default {
     return {
       userBranches: [],
       saving: false,
-    };
+    }
   },
   mounted() {
-    this.loadUserBranches();
+    this.loadUserBranches()
   },
   methods: {
     onBranchInputFocus() {
-      this.loadUserBranches();
+      this.loadUserBranches()
     },
     async loadUserBranches() {
-      const userBranchesRes = await socket.request('get_user_branches');
-      this.userBranches = userBranchesRes.userBranches;
+      const userBranchesRes = await socket.request('get_user_branches')
+      this.userBranches = userBranchesRes.userBranches
     },
     userBranchesFilter(searchStr, branch) {
-      return branch.toUpperCase().indexOf(searchStr.toUpperCase()) !== -1;
+      return branch.toUpperCase().indexOf(searchStr.toUpperCase()) !== -1
     },
     validateBranch() {
       // TODO: validate if branch does not exist
     },
     async saveRevision() {
-      this.saving = true;
-      const meta = await this.$store.dispatch('saveRevision');
+      this.saving = true
+      const meta = await this.$store.dispatch('saveRevision')
       setTimeout(() => {
-        this.saving = false;
-      }, 900);
+        this.saving = false
+      }, 900)
       this.$Notice.success({
         title: `Revision ${meta.branch}:${meta.rev} has been saved`,
-      });
+      })
     },
     clearRevisionEditor() {
-      this.$store.commit('clearRevisionEditor');
+      this.$store.commit('clearRevisionEditor')
     },
     async onSaveClick() {
       if (!this.userBranches.includes(this.branch)) {
         this.$Modal.confirm({
           title: `Create new branch ${this.branch}?`,
           onOk: () => this.saveRevision(),
-        });
-        return;
+        })
+        return
       }
 
-      this.saveRevision();
+      this.saveRevision()
     },
   },
   computed: {
     branch: {
       get() {
-        return this.$store.state.revision.branch;
+        return this.$store.state.revision.branch
       },
       set(branch) {
-        this.$store.commit('setRevisionBranch', branch);
+        this.$store.commit('setRevisionBranch', branch)
       },
     },
     revisionValid() {
-      return this.$store.state.revision.valid;
+      return this.$store.state.revision.valid
     },
   },
-};
+}
 </script>

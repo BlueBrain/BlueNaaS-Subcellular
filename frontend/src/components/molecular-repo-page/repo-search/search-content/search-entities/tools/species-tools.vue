@@ -21,32 +21,32 @@ export default {
     return {
       visibleConcSources: [],
       sources: [],
-    };
+    }
   },
   mounted() {
-    this.init();
+    this.init()
   },
   methods: {
     init() {
-      this.sources = this.globalConcSources.slice();
+      this.sources = this.globalConcSources.slice()
       // by default show only first 5 concentrations
-      this.visibleConcSources = this.sources.slice(0, 5);
+      this.visibleConcSources = this.sources.slice(0, 5)
     },
     onVisibleConcSourcesChange(sources) {
-      setTimeout(() => this.$store.commit('setRevisionQueryVisibleConcSources', sources), 40);
+      setTimeout(() => this.$store.commit('setRevisionQueryVisibleConcSources', sources), 40)
     },
   },
   computed: {
     globalConcSources() {
-      return this.$store.state.repoQueryConfig.concSources;
+      return this.$store.state.repoQueryConfig.concSources
     },
   },
   watch: {
     globalConcSources() {
-      this.init();
+      this.init()
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

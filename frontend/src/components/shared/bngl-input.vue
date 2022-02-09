@@ -1,22 +1,16 @@
 <template>
-  <codemirror
-    ref="bnglCm"
-    :class="{ editable: !readOnly }"
-    :value="value"
-    :options="cmOptions"
-    @input="onCodeChange"
-  />
+  <codemirror ref="bnglCm" :class="{ editable: !readOnly }" :value="value" :options="cmOptions" @input="onCodeChange" />
 </template>
 
 <script>
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/addon//lint/lint.css';
+import 'codemirror/lib/codemirror.css'
+import 'codemirror/addon//lint/lint.css'
 
-import CodeMirror from 'codemirror';
-import 'codemirror/addon/mode/simple';
-import 'codemirror/addon/lint/lint';
-import 'codemirror/addon/display/autorefresh';
-import { codemirror } from 'vue-codemirror';
+import CodeMirror from 'codemirror'
+import 'codemirror/addon/mode/simple'
+import 'codemirror/addon/lint/lint'
+import 'codemirror/addon/display/autorefresh'
+import { codemirror } from 'vue-codemirror'
 
 const bnglDefinitionModeConfig = {
   start: [
@@ -49,7 +43,7 @@ const bnglDefinitionModeConfig = {
       token: [null, 'number'],
     },
   ],
-};
+}
 
 const bnglParameterModeConfig = {
   start: [
@@ -66,16 +60,16 @@ const bnglParameterModeConfig = {
       token: 'qualifier',
     },
   ],
-};
+}
 
-CodeMirror.defineSimpleMode('bngl-function', bnglParameterModeConfig);
-CodeMirror.defineSimpleMode('bngl-parameter', bnglParameterModeConfig);
+CodeMirror.defineSimpleMode('bngl-function', bnglParameterModeConfig)
+CodeMirror.defineSimpleMode('bngl-parameter', bnglParameterModeConfig)
 
-CodeMirror.defineSimpleMode('bngl-molecule', bnglDefinitionModeConfig);
-CodeMirror.defineSimpleMode('bngl-species', bnglDefinitionModeConfig);
-CodeMirror.defineSimpleMode('bngl-observable', bnglDefinitionModeConfig);
-CodeMirror.defineSimpleMode('bngl-reaction', bnglDefinitionModeConfig);
-CodeMirror.defineSimpleMode('bngl-diffusion', bnglDefinitionModeConfig);
+CodeMirror.defineSimpleMode('bngl-molecule', bnglDefinitionModeConfig)
+CodeMirror.defineSimpleMode('bngl-species', bnglDefinitionModeConfig)
+CodeMirror.defineSimpleMode('bngl-observable', bnglDefinitionModeConfig)
+CodeMirror.defineSimpleMode('bngl-reaction', bnglDefinitionModeConfig)
+CodeMirror.defineSimpleMode('bngl-diffusion', bnglDefinitionModeConfig)
 
 export default {
   name: 'bngl-input',
@@ -84,11 +78,11 @@ export default {
     codemirror,
   },
   mounted() {
-    const cm = this.$refs.bnglCm.codemirror;
+    const cm = this.$refs.bnglCm.codemirror
     cm.setOption('extraKeys', {
       Tab: () => this.$emit('tab'),
       Enter: () => this.$emit('enter'),
-    });
+    })
   },
   data() {
     return {
@@ -99,20 +93,20 @@ export default {
         readOnly: this.readOnly,
         lint: false,
       },
-    };
+    }
   },
   methods: {
     onCodeChange(code) {
-      this.$emit('input', code);
+      this.$emit('input', code)
     },
     refresh() {
-      this.$refs.bnglCm.codemirror.refresh();
+      this.$refs.bnglCm.codemirror.refresh()
     },
     focus() {
-      this.$refs.bnglCm.codemirror.focus();
+      this.$refs.bnglCm.codemirror.focus()
     },
   },
-};
+}
 </script>
 
 <style lang="scss">

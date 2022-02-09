@@ -22,9 +22,7 @@
     <Row :gutter="12" type="flex">
       <i-col :xs="{ span: 24, order: 2 }" :xl="{ span: 16, order: 1 }">
         <i-button class="mt-12" type="primary" @click="onAddNewClick"> Add new </i-button>
-        <i-button class="ml-12 mt-12 mr-24" type="warning" @click="onRemoveSelectedClick">
-          Remove selected
-        </i-button>
+        <i-button class="ml-12 mt-12 mr-24" type="warning" @click="onRemoveSelectedClick"> Remove selected </i-button>
         <component class="inline-block" :is="toolByEntityType[entityType]" />
       </i-col>
       <i-col class="mt-12" :xs="{ span: 24, order: 1 }" :xl="{ span: 8, order: 2 }">
@@ -32,50 +30,40 @@
       </i-col>
     </Row>
 
-    <Modal
-      :title="modalTitle"
-      v-model="editFormVisible"
-      class-name="vertical-center-modal"
-      width="720"
-    >
+    <Modal :title="modalTitle" v-model="editFormVisible" class-name="vertical-center-modal" width="720">
       <div slot="footer">
         <i-button @click="editFormVisible = false"> Cancel </i-button>
 
         <i-button type="primary" :disabled="!tmpEntity.valid" @click="onEditFinish"> Ok </i-button>
       </div>
       <div>
-        <component
-          ref="form"
-          :is="formByEntityType[entityType]"
-          :entity-type="entityType"
-          v-model="tmpEntity"
-        />
+        <component ref="form" :is="formByEntityType[entityType]" :entity-type="entityType" v-model="tmpEntity" />
       </div>
     </Modal>
   </div>
 </template>
 
 <script>
-import capitalize from 'lodash/capitalize';
+import capitalize from 'lodash/capitalize'
 
-import constants from '@/constants';
-import Entity from '@/services/entity';
-import objStrSearchFilter from '@/tools/obj-str-search-filter';
-import EntityStatus from '@/components/shared/entity-status';
-import contentConfig from './content-config';
+import constants from '@/constants'
+import Entity from '@/services/entity'
+import objStrSearchFilter from '@/tools/obj-str-search-filter'
+import EntityStatus from '@/components/shared/entity-status'
+import contentConfig from './content-config'
 
-import StructureForm from './forms/structure-form.vue';
-import MoleculeForm from './forms/molecule-form.vue';
-import SpeciesForm from './forms/species-form.vue';
-import ReactionForm from './forms/reaction-form.vue';
-import DiffusionForm from './forms/diffusion-form.vue';
-import ObservableForm from './forms/observable-form.vue';
-import ParameterForm from './forms/parameter-form.vue';
-import FunctionForm from './forms/function-form.vue';
+import StructureForm from './forms/structure-form.vue'
+import MoleculeForm from './forms/molecule-form.vue'
+import SpeciesForm from './forms/species-form.vue'
+import ReactionForm from './forms/reaction-form.vue'
+import DiffusionForm from './forms/diffusion-form.vue'
+import ObservableForm from './forms/observable-form.vue'
+import ParameterForm from './forms/parameter-form.vue'
+import FunctionForm from './forms/function-form.vue'
 
-import SpeciesTools from './forms/tools/species-tools.vue';
+import SpeciesTools from './forms/tools/species-tools.vue'
 
-const { entityTypeCollectionMap, formMode } = constants;
+const { entityTypeCollectionMap, formMode } = constants
 
 const formByEntityType = {
   structure: StructureForm,
@@ -86,13 +74,13 @@ const formByEntityType = {
   observable: ObservableForm,
   parameter: ParameterForm,
   function: FunctionForm,
-};
+}
 
 const toolByEntityType = {
   species: SpeciesTools,
-};
+}
 
-const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId'];
+const searchExcludedProps = ['entityId', 'id', '_id', 'entityType', 'userId']
 
 export default {
   name: 'revision-entities',
@@ -110,80 +98,76 @@ export default {
       tmpEntity: {},
       filterStr: '',
       currentFormMode: '',
-    };
+    }
   },
   mounted() {
-    this.initTableColumnConfig();
+    this.initTableColumnConfig()
   },
   methods: {
     onAddNewClick() {
-      const className = `Revision${capitalize(this.entityType)}`;
-      this.tmpEntity = new Entity[className](this.revisionConfig);
-      this.currentFormMode = formMode.CREATE_NEW;
-      this.showEditForm();
+      const className = `Revision${capitalize(this.entityType)}`
+      this.tmpEntity = new Entity[className](this.revisionConfig)
+      this.currentFormMode = formMode.CREATE_NEW
+      this.showEditForm()
     },
     initEntityEdit(entity) {
-      this.tmpEntity = { ...entity };
-      this.currentFormMode = formMode.EDIT;
-      this.showEditForm();
+      this.tmpEntity = { ...entity }
+      this.currentFormMode = formMode.EDIT
+      this.showEditForm()
     },
     showEditForm() {
-      this.editFormVisible = true;
+      this.editFormVisible = true
       this.$nextTick(() => {
-        this.$refs.form.refresh();
-        this.$refs.form.focus();
-      });
+        this.$refs.form.refresh()
+        this.$refs.form.focus()
+      })
     },
     hideEditForm() {
-      this.editFormVisible = false;
+      this.editFormVisible = false
     },
     onEditFinish() {
       this.$store.dispatch('updateRevisionEntity', {
         type: this.entityType,
         entity: this.tmpEntity,
-      });
-      this.hideEditForm();
+      })
+      this.hideEditForm()
     },
     onSelectionChange(selection) {
-      this.selection = selection;
+      this.selection = selection
     },
     onRemoveSelectedClick() {
       this.$store.dispatch('removeRevisionEntities', {
         type: this.entityType,
         entities: this.selection,
-      });
+      })
     },
     initTableColumnConfig() {
-      this.tableColumns = contentConfig.build(
-        contentConfig.Type.EDITOR,
-        this.entityType,
-        this.revisionConfig,
-      );
+      this.tableColumns = contentConfig.build(contentConfig.Type.EDITOR, this.entityType, this.revisionConfig)
     },
   },
   computed: {
     loading() {
-      return this.$store.state.revision.loading;
+      return this.$store.state.revision.loading
     },
     entities() {
       return this.$store.state.revision[entityTypeCollectionMap[this.entityType]].filter((e) =>
-        objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps }),
-      );
+        objStrSearchFilter(this.filterStr, e, { exclude: searchExcludedProps })
+      )
     },
     modalTitle() {
-      return this.currentFormMode === formMode.CREATE_NEW ? 'Create new' : 'Edit';
+      return this.currentFormMode === formMode.CREATE_NEW ? 'Create new' : 'Edit'
     },
     revisionConfig() {
-      return this.$store.state.revision.config;
+      return this.$store.state.revision.config
     },
   },
   watch: {
     revisionConfig: {
       handler() {
-        this.initTableColumnConfig();
+        this.initTableColumnConfig()
       },
       deep: true,
     },
   },
-};
+}
 </script>

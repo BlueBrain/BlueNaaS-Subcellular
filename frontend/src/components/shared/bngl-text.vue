@@ -3,9 +3,9 @@
 </template>
 
 <script>
-import intersection from 'lodash/intersection';
-import set from 'lodash/set';
-import range from '@/tools/range';
+import intersection from 'lodash/intersection'
+import set from 'lodash/set'
+import range from '@/tools/range'
 
 const bnglDefinitionModeConfig = {
   start: [
@@ -34,7 +34,7 @@ const bnglDefinitionModeConfig = {
       token: ['atom', null],
     },
   ],
-};
+}
 
 // TODO: make config consistent with BnglInput
 const bnglParameterModeConfig = {
@@ -52,7 +52,7 @@ const bnglParameterModeConfig = {
       token: 'qualifier',
     },
   ],
-};
+}
 
 const typeConfig = {
   function: bnglParameterModeConfig,
@@ -63,7 +63,7 @@ const typeConfig = {
   observable: bnglDefinitionModeConfig,
   reaction: bnglDefinitionModeConfig,
   diffusion: bnglDefinitionModeConfig,
-};
+}
 
 export default {
   name: 'bngl-text',
@@ -71,100 +71,98 @@ export default {
   data() {
     return {
       html: this.getHtml(),
-    };
+    }
   },
   methods: {
     processTokenMatch(reMatch, tokenType, reGroupIdx, posOffset) {
-      const matchIdx = reMatch.index;
-      const tokenLength = reMatch[reGroupIdx].length;
+      const matchIdx = reMatch.index
+      const tokenLength = reMatch[reGroupIdx].length
 
-      const pos = posOffset + matchIdx;
+      const pos = posOffset + matchIdx
 
-      const currentRange = range(pos, pos + tokenLength);
+      const currentRange = range(pos, pos + tokenLength)
 
-      const overlay = this.tokenRanges.some(
-        (tokenRange) => intersection(tokenRange, currentRange).length,
-      );
+      const overlay = this.tokenRanges.some((tokenRange) => intersection(tokenRange, currentRange).length)
 
       if (!overlay) {
-        set(this.elemPosMap, `${pos}.open`, tokenType);
-        set(this.elemPosMap, `${pos + tokenLength}.close`, true);
-        this.tokenRanges.push(currentRange);
+        set(this.elemPosMap, `${pos}.open`, tokenType)
+        set(this.elemPosMap, `${pos + tokenLength}.close`, true)
+        this.tokenRanges.push(currentRange)
       }
     },
     buildHtmlFromElemPosMap() {
-      let html = '';
-      let currentIdx = 0;
+      let html = ''
+      let currentIdx = 0
 
       const idxs = Object.keys(this.elemPosMap)
         .map((idxStr) => parseInt(idxStr, 10))
-        .sort((a, b) => a - b);
+        .sort((a, b) => a - b)
 
       idxs.forEach((idx) => {
         if (currentIdx < idx) {
-          html += this.value.slice(currentIdx, idx);
-          currentIdx = idx;
+          html += this.value.slice(currentIdx, idx)
+          currentIdx = idx
         }
 
-        const elementOp = this.elemPosMap[idx];
+        const elementOp = this.elemPosMap[idx]
         if (elementOp.close) {
-          html += '</span>';
+          html += '</span>'
         }
 
         if (elementOp.open) {
-          html += `<span class="bt-${elementOp.open}">`;
+          html += `<span class="bt-${elementOp.open}">`
         }
-      });
+      })
 
       if (currentIdx < this.value.length) {
-        html += this.value.slice(currentIdx);
+        html += this.value.slice(currentIdx)
       }
 
-      return html;
+      return html
     },
     getHtml() {
-      if (!this.value) return '';
+      if (!this.value) return ''
 
-      if (typeof this.value !== 'string') throw new Error('Value of String type expected');
+      if (typeof this.value !== 'string') throw new Error('Value of String type expected')
 
-      this.elemPosMap = {};
-      this.tokenRanges = [];
+      this.elemPosMap = {}
+      this.tokenRanges = []
 
-      let reMatch;
+      let reMatch
 
-      const sumStrLengthReducer = (offset, str) => offset + str.length;
+      const sumStrLengthReducer = (offset, str) => offset + str.length
       const processRuleToken = (tokenType, tokenIdx) => {
-        if (!tokenType) return;
+        if (!tokenType) return
 
-        const offset = reMatch.slice(1, tokenIdx + 1).reduce(sumStrLengthReducer, 0);
+        const offset = reMatch.slice(1, tokenIdx + 1).reduce(sumStrLengthReducer, 0)
 
-        this.processTokenMatch(reMatch, tokenType, tokenIdx + 1, offset);
-      };
+        this.processTokenMatch(reMatch, tokenType, tokenIdx + 1, offset)
+      }
 
       typeConfig[this.entityType].start.forEach((rule) => {
-        const r = new RegExp(rule.regex, 'gi');
-        reMatch = r.exec(this.value);
+        const r = new RegExp(rule.regex, 'gi')
+        reMatch = r.exec(this.value)
 
         while (reMatch) {
           if (typeof rule.token === 'string') {
-            this.processTokenMatch(reMatch, rule.token, 0, 0);
+            this.processTokenMatch(reMatch, rule.token, 0, 0)
           } else {
-            rule.token.forEach(processRuleToken);
+            rule.token.forEach(processRuleToken)
           }
 
-          reMatch = r.exec(this.value);
+          reMatch = r.exec(this.value)
         }
-      });
+      })
 
-      return this.buildHtmlFromElemPosMap();
+      return this.buildHtmlFromElemPosMap()
     },
   },
   watch: {
     value() {
-      this.html = this.getHtml();
+      this.html = this.getHtml()
     },
   },
-};
+}
 </script>
 
 <style lang="scss">

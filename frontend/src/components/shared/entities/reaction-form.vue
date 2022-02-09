@@ -32,18 +32,13 @@
       />
     </FormItem>
     <FormItem label="Annotation">
-      <i-input
-        ref="annotationInput"
-        type="textarea"
-        v-model="reaction.annotation"
-        @input="onReactionChange"
-      />
+      <i-input ref="annotationInput" type="textarea" v-model="reaction.annotation" @input="onReactionChange" />
     </FormItem>
   </i-form>
 </template>
 
 <script>
-import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
   name: 'reaction-form',
@@ -54,40 +49,40 @@ export default {
   data() {
     return {
       reaction: { ...this.value },
-    };
+    }
   },
   methods: {
     onReactionChange() {
-      this.reaction.valid = this.isValid();
-      this.$emit('input', this.reaction);
+      this.reaction.valid = this.isValid()
+      this.$emit('input', this.reaction)
     },
     isValid() {
       // TODO: add reaction validation
       // TODO: add kr validation if reaction is bidirectional
-      return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf;
+      return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf
     },
     onDefinitionInputTab() {
-      this.$refs.kfInput.focus();
+      this.$refs.kfInput.focus()
     },
     onKfInputTab() {
-      this.$refs.krInput.focus();
+      this.$refs.krInput.focus()
     },
     onKrInputTab() {
-      this.$refs.annotationInput.focus();
+      this.$refs.annotationInput.focus()
     },
     focus() {
-      this.$refs.nameInput.focus();
+      this.$refs.nameInput.focus()
     },
     refresh() {
-      this.$refs.definitionInput.refresh();
-      this.$refs.kfInput.refresh();
-      this.$refs.krInput.refresh();
+      this.$refs.definitionInput.refresh()
+      this.$refs.kfInput.refresh()
+      this.$refs.krInput.refresh()
     },
   },
   watch: {
     value() {
-      this.reaction = { ...this.value };
+      this.reaction = { ...this.value }
     },
   },
-};
+}
 </script>

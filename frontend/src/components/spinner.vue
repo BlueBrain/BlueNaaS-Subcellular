@@ -2,13 +2,13 @@
 <template></template>
 
 <script>
-import store from '@/store';
+import store from '@/store'
 
 export default {
   name: 'spinner',
   mounted() {
     store.$on('showGlobalSpinner', (msg) => {
-      const config = {};
+      const config = {}
 
       if (msg) {
         config.render = (h) =>
@@ -18,14 +18,14 @@ export default {
               props: { type: 'load-c', size: 18 },
             }),
             h('div', msg),
-          ]);
+          ])
       }
 
-      this.$Spin.show(config);
-    });
-    store.$on('hideGlobalSpinner', () => this.$Spin.hide());
+      this.$Spin.show(config)
+    })
+    store.$on('hideGlobalSpinner', () => this.$Spin.hide())
   },
-};
+}
 </script>
 
 <style>

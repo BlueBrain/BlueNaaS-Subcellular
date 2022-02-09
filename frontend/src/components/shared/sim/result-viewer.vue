@@ -2,23 +2,13 @@
   <div class="h-100 pos-relative">
     <div v-if="spatialViewerAvailable" class="ctrl">
       <i-select v-model="currentViewKey" @on-change="onViewChange">
-        <i-option v-for="(viewLabel, viewKey) in view" :key="viewKey" :value="viewKey">{{
-          viewLabel
-        }}</i-option>
+        <i-option v-for="(viewLabel, viewKey) in view" :key="viewKey" :value="viewKey">{{ viewLabel }}</i-option>
       </i-select>
     </div>
 
-    <temporal-result-viewer
-      v-if="currentViewKey === 'temporal'"
-      id="temporal-result-viewer"
-      :sim-id="simId"
-    />
+    <temporal-result-viewer v-if="currentViewKey === 'temporal'" id="temporal-result-viewer" :sim-id="simId" />
 
-    <spatial-result-viewer
-      v-else-if="currentViewKey === 'spatial'"
-      id="spatial-result-viewer"
-      :sim-id="simId"
-    />
+    <spatial-result-viewer v-else-if="currentViewKey === 'spatial'" id="spatial-result-viewer" :sim-id="simId" />
 
     <Split
       v-else-if="currentViewKey === 'allHorizontal'"
@@ -40,16 +30,16 @@
 </template>
 
 <script>
-import get from 'lodash/get';
+import get from 'lodash/get'
 
-import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue';
-import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue';
+import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue'
+import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue'
 
 const view = {
   temporal: 'Temporal',
   spatial: 'Spatial',
   allHorizontal: 'Temporal + Spatial',
-};
+}
 
 export default {
   name: 'result-viewer',
@@ -66,38 +56,34 @@ export default {
         vertical: 0.4,
         horizontal: 0.5,
       },
-    };
+    }
   },
   methods: {
     emitResize() {
-      const resizeEvt = new Event('resize');
-      window.dispatchEvent(resizeEvt);
+      const resizeEvt = new Event('resize')
+      window.dispatchEvent(resizeEvt)
     },
     onViewChange() {
-      setTimeout(() => this.emitResize(), 10);
+      setTimeout(() => this.emitResize(), 10)
     },
   },
   mounted() {
-    this.currentViewKey = this.spatialViewerAvailable ? 'allHorizontal' : 'temporal';
+    this.currentViewKey = this.spatialViewerAvailable ? 'allHorizontal' : 'temporal'
 
-    setTimeout(() => this.emitResize(), 10);
+    setTimeout(() => this.emitResize(), 10)
   },
   computed: {
     sim() {
-      return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
+      return this.$store.state.model.simulations.find((sim) => sim.id === this.simId)
     },
     geometry() {
-      return this.$store.state.model.geometry;
+      return this.$store.state.model.geometry
     },
     spatialViewerAvailable() {
-      return (
-        this.sim.solver === 'tetexact' &&
-        get(this.sim, 'solverConf.spatialSampling.enabled') &&
-        !!this.geometry
-      );
+      return this.sim.solver === 'tetexact' && get(this.sim, 'solverConf.spatialSampling.enabled') && !!this.geometry
     },
   },
-};
+}
 </script>
 
 <style lang="scss" scoped>

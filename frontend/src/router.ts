@@ -1,7 +1,7 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router';
+import Vue from 'vue'
+import VueRouter from 'vue-router'
 
-Vue.use(VueRouter);
+Vue.use(VueRouter)
 
 export default new VueRouter({
   mode: 'history',
@@ -125,4 +125,4 @@ export default new VueRouter({
       redirect: '/model/meta',
     },
   ],
-});
+})

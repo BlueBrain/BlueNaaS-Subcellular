@@ -1,3 +1,3 @@
-import distinctColors from 'distinct-colors';
+import distinctColors from 'distinct-colors'
 
-export default distinctColors({ count: 200, chromaMin: 50 });
+export default distinctColors({ count: 200, chromaMin: 50 })

@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import SearchEntities from './search-content/search-entities.vue';
+import SearchEntities from './search-content/search-entities.vue'
 
 export default {
   name: 'search-content',
@@ -86,8 +86,8 @@ export default {
   },
   computed: {
     queryResult() {
-      return this.$store.state.repoQueryResult;
+      return this.$store.state.repoQueryResult
     },
   },
-};
+}
 </script>
