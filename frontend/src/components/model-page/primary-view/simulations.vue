@@ -75,7 +75,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Vue from 'vue'
 import { mapState } from 'vuex'
 import get from 'lodash/get'
@@ -93,6 +93,7 @@ import findUniqName from '@/tools/find-uniq-name'
 import constants from '@/constants'
 import objStrSearchFilter from '@/tools/obj-str-search-filter'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
+import { State } from '@/types'
 
 const { SimStatus } = constants
 
@@ -153,7 +154,7 @@ export default Vue.extend({
     'result-viewer': ResultViewer,
     'sim-log-viewer': SimLogViewer,
   },
-  data(){
+  data() {
     return {
       constants,
       searchStr: '',
@@ -332,7 +333,7 @@ export default Vue.extend({
       this.simLogViewerVisible = false
     },
   },
-  computed: mapState({
+  computed: mapState<State>({
     simulations(state) {
       return state.model.simulations.map((sim) => {
         const solverConf = pick(sim.solverConf, ['tEnd', 'dt'])
@@ -342,6 +343,7 @@ export default Vue.extend({
       })
     },
     filteredSimulations() {
+      // @ts-ignore
       return this.simulations.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
