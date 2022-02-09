@@ -146,14 +146,14 @@ const simulationStatus = {
   },
 }
 
-const SimulationsComponent = {
+export default Vue.extend({
   name: 'simulations-component',
   components: {
     'simulation-form': SimulationForm,
     'result-viewer': ResultViewer,
     'sim-log-viewer': SimLogViewer,
   },
-  data() {
+  data(){
     return {
       constants,
       searchStr: '',
@@ -374,9 +374,7 @@ const SimulationsComponent = {
       )
     },
   }),
-}
-
-export default Vue.extend(SimulationsComponent)
+})
 </script>
 
 <style lang="scss">

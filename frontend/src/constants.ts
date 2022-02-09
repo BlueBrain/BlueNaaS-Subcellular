@@ -75,7 +75,23 @@ const StimulusTypeEnum = {
   CLAMP_CONC: 'clampConc',
 }
 
-const defaultEmptyModel = {
+interface Model {
+  id: string | null
+  name: string
+  annotation: string
+  structures: any[]
+  parameters: any[]
+  functions: any[]
+  molecules: any[]
+  species: any[]
+  observables: any[]
+  reactions: any[]
+  diffusions: any[]
+  geometry: null
+  simulations: any[]
+}
+
+const defaultEmptyModel: Model = {
   id: null,
   name: '',
   annotation: '',
@@ -93,7 +109,26 @@ const defaultEmptyModel = {
   simulations: [],
 }
 
-const defaultEmptyRevision = {
+type Revision = {
+  name: string
+  description: string
+  branch: string
+  loading: boolean
+  config: {
+    concSources: string[]
+    visibleConcSources: string[]
+  }
+  structures: any[]
+  parameters: any[]
+  functions: any[]
+  molecules: any[]
+  species: any[]
+  observables: any[]
+  reactions: any[]
+  diffusions: any[]
+}
+
+const defaultEmptyRevision: Revision = {
   name: '',
   description: '',
   branch: '',
@@ -113,7 +148,28 @@ const defaultEmptyRevision = {
   diffusions: [],
 }
 
-const defaultSolverConfig = {
+interface StepsSolverConfig {
+  dt: number
+  tEnd: number
+  stimulation: {
+    size: number
+    targetValues: number[]
+    data: any[]
+  }
+  spatialSampling: {
+    enabled: boolean
+    structures: any[]
+    observables: any[]
+  }
+}
+
+type NfsimSolverConfig = Omit<StepsSolverConfig, 'spatialSampling'>
+
+interface SolverConfigs {
+  [solver: string]: StepsSolverConfig | NfsimSolverConfig
+}
+
+const defaultSolverConfig: SolverConfigs = {
   tetexact: {
     dt: 0.01,
     tEnd: 10,
