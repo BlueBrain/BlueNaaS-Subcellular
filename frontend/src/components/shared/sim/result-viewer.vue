@@ -40,71 +40,71 @@
 </template>
 
 <script>
-  import get from 'lodash/get';
+import get from 'lodash/get';
 
-  import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue';
-  import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue';
+import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue';
+import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue';
 
-  const view = {
-    temporal: 'Temporal',
-    spatial: 'Spatial',
-    allHorizontal: 'Temporal + Spatial',
-  };
+const view = {
+  temporal: 'Temporal',
+  spatial: 'Spatial',
+  allHorizontal: 'Temporal + Spatial',
+};
 
-  export default {
-    name: 'result-viewer',
-    props: ['simId'],
-    components: {
-      'spatial-result-viewer': SpatialResultViewer,
-      'temporal-result-viewer': TemporalResultViewer,
-    },
-    data() {
-      return {
-        view,
-        currentViewKey: null,
-        split: {
-          vertical: 0.4,
-          horizontal: 0.5,
-        },
-      };
-    },
-    methods: {
-      emitResize() {
-        const resizeEvt = new Event('resize');
-        window.dispatchEvent(resizeEvt);
+export default {
+  name: 'result-viewer',
+  props: ['simId'],
+  components: {
+    'spatial-result-viewer': SpatialResultViewer,
+    'temporal-result-viewer': TemporalResultViewer,
+  },
+  data() {
+    return {
+      view,
+      currentViewKey: null,
+      split: {
+        vertical: 0.4,
+        horizontal: 0.5,
       },
-      onViewChange() {
-        setTimeout(() => this.emitResize(), 10);
-      },
+    };
+  },
+  methods: {
+    emitResize() {
+      const resizeEvt = new Event('resize');
+      window.dispatchEvent(resizeEvt);
     },
-    mounted() {
-      this.currentViewKey = this.spatialViewerAvailable ? 'allHorizontal' : 'temporal';
-
+    onViewChange() {
       setTimeout(() => this.emitResize(), 10);
     },
-    computed: {
-      sim() {
-        return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
-      },
-      geometry() {
-        return this.$store.state.model.geometry;
-      },
-      spatialViewerAvailable() {
-        return (
-          this.sim.solver === 'tetexact' &&
-          get(this.sim, 'solverConf.spatialSampling.enabled') &&
-          !!this.geometry
-        );
-      },
+  },
+  mounted() {
+    this.currentViewKey = this.spatialViewerAvailable ? 'allHorizontal' : 'temporal';
+
+    setTimeout(() => this.emitResize(), 10);
+  },
+  computed: {
+    sim() {
+      return this.$store.state.model.simulations.find((sim) => sim.id === this.simId);
     },
-  };
+    geometry() {
+      return this.$store.state.model.geometry;
+    },
+    spatialViewerAvailable() {
+      return (
+        this.sim.solver === 'tetexact' &&
+        get(this.sim, 'solverConf.spatialSampling.enabled') &&
+        !!this.geometry
+      );
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .ctrl {
-    position: fixed;
-    z-index: 10;
-    left: 240px;
-    top: 12px;
-  }
+.ctrl {
+  position: fixed;
+  z-index: 10;
+  left: 240px;
+  top: 12px;
+}
 </style>

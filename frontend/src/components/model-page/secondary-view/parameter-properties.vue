@@ -27,61 +27,61 @@
 </template>
 
 <script>
-  import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by';
 
-  import ParameterForm from '@/components/shared/entities/parameter-form.vue';
+import ParameterForm from '@/components/shared/entities/parameter-form.vue';
 
-  export default {
-    name: 'parameter-properties',
-    components: {
-      'parameter-form': ParameterForm,
+export default {
+  name: 'parameter-properties',
+  components: {
+    'parameter-form': ParameterForm,
+  },
+  data() {
+    return {
+      tmpEntity: this.getTmpEntity(),
+    };
+  },
+  mounted() {
+    this.focusNameInput();
+  },
+  methods: {
+    focusNameInput() {
+      this.$nextTick(() => this.$refs.parameterForm.focus());
     },
-    data() {
-      return {
-        tmpEntity: this.getTmpEntity(),
-      };
+    applyParameterChange() {
+      this.$store.commit('modifySelectedEntity', this.tmpEntity);
     },
-    mounted() {
+    resetParameterChange() {
+      this.tmpEntity = this.getTmpEntity();
+    },
+    getTmpEntity() {
+      return { ...this.$store.state.selectedEntity.entity };
+    },
+  },
+  computed: {
+    parameterEdited() {
+      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+        'name',
+        'definition',
+        'unit',
+        'annotation',
+      ]);
+    },
+    selection() {
+      return this.$store.state.selectedEntity;
+    },
+  },
+  watch: {
+    selection() {
+      this.tmpEntity = this.getTmpEntity();
       this.focusNameInput();
     },
-    methods: {
-      focusNameInput() {
-        this.$nextTick(() => this.$refs.parameterForm.focus());
-      },
-      applyParameterChange() {
-        this.$store.commit('modifySelectedEntity', this.tmpEntity);
-      },
-      resetParameterChange() {
-        this.tmpEntity = this.getTmpEntity();
-      },
-      getTmpEntity() {
-        return { ...this.$store.state.selectedEntity.entity };
-      },
-    },
-    computed: {
-      parameterEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, [
-          'name',
-          'definition',
-          'unit',
-          'annotation',
-        ]);
-      },
-      selection() {
-        return this.$store.state.selectedEntity;
-      },
-    },
-    watch: {
-      selection() {
-        this.tmpEntity = this.getTmpEntity();
-        this.focusNameInput();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .action-block {
-    padding-left: 100px;
-  }
+.action-block {
+  padding-left: 100px;
+}
 </style>

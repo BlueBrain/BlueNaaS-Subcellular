@@ -32,29 +32,29 @@
 </template>
 
 <script>
-  export default {
-    name: 'structure-form',
-    props: ['value'],
-    data() {
-      return {
-        structure: { ...this.value },
-      };
+export default {
+  name: 'structure-form',
+  props: ['value'],
+  data() {
+    return {
+      structure: { ...this.value },
+    };
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus();
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {},
-      onChange() {
-        // TODO: add validation
-        this.structure.valid = true;
-        this.$emit('input', this.structure);
-      },
+    refresh() {},
+    onChange() {
+      // TODO: add validation
+      this.structure.valid = true;
+      this.$emit('input', this.structure);
     },
-    watch: {
-      value() {
-        this.structure = { ...this.value };
-      },
+  },
+  watch: {
+    value() {
+      this.structure = { ...this.value };
     },
-  };
+  },
+};
 </script>

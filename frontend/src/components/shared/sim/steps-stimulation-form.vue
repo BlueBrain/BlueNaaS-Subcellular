@@ -104,172 +104,172 @@
 </template>
 
 <script>
-  import sortBy from 'lodash/sortBy';
+import sortBy from 'lodash/sortBy';
 
-  import constants from '@/constants';
-  import tools from '@/tools/model-tools';
-  import StepsStimuliImport from './steps-stimulation-import.vue';
+import constants from '@/constants';
+import tools from '@/tools/model-tools';
+import StepsStimuliImport from './steps-stimulation-import.vue';
 
-  const { StimulusTypeEnum: StimType } = constants;
+const { StimulusTypeEnum: StimType } = constants;
 
-  const stimulusTypes = [
-    {
-      type: StimType.SET_PARAM,
-      label: 'set param',
-    },
-    {
-      type: StimType.SET_CONC,
-      label: 'set conc',
-    },
-    {
-      type: StimType.CLAMP_CONC,
-      label: 'clamp conc',
-    },
-  ];
+const stimulusTypes = [
+  {
+    type: StimType.SET_PARAM,
+    label: 'set param',
+  },
+  {
+    type: StimType.SET_CONC,
+    label: 'set conc',
+  },
+  {
+    type: StimType.CLAMP_CONC,
+    label: 'clamp conc',
+  },
+];
 
-  const tableColumns = [
-    {
-      title: 'Time, s',
-      key: 't',
-      maxWidth: 140,
-    },
-    {
-      title: 'Operation',
-      key: 'type',
-      width: 110,
-    },
-    {
-      title: 'Target',
-      key: 'target',
-      maxWidth: 280,
-    },
-    {
-      title: 'Value',
-      slot: 'value',
-    },
-    {
-      title: ' ',
-      slot: 'action',
-      width: 40,
-    },
-  ];
+const tableColumns = [
+  {
+    title: 'Time, s',
+    key: 't',
+    maxWidth: 140,
+  },
+  {
+    title: 'Operation',
+    key: 'type',
+    width: 110,
+  },
+  {
+    title: 'Target',
+    key: 'target',
+    maxWidth: 280,
+  },
+  {
+    title: 'Value',
+    slot: 'value',
+  },
+  {
+    title: ' ',
+    slot: 'action',
+    width: 40,
+  },
+];
 
-  const defaultStimulus = {
-    t: null,
-    type: null,
-    target: null,
-    value: null,
-  };
+const defaultStimulus = {
+  t: null,
+  type: null,
+  target: null,
+  value: null,
+};
 
-  export default {
-    name: 'steps-stimuli-form',
-    props: ['value'],
-    components: {
-      'stimuli-import': StepsStimuliImport,
+export default {
+  name: 'steps-stimuli-form',
+  props: ['value'],
+  components: {
+    'stimuli-import': StepsStimuliImport,
+  },
+  data() {
+    return {
+      tableColumns,
+      stimulusTypes,
+      largeStimulation: false,
+      stimuli: [],
+      stimulation: {
+        size: 0,
+        data: [],
+        targetValues: [],
+      },
+      stimulus: { ...defaultStimulus },
+      importModalVisible: false,
+    };
+  },
+  mounted() {
+    this.init();
+  },
+  methods: {
+    init() {
+      this.stimulation = { ...this.value };
+      this.largeStimulation = this.value.size > 100;
+      this.stimuli = this.getStimuli();
     },
-    data() {
-      return {
-        tableColumns,
-        stimulusTypes,
-        largeStimulation: false,
-        stimuli: [],
-        stimulation: {
-          size: 0,
-          data: [],
-          targetValues: [],
-        },
-        stimulus: { ...defaultStimulus },
-        importModalVisible: false,
-      };
+    getStimuli() {
+      return this.stimulation.size < 100 ? tools.decompressStimulation(this.stimulation) : [];
     },
-    mounted() {
-      this.init();
+    addStimulus() {
+      this.stimuli.push(this.stimulus);
+      this.stimuli = sortBy(this.stimuli, (stimulus) => stimulus.t);
+      this.setDefaultStimulusValue();
+      this.updateStimulation();
+      this.onStimuliChange();
     },
-    methods: {
-      init() {
-        this.stimulation = { ...this.value };
-        this.largeStimulation = this.value.size > 100;
-        this.stimuli = this.getStimuli();
-      },
-      getStimuli() {
-        return this.stimulation.size < 100 ? tools.decompressStimulation(this.stimulation) : [];
-      },
-      addStimulus() {
-        this.stimuli.push(this.stimulus);
-        this.stimuli = sortBy(this.stimuli, (stimulus) => stimulus.t);
-        this.setDefaultStimulusValue();
-        this.updateStimulation();
-        this.onStimuliChange();
-      },
-      removeStimulus(index) {
-        this.stimuli.splice(index, 1);
-        this.updateStimulation();
-        this.onStimuliChange();
-      },
-      setDefaultStimulusValue() {
-        this.stimulus = { ...defaultStimulus };
-      },
-      onStimTypeChange() {
-        Object.assign(this.stimulus, { target: null, value: null });
-      },
-      onStimuliChange() {
-        this.$emit('input', { ...this.stimulation });
-      },
-      onImportClick() {
-        this.importModalVisible = true;
-      },
-      onImport(stimulation) {
-        this.stimulation = stimulation;
-        this.largeStimulation = stimulation.size > 100;
-        this.stimuli = this.getStimuli();
-        this.importModalVisible = false;
-        this.onStimuliChange();
-      },
-      onClearClick() {
-        this.stimuli = [];
-        this.updateStimulation();
-        this.largeStimulation = false;
-        this.onStimuliChange();
-      },
-      updateStimulation() {
-        this.stimulation = tools.compressStimuli(this.stimuli);
-      },
+    removeStimulus(index) {
+      this.stimuli.splice(index, 1);
+      this.updateStimulation();
+      this.onStimuliChange();
     },
-    computed: {
-      parameters() {
-        return this.$store.state.model.parameters;
-      },
-      addStimulusBtnEnabled() {
-        const { t, type, target, value } = this.stimulus;
+    setDefaultStimulusValue() {
+      this.stimulus = { ...defaultStimulus };
+    },
+    onStimTypeChange() {
+      Object.assign(this.stimulus, { target: null, value: null });
+    },
+    onStimuliChange() {
+      this.$emit('input', { ...this.stimulation });
+    },
+    onImportClick() {
+      this.importModalVisible = true;
+    },
+    onImport(stimulation) {
+      this.stimulation = stimulation;
+      this.largeStimulation = stimulation.size > 100;
+      this.stimuli = this.getStimuli();
+      this.importModalVisible = false;
+      this.onStimuliChange();
+    },
+    onClearClick() {
+      this.stimuli = [];
+      this.updateStimulation();
+      this.largeStimulation = false;
+      this.onStimuliChange();
+    },
+    updateStimulation() {
+      this.stimulation = tools.compressStimuli(this.stimuli);
+    },
+  },
+  computed: {
+    parameters() {
+      return this.$store.state.model.parameters;
+    },
+    addStimulusBtnEnabled() {
+      const { t, type, target, value } = this.stimulus;
 
-        return t && type && target && typeof value === 'number';
-      },
+      return t && type && target && typeof value === 'number';
     },
-    watch: {
-      value(stimulation) {
-        this.stimulation = { ...stimulation };
-        this.stimuli = this.getStimuli();
-      },
+  },
+  watch: {
+    value(stimulation) {
+      this.stimulation = { ...stimulation };
+      this.stimuli = this.getStimuli();
     },
-  };
+  },
+};
 </script>
 
 <style lang="scss">
-  .stimuli-table {
-    border: none;
-    line-height: 24px !important;
+.stimuli-table {
+  border: none;
+  line-height: 24px !important;
 
-    .ivu-table:after {
-      width: 0px !important;
-    }
-
-    .ivu-table-cell {
-      padding-left: 12px;
-      padding-right: 12px;
-    }
+  .ivu-table:after {
+    width: 0px !important;
   }
 
-  .cursor-pointer {
-    cursor: pointer;
+  .ivu-table-cell {
+    padding-left: 12px;
+    padding-right: 12px;
   }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
 </style>

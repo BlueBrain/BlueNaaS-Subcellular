@@ -90,134 +90,134 @@
 </template>
 
 <script>
-  import { saveAs } from 'file-saver';
-  import Ajv from 'ajv';
+import { saveAs } from 'file-saver';
+import Ajv from 'ajv';
 
-  import repoFilterSchema from '@/schemas/repo-filter.json';
+import repoFilterSchema from '@/schemas/repo-filter.json';
 
-  import FileImport from '@/components/shared/file-import.vue';
+import FileImport from '@/components/shared/file-import.vue';
 
-  import RevisionSelect from './repo-search/revision-select.vue';
-  import SearchContent from './repo-search/search-content.vue';
-  import RevisionMerge from './repo-search/revision-merge.vue';
+import RevisionSelect from './repo-search/revision-select.vue';
+import SearchContent from './repo-search/search-content.vue';
+import RevisionMerge from './repo-search/revision-merge.vue';
 
-  const validateFilter = new Ajv().compile(repoFilterSchema);
+const validateFilter = new Ajv().compile(repoFilterSchema);
 
-  const entityLabels = {
-    parameter: 'Parameters',
-    structure: 'Structures',
-    molecule: 'Molecules',
-    species: 'Species',
-    observable: 'Observables',
-    function: 'Functions',
-    reaction: 'Reactions',
-  };
+const entityLabels = {
+  parameter: 'Parameters',
+  structure: 'Structures',
+  molecule: 'Molecules',
+  species: 'Species',
+  observable: 'Observables',
+  function: 'Functions',
+  reaction: 'Reactions',
+};
 
-  export default {
-    name: 'repo-search',
-    components: {
-      'revision-select': RevisionSelect,
-      'search-content': SearchContent,
-      'revision-merge': RevisionMerge,
-      'file-import': FileImport,
+export default {
+  name: 'repo-search',
+  components: {
+    'revision-select': RevisionSelect,
+    'search-content': SearchContent,
+    'revision-merge': RevisionMerge,
+    'file-import': FileImport,
+  },
+  data() {
+    return {
+      entityLabels,
+      importFilterModalVisible: false,
+      filterImportError: '',
+      query: {
+        moleculeStr: '',
+        structureStr: '',
+        versions: [
+          {
+            branch: 'master',
+            revision: 'latest',
+            key: 'master:latest',
+          },
+        ],
+        entityTypes: Object.keys(entityLabels),
+      },
+      result: {
+        selectedEntity: null,
+      },
+    };
+  },
+  beforeDestroy() {
+    this.$store.commit('resetMolecularRepo');
+  },
+  methods: {
+    onSearchClick() {
+      this.$store.commit('setQueryLoading', true);
+      setTimeout(async () => {
+        await this.$store.dispatch('queryMolecularRepo', this.query);
+        this.$store.commit('setQueryLoading', false);
+      }, 100);
     },
-    data() {
-      return {
-        entityLabels,
-        importFilterModalVisible: false,
-        filterImportError: '',
-        query: {
-          moleculeStr: '',
-          structureStr: '',
-          versions: [
-            {
-              branch: 'master',
-              revision: 'latest',
-              key: 'master:latest',
-            },
-          ],
-          entityTypes: Object.keys(entityLabels),
-        },
-        result: {
-          selectedEntity: null,
-        },
-      };
+    onFilterActionClick(action) {
+      if (action === 'save') {
+        const blob = new Blob([JSON.stringify(this.query)], {
+          type: 'text/plain;charset=utf-8',
+        });
+        saveAs(blob, 'filter.json');
+      } else {
+        this.showImportFilterModal();
+      }
     },
-    beforeDestroy() {
-      this.$store.commit('resetMolecularRepo');
+    hideImportFilterModal() {
+      this.importFilterModalVisible = false;
     },
-    methods: {
-      onSearchClick() {
-        this.$store.commit('setQueryLoading', true);
-        setTimeout(async () => {
-          await this.$store.dispatch('queryMolecularRepo', this.query);
-          this.$store.commit('setQueryLoading', false);
-        }, 100);
-      },
-      onFilterActionClick(action) {
-        if (action === 'save') {
-          const blob = new Blob([JSON.stringify(this.query)], {
-            type: 'text/plain;charset=utf-8',
-          });
-          saveAs(blob, 'filter.json');
-        } else {
-          this.showImportFilterModal();
-        }
-      },
-      hideImportFilterModal() {
-        this.importFilterModalVisible = false;
-      },
-      showImportFilterModal() {
-        this.importFilterModalVisible = true;
-      },
-      onFilterFileRead({ content }) {
-        let filter = null;
-        try {
-          filter = JSON.parse(content);
-        } catch (error) {
-          this.filterImportError = "Can't parse file as JSON";
-        }
+    showImportFilterModal() {
+      this.importFilterModalVisible = true;
+    },
+    onFilterFileRead({ content }) {
+      let filter = null;
+      try {
+        filter = JSON.parse(content);
+      } catch (error) {
+        this.filterImportError = "Can't parse file as JSON";
+      }
 
-        if (!filter) return;
+      if (!filter) return;
 
-        const schemaValid = validateFilter(filter);
-        if (!schemaValid) {
-          const [errObj] = validateFilter.errors;
-          this.filterImportError = `error: ${errObj.dataPath} ${errObj.message}`;
-          return;
-        }
+      const schemaValid = validateFilter(filter);
+      if (!schemaValid) {
+        const [errObj] = validateFilter.errors;
+        this.filterImportError = `error: ${errObj.dataPath} ${errObj.message}`;
+        return;
+      }
 
-        this.query = filter;
-        this.hideImportFilterModal();
-        this.$Notice.success({ title: 'Filter successfully imported' });
-      },
+      this.query = filter;
+      this.hideImportFilterModal();
+      this.$Notice.success({ title: 'Filter successfully imported' });
     },
-    computed: {
-      searchResultEntityTypes() {
-        return Object.keys(this.$store.state.molecularRepo.queryResult || {});
-      },
-      repoQueryResult() {
-        return !!this.$store.state.repoQueryResult;
-      },
-      searchBtnEnabled() {
-        return this.query.versions.length && this.query.entityTypes.length;
-      },
-      loading() {
-        return this.$store.state.revision.loading;
-      },
-      queryResultVersions() {
-        return this.$store.getters.queryResultVersions;
-      },
-      queryResultEmpty() {
-        const result = this.$store.state.repoQueryResult;
-        return !result || Object.values(result).every((entities) => !entities.length);
-      },
+  },
+  computed: {
+    searchResultEntityTypes() {
+      return Object.keys(this.$store.state.molecularRepo.queryResult || {});
     },
-  };
+    repoQueryResult() {
+      return !!this.$store.state.repoQueryResult;
+    },
+    searchBtnEnabled() {
+      return this.query.versions.length && this.query.entityTypes.length;
+    },
+    loading() {
+      return this.$store.state.revision.loading;
+    },
+    queryResultVersions() {
+      return this.$store.getters.queryResultVersions;
+    },
+    queryResultEmpty() {
+      const result = this.$store.state.repoQueryResult;
+      return !result || Object.values(result).every((entities) => !entities.length);
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .ivu-checkbox-group-item {
-    display: block;
-  }
+.ivu-checkbox-group-item {
+  display: block;
+}
 </style>

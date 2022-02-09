@@ -27,62 +27,62 @@
 </template>
 
 <script>
-  import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by';
 
-  import ReactionForm from '@/components/shared/entities/reaction-form.vue';
+import ReactionForm from '@/components/shared/entities/reaction-form.vue';
 
-  export default {
-    name: 'reaction-properties',
-    components: {
-      'reaction-form': ReactionForm,
+export default {
+  name: 'reaction-properties',
+  components: {
+    'reaction-form': ReactionForm,
+  },
+  data() {
+    return {
+      tmpEntity: this.getTmpEntity(),
+    };
+  },
+  mounted() {
+    this.focusReactionForm();
+  },
+  methods: {
+    focusReactionForm() {
+      this.$nextTick(() => this.$refs.reactionForm.focus());
     },
-    data() {
-      return {
-        tmpEntity: this.getTmpEntity(),
-      };
+    applyReactionChange() {
+      this.$store.commit('modifySelectedEntity', this.tmpEntity);
     },
-    mounted() {
+    resetReactionChange() {
+      this.tmpEntity = this.getTmpEntity();
+    },
+    getTmpEntity() {
+      return { ...this.$store.state.selectedEntity.entity };
+    },
+  },
+  computed: {
+    reactionEdited() {
+      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+        'name',
+        'definition',
+        'kr',
+        'kf',
+        'annotation',
+      ]);
+    },
+    selection() {
+      return this.$store.state.selectedEntity;
+    },
+  },
+  watch: {
+    selection() {
+      this.tmpEntity = this.getTmpEntity();
       this.focusReactionForm();
     },
-    methods: {
-      focusReactionForm() {
-        this.$nextTick(() => this.$refs.reactionForm.focus());
-      },
-      applyReactionChange() {
-        this.$store.commit('modifySelectedEntity', this.tmpEntity);
-      },
-      resetReactionChange() {
-        this.tmpEntity = this.getTmpEntity();
-      },
-      getTmpEntity() {
-        return { ...this.$store.state.selectedEntity.entity };
-      },
-    },
-    computed: {
-      reactionEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, [
-          'name',
-          'definition',
-          'kr',
-          'kf',
-          'annotation',
-        ]);
-      },
-      selection() {
-        return this.$store.state.selectedEntity;
-      },
-    },
-    watch: {
-      selection() {
-        this.tmpEntity = this.getTmpEntity();
-        this.focusReactionForm();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .action-block {
-    padding-left: 100px;
-  }
+.action-block {
+  padding-left: 100px;
+}
 </style>

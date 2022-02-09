@@ -59,72 +59,72 @@
 </template>
 
 <script>
-  import get from 'lodash/get';
+import get from 'lodash/get';
 
-  import constants from '@/constants';
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import constants from '@/constants';
+import BnglInput from '@/components/shared/bngl-input.vue';
 
-  const { agentType } = constants;
+const { agentType } = constants;
 
-  export default {
-    name: 'species-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'species-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      agentType,
+      species: { ...this.value },
+    };
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus();
     },
-    data() {
-      return {
-        agentType,
-        species: { ...this.value },
-      };
+    refresh() {
+      this.$refs.definitionInput.refresh();
+      Object.keys(this.$refs)
+        .filter((refName) => refName.includes('concInput'))
+        .forEach((refName) => {
+          // TODO: refactor
+          const refs = this.$refs[refName];
+          const ref = refs.length ? refs[0] : refs;
+          if (ref.refresh) ref.refresh();
+        });
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        Object.keys(this.$refs)
-          .filter((refName) => refName.includes('concInput'))
-          .forEach((refName) => {
-            // TODO: refactor
-            const refs = this.$refs[refName];
-            const ref = refs.length ? refs[0] : refs;
-            if (ref.refresh) ref.refresh();
-          });
-      },
-      onDefinitionInputTab() {
-        const input0refs = this.$refs.concInput0;
-        const ref = input0refs.length ? input0refs[0] : input0refs;
-        if (ref.focus) ref.focus();
-      },
-      onConcentrationInputTab(concInputIndex) {
-        const nextConcInputRefList = this.$refs[`concInput${concInputIndex + 1}`];
-        if (nextConcInputRefList) {
-          nextConcInputRefList[0].focus();
-        } else {
-          this.$refs.unitsInput.focus();
-        }
-      },
-      onChange() {
-        // TODO: add validation
-        this.species.valid = true;
-        this.$emit('input', this.species);
-      },
+    onDefinitionInputTab() {
+      const input0refs = this.$refs.concInput0;
+      const ref = input0refs.length ? input0refs[0] : input0refs;
+      if (ref.focus) ref.focus();
     },
-    computed: {
-      hasOnlyDefaultConcentration() {
-        return this.concSources.length === 1 && this.concSources[0] === 'default';
-      },
-      concSources() {
-        const concentration = get(this.species, 'concentration', {});
-        return Object.keys(concentration);
-      },
+    onConcentrationInputTab(concInputIndex) {
+      const nextConcInputRefList = this.$refs[`concInput${concInputIndex + 1}`];
+      if (nextConcInputRefList) {
+        nextConcInputRefList[0].focus();
+      } else {
+        this.$refs.unitsInput.focus();
+      }
     },
-    watch: {
-      value() {
-        this.species = { ...this.value };
-      },
+    onChange() {
+      // TODO: add validation
+      this.species.valid = true;
+      this.$emit('input', this.species);
     },
-  };
+  },
+  computed: {
+    hasOnlyDefaultConcentration() {
+      return this.concSources.length === 1 && this.concSources[0] === 'default';
+    },
+    concSources() {
+      const concentration = get(this.species, 'concentration', {});
+      return Object.keys(concentration);
+    },
+  },
+  watch: {
+    value() {
+      this.species = { ...this.value };
+    },
+  },
+};
 </script>

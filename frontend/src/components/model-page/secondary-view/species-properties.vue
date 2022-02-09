@@ -22,61 +22,61 @@
 </template>
 
 <script>
-  import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by';
 
-  import SpeciesForm from '@/components/shared/entities/species-form.vue';
+import SpeciesForm from '@/components/shared/entities/species-form.vue';
 
-  export default {
-    name: 'species-properties',
-    components: {
-      'species-form': SpeciesForm,
+export default {
+  name: 'species-properties',
+  components: {
+    'species-form': SpeciesForm,
+  },
+  data() {
+    return {
+      tmpEntity: this.getTmpEntity(),
+    };
+  },
+  mounted() {
+    this.focusForm();
+  },
+  methods: {
+    focusForm() {
+      this.$nextTick(() => this.$refs.speciesForm.focus());
     },
-    data() {
-      return {
-        tmpEntity: this.getTmpEntity(),
-      };
+    applySpeciesChange() {
+      this.$store.commit('modifySelectedEntity', this.tmpEntity);
     },
-    mounted() {
+    resetSpeciesChange() {
+      this.tmpEntity = this.getTmpEntity();
+    },
+    getTmpEntity() {
+      return { ...this.$store.state.selectedEntity.entity };
+    },
+  },
+  computed: {
+    speciesEdited() {
+      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+        'name',
+        'definition',
+        'concentration',
+        'annotation',
+      ]);
+    },
+    selection() {
+      return this.$store.state.selectedEntity;
+    },
+  },
+  watch: {
+    selection() {
+      this.tmpEntity = this.getTmpEntity();
       this.focusForm();
     },
-    methods: {
-      focusForm() {
-        this.$nextTick(() => this.$refs.speciesForm.focus());
-      },
-      applySpeciesChange() {
-        this.$store.commit('modifySelectedEntity', this.tmpEntity);
-      },
-      resetSpeciesChange() {
-        this.tmpEntity = this.getTmpEntity();
-      },
-      getTmpEntity() {
-        return { ...this.$store.state.selectedEntity.entity };
-      },
-    },
-    computed: {
-      speciesEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, [
-          'name',
-          'definition',
-          'concentration',
-          'annotation',
-        ]);
-      },
-      selection() {
-        return this.$store.state.selectedEntity;
-      },
-    },
-    watch: {
-      selection() {
-        this.tmpEntity = this.getTmpEntity();
-        this.focusForm();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .action-block {
-    padding-left: 100px;
-  }
+.action-block {
+  padding-left: 100px;
+}
 </style>

@@ -86,67 +86,67 @@
 </template>
 
 <script>
-  import NewGeometryForm from '@/components/shared/new-geometry-form.vue';
-  import GeometryViewer from '@/components/shared/geometry-viewer.vue';
+import NewGeometryForm from '@/components/shared/new-geometry-form.vue';
+import GeometryViewer from '@/components/shared/geometry-viewer.vue';
 
-  export default {
-    name: 'geometry-component',
-    components: {
-      'new-geometry-form': NewGeometryForm,
-      'geometry-viewer': GeometryViewer,
+export default {
+  name: 'geometry-component',
+  components: {
+    'new-geometry-form': NewGeometryForm,
+    'geometry-viewer': GeometryViewer,
+  },
+  data() {
+    return {
+      modelVisible: false,
+      newModelGeometry: null,
+      saving: false,
+    };
+  },
+  methods: {
+    onModalVisibleChange(visible) {
+      if (!visible) this.reset();
     },
-    data() {
-      return {
-        modelVisible: false,
-        newModelGeometry: null,
-        saving: false,
-      };
+    showNewGeometryModal() {
+      this.modelVisible = true;
     },
-    methods: {
-      onModalVisibleChange(visible) {
-        if (!visible) this.reset();
-      },
-      showNewGeometryModal() {
-        this.modelVisible = true;
-      },
-      reset() {
-        this.newModelGeometry = null;
-        this.saving = false;
-        this.$refs.newGeometryForm.reset();
-      },
-      hideNewGeometryModal() {
-        this.modelVisible = false;
-        this.reset();
-      },
-      async onOk() {
-        this.saving = true;
-        await this.$store.dispatch('createGeometry', this.newModelGeometry);
-        this.hideNewGeometryModal();
-      },
-      removeGeometry() {
-        this.$store.dispatch('removeGeometry');
-      },
+    reset() {
+      this.newModelGeometry = null;
+      this.saving = false;
+      this.$refs.newGeometryForm.reset();
     },
-    computed: {
-      geometry() {
-        return this.$store.state.model.geometry;
-      },
+    hideNewGeometryModal() {
+      this.modelVisible = false;
+      this.reset();
     },
-  };
+    async onOk() {
+      this.saving = true;
+      await this.$store.dispatch('createGeometry', this.newModelGeometry);
+      this.hideNewGeometryModal();
+    },
+    removeGeometry() {
+      this.$store.dispatch('removeGeometry');
+    },
+  },
+  computed: {
+    geometry() {
+      return this.$store.state.model.geometry;
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .block-main-inner {
-    height: 100%;
-  }
+.block-main-inner {
+  height: 100%;
+}
 
-  .white-bg {
-    background-color: white;
-  }
+.white-bg {
+  background-color: white;
+}
 
-  .geometry-viewer-container {
-    background-color: #f8f8f9;
-    border: 1px solid #dcdee2;
-    border-radius: 3px;
-  }
+.geometry-viewer-container {
+  background-color: #f8f8f9;
+  border: 1px solid #dcdee2;
+  border-radius: 3px;
+}
 </style>

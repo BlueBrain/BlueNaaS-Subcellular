@@ -49,43 +49,43 @@
 </template>
 
 <script>
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue';
 
-  export default {
-    name: 'diffusion-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'diffusion-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      diffusion: { ...this.value },
+    };
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus();
     },
-    data() {
-      return {
-        diffusion: { ...this.value },
-      };
+    refresh() {
+      this.$refs.definitionInput.refresh();
+      this.$refs.rateInput.refresh();
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        this.$refs.rateInput.refresh();
-      },
-      onDefinitionInputTab() {
-        this.$refs.rateInput.focus();
-      },
-      onRateInputTab() {
-        this.$refs.descriptionInput.focus();
-      },
-      onChange() {
-        // TODO: add validation
-        this.diffusion.valid = true;
-        this.$emit('input', this.diffusion);
-      },
+    onDefinitionInputTab() {
+      this.$refs.rateInput.focus();
     },
-    watch: {
-      value() {
-        this.diffusion = { ...this.value };
-      },
+    onRateInputTab() {
+      this.$refs.descriptionInput.focus();
     },
-  };
+    onChange() {
+      // TODO: add validation
+      this.diffusion.valid = true;
+      this.$emit('input', this.diffusion);
+    },
+  },
+  watch: {
+    value() {
+      this.diffusion = { ...this.value };
+    },
+  },
+};
 </script>

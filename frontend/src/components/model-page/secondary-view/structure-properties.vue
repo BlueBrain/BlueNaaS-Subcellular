@@ -27,65 +27,65 @@
 </template>
 
 <script>
-  import isEqualBy from '@/tools/is-equal-by';
-  import constants from '@/constants';
+import isEqualBy from '@/tools/is-equal-by';
+import constants from '@/constants';
 
-  import StructureForm from '@/components/shared/entities/structure-form.vue';
+import StructureForm from '@/components/shared/entities/structure-form.vue';
 
-  export default {
-    name: 'structure-properties',
-    components: {
-      'structure-form': StructureForm,
+export default {
+  name: 'structure-properties',
+  components: {
+    'structure-form': StructureForm,
+  },
+  data() {
+    return {
+      constants,
+      tmpEntity: this.getTmpEntity(),
+    };
+  },
+  mounted() {
+    this.focusStructureForm();
+  },
+  methods: {
+    focusStructureForm() {
+      this.$nextTick(() => this.$refs.structureForm.focus());
     },
-    data() {
-      return {
-        constants,
-        tmpEntity: this.getTmpEntity(),
-      };
+    applyStructureChange() {
+      this.$store.commit('modifySelectedEntity', this.tmpEntity);
     },
-    mounted() {
+    resetStructureChange() {
+      this.tmpEntity = this.getTmpEntity();
+    },
+    getTmpEntity() {
+      return { ...this.$store.state.selectedEntity.entity };
+    },
+  },
+  computed: {
+    structureEdited() {
+      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+        'name',
+        'type',
+        'parentName',
+        'size',
+        'annotation',
+        'geometryStructureName',
+      ]);
+    },
+    selection() {
+      return this.$store.state.selectedEntity;
+    },
+  },
+  watch: {
+    selection() {
+      this.tmpEntity = this.getTmpEntity();
       this.focusStructureForm();
     },
-    methods: {
-      focusStructureForm() {
-        this.$nextTick(() => this.$refs.structureForm.focus());
-      },
-      applyStructureChange() {
-        this.$store.commit('modifySelectedEntity', this.tmpEntity);
-      },
-      resetStructureChange() {
-        this.tmpEntity = this.getTmpEntity();
-      },
-      getTmpEntity() {
-        return { ...this.$store.state.selectedEntity.entity };
-      },
-    },
-    computed: {
-      structureEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, [
-          'name',
-          'type',
-          'parentName',
-          'size',
-          'annotation',
-          'geometryStructureName',
-        ]);
-      },
-      selection() {
-        return this.$store.state.selectedEntity;
-      },
-    },
-    watch: {
-      selection() {
-        this.tmpEntity = this.getTmpEntity();
-        this.focusStructureForm();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .action-block {
-    padding-left: 100px;
-  }
+.action-block {
+  padding-left: 100px;
+}
 </style>

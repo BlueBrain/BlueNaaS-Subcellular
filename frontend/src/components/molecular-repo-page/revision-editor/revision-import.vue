@@ -44,68 +44,68 @@
 </template>
 
 <script>
-  import socket from '@/services/websocket';
+import socket from '@/services/websocket';
 
-  export default {
-    name: 'revision-import',
-    data() {
-      return {
-        branch: '',
-        revision: '',
-        branches: [],
-        revisions: [],
-        loading: {
-          branches: false,
-          revisions: false,
-        },
-        importing: false,
-      };
+export default {
+  name: 'revision-import',
+  data() {
+    return {
+      branch: '',
+      revision: '',
+      branches: [],
+      revisions: [],
+      loading: {
+        branches: false,
+        revisions: false,
+      },
+      importing: false,
+    };
+  },
+  async mounted() {
+    this.queryBranchNames();
+  },
+  methods: {
+    async queryBranchNames(searchStr) {
+      this.loading.branches = true;
+      const { branches } = await socket.request('query_branch_names', searchStr);
+      this.branches = branches;
+      this.loading.branches = false;
     },
-    async mounted() {
+    onBranchSelectOpenChange(opened) {
+      if (!opened) return;
+
       this.queryBranchNames();
     },
-    methods: {
-      async queryBranchNames(searchStr) {
-        this.loading.branches = true;
-        const { branches } = await socket.request('query_branch_names', searchStr);
-        this.branches = branches;
-        this.loading.branches = false;
-      },
-      onBranchSelectOpenChange(opened) {
-        if (!opened) return;
-
-        this.queryBranchNames();
-      },
-      onBranchSelect() {
-        this.queryRevisions();
-      },
-      onBranchQueryChange(queryStr) {
-        if (!queryStr) {
-          this.queryBranchNames();
-        }
-      },
-      async queryRevisions() {
-        if (!this.branch) return;
-
-        this.loading.revisions = true;
-        const { revisions } = await socket.request('query_revisions', this.branch);
-        this.revisions = revisions;
-        this.loading.revisions = false;
-      },
-      async importRevision() {
-        this.importing = true;
-        await this.$store.dispatch('importRevision', {
-          branch: this.branch,
-          revision: this.revision,
-        });
-        this.$Notice.success({
-          title: 'Import successfull',
-          desc: `Revision ${this.branch}:${this.revision}`,
-        });
-        this.branch = '';
-        this.revision = '';
-        this.importing = false;
-      },
+    onBranchSelect() {
+      this.queryRevisions();
     },
-  };
+    onBranchQueryChange(queryStr) {
+      if (!queryStr) {
+        this.queryBranchNames();
+      }
+    },
+    async queryRevisions() {
+      if (!this.branch) return;
+
+      this.loading.revisions = true;
+      const { revisions } = await socket.request('query_revisions', this.branch);
+      this.revisions = revisions;
+      this.loading.revisions = false;
+    },
+    async importRevision() {
+      this.importing = true;
+      await this.$store.dispatch('importRevision', {
+        branch: this.branch,
+        revision: this.revision,
+      });
+      this.$Notice.success({
+        title: 'Import successfull',
+        desc: `Revision ${this.branch}:${this.revision}`,
+      });
+      this.branch = '';
+      this.revision = '';
+      this.importing = false;
+    },
+  },
+};
 </script>

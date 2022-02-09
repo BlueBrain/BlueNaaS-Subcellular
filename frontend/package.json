@@ -126,8 +126,7 @@
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,
-    "trailingComma": "all",
-    "vueIndentScriptAndStyle": true
+    "trailingComma": "all"
   },
   "postcss": {
     "plugins": {

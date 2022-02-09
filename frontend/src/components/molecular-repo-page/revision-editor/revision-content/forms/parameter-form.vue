@@ -38,39 +38,39 @@
 </template>
 
 <script>
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue';
 
-  export default {
-    name: 'parameter-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'parameter-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      parameter: { ...this.value },
+    };
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus();
     },
-    data() {
-      return {
-        parameter: { ...this.value },
-      };
+    refresh() {
+      this.$refs.definitionInput.refresh();
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-      },
-      onDefinitionInputTab() {
-        this.$refs.descriptionInput.focus();
-      },
-      onChange() {
-        // TODO: add validation
-        this.parameter.valid = true;
-        this.$emit('input', this.parameter);
-      },
+    onDefinitionInputTab() {
+      this.$refs.descriptionInput.focus();
     },
-    watch: {
-      value() {
-        this.parameter = { ...this.value };
-      },
+    onChange() {
+      // TODO: add validation
+      this.parameter.valid = true;
+      this.$emit('input', this.parameter);
     },
-  };
+  },
+  watch: {
+    value() {
+      this.parameter = { ...this.value };
+    },
+  },
+};
 </script>

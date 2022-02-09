@@ -43,56 +43,56 @@
 </template>
 
 <script>
-  import constants from '@/constants';
+import constants from '@/constants';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue';
 
-  export default {
-    name: 'diffusion-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'diffusion-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      constants,
+      diffusion: { ...this.value },
+    };
+  },
+  methods: {
+    onDiffusionChange() {
+      this.diffusion.valid = this.isValid();
+      this.$emit('input', this.diffusion);
     },
-    data() {
-      return {
-        constants,
-        diffusion: { ...this.value },
-      };
+    isValid() {
+      return this.diffusion.name.trim() && this.diffusion.speciesDefinition;
     },
-    methods: {
-      onDiffusionChange() {
-        this.diffusion.valid = this.isValid();
-        this.$emit('input', this.diffusion);
-      },
-      isValid() {
-        return this.diffusion.name.trim() && this.diffusion.speciesDefinition;
-      },
-      onSpeciesDefinitionInputTab() {
-        this.$refs.diffusionConstantInput.focus();
-      },
-      onDiffusionConstantInputTab() {
-        this.$refs.annotationInput.focus();
-      },
-      onSubmit() {
-        this.$emit('on-submit');
-      },
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.speciesDefinitionInput.refresh();
-        this.$refs.diffusionConstantInput.refresh();
-      },
+    onSpeciesDefinitionInputTab() {
+      this.$refs.diffusionConstantInput.focus();
     },
-    computed: {
-      structures() {
-        return this.$store.state.model.structures;
-      },
+    onDiffusionConstantInputTab() {
+      this.$refs.annotationInput.focus();
     },
-    watch: {
-      value() {
-        this.diffusion = { ...this.value };
-      },
+    onSubmit() {
+      this.$emit('on-submit');
     },
-  };
+    focus() {
+      this.$refs.nameInput.focus();
+    },
+    refresh() {
+      this.$refs.speciesDefinitionInput.refresh();
+      this.$refs.diffusionConstantInput.refresh();
+    },
+  },
+  computed: {
+    structures() {
+      return this.$store.state.model.structures;
+    },
+  },
+  watch: {
+    value() {
+      this.diffusion = { ...this.value };
+    },
+  },
+};
 </script>

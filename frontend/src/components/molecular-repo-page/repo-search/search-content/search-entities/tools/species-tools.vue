@@ -15,52 +15,52 @@
 </template>
 
 <script>
-  export default {
-    name: 'species-tools',
-    data() {
-      return {
-        visibleConcSources: [],
-        sources: [],
-      };
+export default {
+  name: 'species-tools',
+  data() {
+    return {
+      visibleConcSources: [],
+      sources: [],
+    };
+  },
+  mounted() {
+    this.init();
+  },
+  methods: {
+    init() {
+      this.sources = this.globalConcSources.slice();
+      // by default show only first 5 concentrations
+      this.visibleConcSources = this.sources.slice(0, 5);
     },
-    mounted() {
+    onVisibleConcSourcesChange(sources) {
+      setTimeout(() => this.$store.commit('setRevisionQueryVisibleConcSources', sources), 40);
+    },
+  },
+  computed: {
+    globalConcSources() {
+      return this.$store.state.repoQueryConfig.concSources;
+    },
+  },
+  watch: {
+    globalConcSources() {
       this.init();
     },
-    methods: {
-      init() {
-        this.sources = this.globalConcSources.slice();
-        // by default show only first 5 concentrations
-        this.visibleConcSources = this.sources.slice(0, 5);
-      },
-      onVisibleConcSourcesChange(sources) {
-        setTimeout(() => this.$store.commit('setRevisionQueryVisibleConcSources', sources), 40);
-      },
-    },
-    computed: {
-      globalConcSources() {
-        return this.$store.state.repoQueryConfig.concSources;
-      },
-    },
-    watch: {
-      globalConcSources() {
-        this.init();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .source-container {
-    min-height: 160px;
-  }
+.source-container {
+  min-height: 160px;
+}
 
-  .conc-sources-select {
-    width: 420px;
-  }
+.conc-sources-select {
+  width: 420px;
+}
 
-  .visible-conc-label {
-    vertical-align: middle;
-    font-size: 14px;
-    line-height: 24px;
-  }
+.visible-conc-label {
+  vertical-align: middle;
+  font-size: 14px;
+  line-height: 24px;
+}
 </style>

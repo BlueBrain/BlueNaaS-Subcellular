@@ -27,62 +27,62 @@
 </template>
 
 <script>
-  import isEqualBy from '@/tools/is-equal-by';
+import isEqualBy from '@/tools/is-equal-by';
 
-  import DiffusionForm from '@/components/shared/entities/diffusion-form.vue';
+import DiffusionForm from '@/components/shared/entities/diffusion-form.vue';
 
-  export default {
-    name: 'diffusion-properties',
-    components: {
-      'diffusion-form': DiffusionForm,
+export default {
+  name: 'diffusion-properties',
+  components: {
+    'diffusion-form': DiffusionForm,
+  },
+  data() {
+    return {
+      tmpEntity: this.getTmpEntity(),
+    };
+  },
+  mounted() {
+    this.focusNameInput();
+  },
+  methods: {
+    focusNameInput() {
+      this.$nextTick(() => this.$refs.diffusionForm.focus());
     },
-    data() {
-      return {
-        tmpEntity: this.getTmpEntity(),
-      };
+    applyDiffusionChange() {
+      this.$store.commit('modifySelectedEntity', this.tmpEntity);
     },
-    mounted() {
+    resetDiffusionChange() {
+      this.tmpEntity = this.getTmpEntity();
+    },
+    getTmpEntity() {
+      return { ...this.$store.state.selectedEntity.entity };
+    },
+  },
+  computed: {
+    diffusionEdited() {
+      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+        'name',
+        'speciesDefinition',
+        'diffusionConstant',
+        'compartment',
+        'annotation',
+      ]);
+    },
+    selection() {
+      return this.$store.state.selectedEntity;
+    },
+  },
+  watch: {
+    selection() {
+      this.tmpEntity = this.getTmpEntity();
       this.focusNameInput();
     },
-    methods: {
-      focusNameInput() {
-        this.$nextTick(() => this.$refs.diffusionForm.focus());
-      },
-      applyDiffusionChange() {
-        this.$store.commit('modifySelectedEntity', this.tmpEntity);
-      },
-      resetDiffusionChange() {
-        this.tmpEntity = this.getTmpEntity();
-      },
-      getTmpEntity() {
-        return { ...this.$store.state.selectedEntity.entity };
-      },
-    },
-    computed: {
-      diffusionEdited() {
-        return !isEqualBy(this.selection.entity, this.tmpEntity, [
-          'name',
-          'speciesDefinition',
-          'diffusionConstant',
-          'compartment',
-          'annotation',
-        ]);
-      },
-      selection() {
-        return this.$store.state.selectedEntity;
-      },
-    },
-    watch: {
-      selection() {
-        this.tmpEntity = this.getTmpEntity();
-        this.focusNameInput();
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .action-block {
-    padding-left: 100px;
-  }
+.action-block {
+  padding-left: 100px;
+}
 </style>

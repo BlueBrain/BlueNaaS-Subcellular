@@ -97,335 +97,329 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex';
-  import get from 'lodash/get';
-  import pick from 'lodash/pick';
-  import cloneDeep from 'lodash/cloneDeep';
-  import { v4 as uuid } from 'uuid';
+import { mapState } from 'vuex';
+import get from 'lodash/get';
+import pick from 'lodash/pick';
+import cloneDeep from 'lodash/cloneDeep';
+import { v4 as uuid } from 'uuid';
 
-  import bus from '@/services/event-bus';
+import bus from '@/services/event-bus';
 
-  import SimulationForm from '@/components/shared/entities/simulation-form.vue';
-  import ResultViewer from '@/components/shared/sim/result-viewer.vue';
-  import SimLogViewer from '@/components/shared/sim-log-viewer.vue';
+import SimulationForm from '@/components/shared/entities/simulation-form.vue';
+import ResultViewer from '@/components/shared/sim/result-viewer.vue';
+import SimLogViewer from '@/components/shared/sim-log-viewer.vue';
 
-  import findUniqName from '@/tools/find-uniq-name';
-  import constants from '@/constants';
-  import objStrSearchFilter from '@/tools/obj-str-search-filter';
-  import blockHeightWoPadding from '@/tools/block-height-wo-padding';
+import findUniqName from '@/tools/find-uniq-name';
+import constants from '@/constants';
+import objStrSearchFilter from '@/tools/obj-str-search-filter';
+import blockHeightWoPadding from '@/tools/block-height-wo-padding';
 
-  const { SimStatus } = constants;
+const { SimStatus } = constants;
 
-  const searchProps = ['name'];
+const searchProps = ['name'];
 
-  const defaultSimulation = {
-    valid: false,
-    id: null,
-    userId: null,
-    modelId: null,
-    status: SimStatus.CREATED,
-    progress: null,
-    name: null,
-    solver: null,
-    solverConf: null,
-    annotation: '',
-  };
+const defaultSimulation = {
+  valid: false,
+  id: null,
+  userId: null,
+  modelId: null,
+  status: SimStatus.CREATED,
+  progress: null,
+  name: null,
+  solver: null,
+  solverConf: null,
+  annotation: '',
+};
 
-  const simulationStatus = {
-    [SimStatus.CREATED]: {
-      text: 'Created',
-      badgeStatus: 'default',
-    },
-    [SimStatus.READY_TO_RUN]: {
-      text: 'Ready to run',
-      badgeStatus: 'processing',
-    },
-    [SimStatus.QUEUED]: {
-      text: 'Queued',
-      badgeStatus: 'processing',
-    },
-    [SimStatus.INIT]: {
-      text: 'Sim init',
-      badgeStatus: 'processing',
-    },
-    [SimStatus.STARTED]: {
-      text: 'Started',
-      badgeStatus: 'processing',
-    },
-    [SimStatus.CANCELLED]: {
-      text: 'Cancelled',
-      badgeStatus: 'warning',
-    },
-    [SimStatus.ERROR]: {
-      text: 'Error',
-      badgeStatus: 'error',
-    },
-    [SimStatus.FINISHED]: {
-      text: 'Finished',
-      badgeStatus: 'success',
-    },
-  };
+const simulationStatus = {
+  [SimStatus.CREATED]: {
+    text: 'Created',
+    badgeStatus: 'default',
+  },
+  [SimStatus.READY_TO_RUN]: {
+    text: 'Ready to run',
+    badgeStatus: 'processing',
+  },
+  [SimStatus.QUEUED]: {
+    text: 'Queued',
+    badgeStatus: 'processing',
+  },
+  [SimStatus.INIT]: {
+    text: 'Sim init',
+    badgeStatus: 'processing',
+  },
+  [SimStatus.STARTED]: {
+    text: 'Started',
+    badgeStatus: 'processing',
+  },
+  [SimStatus.CANCELLED]: {
+    text: 'Cancelled',
+    badgeStatus: 'warning',
+  },
+  [SimStatus.ERROR]: {
+    text: 'Error',
+    badgeStatus: 'error',
+  },
+  [SimStatus.FINISHED]: {
+    text: 'Finished',
+    badgeStatus: 'success',
+  },
+};
 
-  export default {
-    name: 'simulations-component',
-    components: {
-      'simulation-form': SimulationForm,
-      'result-viewer': ResultViewer,
-      'sim-log-viewer': SimLogViewer,
-    },
-    data() {
-      return {
-        constants,
-        searchStr: '',
-        tableHeight: null,
-        simTraceViewerVisible: false,
-        simLogViewerVisible: false,
-        newSimulationModalVisible: false,
-        newSimulation: { ...defaultSimulation },
-        columns: [
-          {
-            title: 'Name',
-            key: 'name',
+export default {
+  name: 'simulations-component',
+  components: {
+    'simulation-form': SimulationForm,
+    'result-viewer': ResultViewer,
+    'sim-log-viewer': SimLogViewer,
+  },
+  data() {
+    return {
+      constants,
+      searchStr: '',
+      tableHeight: null,
+      simTraceViewerVisible: false,
+      simLogViewerVisible: false,
+      newSimulationModalVisible: false,
+      newSimulation: { ...defaultSimulation },
+      columns: [
+        {
+          title: 'Name',
+          key: 'name',
+        },
+        {
+          title: 'Solver',
+          key: 'solver',
+          maxWidth: 120,
+        },
+        {
+          title: 'max_dt',
+          maxWidth: 120,
+          render: (h, params) => h('span', params.row.solverConf.dt),
+        },
+        {
+          title: 't_end',
+          maxWidth: 120,
+          render: (h, params) => h('span', params.row.solverConf.tEnd),
+        },
+        {
+          title: 'Progress',
+          maxWidth: 240,
+          slot: 'progress',
+          render: (h, params) => {
+            const { progress, status } = params.row;
+
+            if (!progress) return h('span', '-');
+
+            let progressStatus;
+            switch (status) {
+              case SimStatus.STARTED:
+                progressStatus = 'active';
+                break;
+              case SimStatus.ERROR:
+                progressStatus = 'wrong';
+                break;
+              case SimStatus.FINISHED:
+                progressStatus = 'success';
+                break;
+              default:
+                progressStatus = 'normal';
+                break;
+            }
+
+            return h('Progress', {
+              props: {
+                percent: progress,
+                status: progressStatus,
+                'stroke-width': 5,
+              },
+            });
           },
-          {
-            title: 'Solver',
-            key: 'solver',
-            maxWidth: 120,
+        },
+        {
+          title: 'Status',
+          maxWidth: 132,
+          render: (h, params) => {
+            const statusObj = simulationStatus[params.row.status];
+            const tagParams = {
+              props: {
+                status: statusObj.badgeStatus,
+                text: statusObj.text,
+              },
+            };
+            return h('Badge', tagParams);
           },
-          {
-            title: 'max_dt',
-            maxWidth: 120,
-            render: (h, params) => h('span', params.row.solverConf.dt),
-          },
-          {
-            title: 't_end',
-            maxWidth: 120,
-            render: (h, params) => h('span', params.row.solverConf.tEnd),
-          },
-          {
-            title: 'Progress',
-            maxWidth: 240,
-            slot: 'progress',
-            render: (h, params) => {
-              const { progress, status } = params.row;
+        },
+        {
+          title: 'Annotation',
+          render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
+        },
+      ],
+    };
+  },
+  mounted() {
+    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
+    bus.$on('layoutChange', () => this.computeTableHeight());
+  },
+  beforeDestroy() {
+    bus.$off('layoutChange');
+  },
+  methods: {
+    addSimulation() {
+      this.resetNewSimulation();
+      this.showNewSimulationModal();
 
-              if (!progress) return h('span', '-');
-
-              let progressStatus;
-              switch (status) {
-                case SimStatus.STARTED:
-                  progressStatus = 'active';
-                  break;
-                case SimStatus.ERROR:
-                  progressStatus = 'wrong';
-                  break;
-                case SimStatus.FINISHED:
-                  progressStatus = 'success';
-                  break;
-                default:
-                  progressStatus = 'normal';
-                  break;
-              }
-
-              return h('Progress', {
-                props: {
-                  percent: progress,
-                  status: progressStatus,
-                  'stroke-width': 5,
-                },
-              });
-            },
-          },
-          {
-            title: 'Status',
-            maxWidth: 132,
-            render: (h, params) => {
-              const statusObj = simulationStatus[params.row.status];
-              const tagParams = {
-                props: {
-                  status: statusObj.badgeStatus,
-                  text: statusObj.text,
-                },
-              };
-              return h('Badge', tagParams);
-            },
-          },
-          {
-            title: 'Annotation',
-            render: (h, params) => h('span', get(params, 'row.annotation', '').split('\n')[0]),
-          },
-        ],
+      this.$nextTick(() => {
+        this.$refs.simulationForm.focus();
+      });
+    },
+    resetNewSimulation() {
+      this.newSimulation = {
+        ...cloneDeep(defaultSimulation),
+        valid: false,
+        id: uuid(),
+        userId: this.$store.state.user.id,
+        modelId: this.$store.state.model.id,
+        name: findUniqName(this.simulations, 'sim'),
       };
     },
-    mounted() {
-      this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0));
-      bus.$on('layoutChange', () => this.computeTableHeight());
+    showNewSimulationModal() {
+      this.newSimulationModalVisible = true;
     },
-    beforeDestroy() {
-      bus.$off('layoutChange');
+    hideNewSimulationModal() {
+      this.newSimulationModalVisible = false;
     },
-    methods: {
-      addSimulation() {
-        this.resetNewSimulation();
-        this.showNewSimulationModal();
+    removeSimulation() {
+      this.$store.dispatch('removeSelectedSimulation');
+    },
+    copySimulation() {
+      this.resetNewSimulation();
 
-        this.$nextTick(() => {
-          this.$refs.simulationForm.focus();
-        });
-      },
-      resetNewSimulation() {
-        this.newSimulation = {
-          ...cloneDeep(defaultSimulation),
-          valid: false,
+      const nameWOSuffixR = /^(.*?)(-\d*)?$/;
+      const prefixedName = this.selectedSimulation.name.includes('Copy of')
+        ? this.selectedSimulation.name
+        : `Copy of ${this.selectedSimulation.name}`;
+
+      const name = findUniqName(this.simulations, `${prefixedName.match(nameWOSuffixR)[1]}-`);
+
+      Object.assign(
+        this.newSimulation,
+        {
+          name,
           id: uuid(),
-          userId: this.$store.state.user.id,
-          modelId: this.$store.state.model.id,
-          name: findUniqName(this.simulations, 'sim'),
-        };
-      },
-      showNewSimulationModal() {
-        this.newSimulationModalVisible = true;
-      },
-      hideNewSimulationModal() {
-        this.newSimulationModalVisible = false;
-      },
-      removeSimulation() {
-        this.$store.dispatch('removeSelectedSimulation');
-      },
-      copySimulation() {
-        this.resetNewSimulation();
-
-        const nameWOSuffixR = /^(.*?)(-\d*)?$/;
-        const prefixedName = this.selectedSimulation.name.includes('Copy of')
-          ? this.selectedSimulation.name
-          : `Copy of ${this.selectedSimulation.name}`;
-
-        const name = findUniqName(this.simulations, `${prefixedName.match(nameWOSuffixR)[1]}-`);
-
-        Object.assign(
-          this.newSimulation,
-          {
-            name,
-            id: uuid(),
-            status: SimStatus.CREATED,
-          },
-          pick(this.selectedSimulation, [
-            'userId',
-            'modelId',
-            'solver',
-            'solverConf',
-            'annotation',
-          ]),
-        );
-        this.onOk();
-      },
-      onSimulationSelect(tableSimulation, index) {
-        const simulation = this.$store.state.model.simulations[index];
-        this.$store.commit('setEntitySelection', {
-          index,
-          type: 'simulation',
-          entity: simulation,
-        });
-      },
-      onOk() {
-        this.newSimulationModalVisible = false;
-        this.$store.dispatch('addSimulation', this.newSimulation);
-        this.$store.commit('setEntitySelection', {
-          index: this.filteredSimulations.length - 1,
-          type: 'simulation',
-          entity: this.newSimulation,
-        });
-      },
-      runSimulation() {
-        this.$store.dispatch('runSimulation', this.selectedSimulation);
-      },
-      cancelSimulation() {
-        this.$store.dispatch('cancelSimulation', this.selectedSimulation);
-      },
-      computeTableHeight() {
-        this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
-      },
-      showSimGraph() {
-        this.simTraceViewerVisible = true;
-      },
-      hideSimGraph() {
-        this.simTraceViewerVisible = false;
-      },
-      showSimLogs() {
-        this.simLogViewerVisible = true;
-      },
-      hideSimLogs() {
-        this.simLogViewerVisible = false;
-      },
+          status: SimStatus.CREATED,
+        },
+        pick(this.selectedSimulation, ['userId', 'modelId', 'solver', 'solverConf', 'annotation']),
+      );
+      this.onOk();
     },
-    computed: mapState({
-      simulations(state) {
-        return state.model.simulations.map((sim) => {
-          const solverConf = pick(sim.solverConf, ['tEnd', 'dt']);
-          const props = ['name', 'solver', 'nSteps', 'status', 'progress', 'annotation'];
-          const strippedSim = pick(sim, props);
-          return { ...strippedSim, ...{ solverConf } };
-        });
-      },
-      filteredSimulations() {
-        return this.simulations.filter((e) =>
-          objStrSearchFilter(this.searchStr, e, { include: searchProps }),
-        );
-      },
-      emptyTableText() {
-        return this.searchStr
-          ? 'No matching simulations'
-          : 'Create a simulation by using buttons below';
-      },
-      selectedSimulation(state) {
-        const selectedEntityType = get(state, 'selectedEntity.type');
-        return selectedEntityType === 'simulation' ? state.selectedEntity.entity : null;
-      },
-      runBtnAvailable() {
-        return get(this, 'selectedSimulation.status') === SimStatus.CREATED;
-      },
-      cancelBtnAvailable() {
-        const status = get(this, 'selectedSimulation.status', null);
-        return [SimStatus.QUEUED, SimStatus.STARTED].includes(status);
-      },
-      traceGraphBtnAvailable() {
-        if (!this.selectedSimulation) return false;
-        if (
-          [SimStatus.STARTED, SimStatus.FINISHED, SimStatus.CANCELLED].includes(
-            this.selectedSimulation.status,
-          )
+    onSimulationSelect(tableSimulation, index) {
+      const simulation = this.$store.state.model.simulations[index];
+      this.$store.commit('setEntitySelection', {
+        index,
+        type: 'simulation',
+        entity: simulation,
+      });
+    },
+    onOk() {
+      this.newSimulationModalVisible = false;
+      this.$store.dispatch('addSimulation', this.newSimulation);
+      this.$store.commit('setEntitySelection', {
+        index: this.filteredSimulations.length - 1,
+        type: 'simulation',
+        entity: this.newSimulation,
+      });
+    },
+    runSimulation() {
+      this.$store.dispatch('runSimulation', this.selectedSimulation);
+    },
+    cancelSimulation() {
+      this.$store.dispatch('cancelSimulation', this.selectedSimulation);
+    },
+    computeTableHeight() {
+      this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock);
+    },
+    showSimGraph() {
+      this.simTraceViewerVisible = true;
+    },
+    hideSimGraph() {
+      this.simTraceViewerVisible = false;
+    },
+    showSimLogs() {
+      this.simLogViewerVisible = true;
+    },
+    hideSimLogs() {
+      this.simLogViewerVisible = false;
+    },
+  },
+  computed: mapState({
+    simulations(state) {
+      return state.model.simulations.map((sim) => {
+        const solverConf = pick(sim.solverConf, ['tEnd', 'dt']);
+        const props = ['name', 'solver', 'nSteps', 'status', 'progress', 'annotation'];
+        const strippedSim = pick(sim, props);
+        return { ...strippedSim, ...{ solverConf } };
+      });
+    },
+    filteredSimulations() {
+      return this.simulations.filter((e) =>
+        objStrSearchFilter(this.searchStr, e, { include: searchProps }),
+      );
+    },
+    emptyTableText() {
+      return this.searchStr
+        ? 'No matching simulations'
+        : 'Create a simulation by using buttons below';
+    },
+    selectedSimulation(state) {
+      const selectedEntityType = get(state, 'selectedEntity.type');
+      return selectedEntityType === 'simulation' ? state.selectedEntity.entity : null;
+    },
+    runBtnAvailable() {
+      return get(this, 'selectedSimulation.status') === SimStatus.CREATED;
+    },
+    cancelBtnAvailable() {
+      const status = get(this, 'selectedSimulation.status', null);
+      return [SimStatus.QUEUED, SimStatus.STARTED].includes(status);
+    },
+    traceGraphBtnAvailable() {
+      if (!this.selectedSimulation) return false;
+      if (
+        [SimStatus.STARTED, SimStatus.FINISHED, SimStatus.CANCELLED].includes(
+          this.selectedSimulation.status,
         )
-          return true;
+      )
+        return true;
 
-        return false;
-      },
-      logBtnAvailable() {
-        return (
-          this.selectedSimulation &&
-          [
-            SimStatus.INIT,
-            SimStatus.STARTED,
-            SimStatus.CANCELLED,
-            SimStatus.ERROR,
-            SimStatus.FINISHED,
-          ].includes(this.selectedSimulation.status)
-        );
-      },
-    }),
-  };
+      return false;
+    },
+    logBtnAvailable() {
+      return (
+        this.selectedSimulation &&
+        [
+          SimStatus.INIT,
+          SimStatus.STARTED,
+          SimStatus.CANCELLED,
+          SimStatus.ERROR,
+          SimStatus.FINISHED,
+        ].includes(this.selectedSimulation.status)
+      );
+    },
+  }),
+};
 </script>
 
 <style lang="scss">
-  .modal-height-400 {
-    .ivu-modal-body {
-      height: 400px;
-      overflow-y: scroll;
-    }
+.modal-height-400 {
+  .ivu-modal-body {
+    height: 400px;
+    overflow-y: scroll;
   }
+}
 
-  .modal--no-padding {
-    .ivu-modal-body {
-      padding: 0;
-    }
+.modal--no-padding {
+  .ivu-modal-body {
+    padding: 0;
   }
+}
 </style>

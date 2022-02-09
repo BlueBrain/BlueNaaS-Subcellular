@@ -27,44 +27,44 @@
 </template>
 
 <script>
-  import constants from '@/constants';
+import constants from '@/constants';
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue';
 
-  export default {
-    name: 'molecule-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'molecule-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      constants,
+      molecule: { ...this.value },
+    };
+  },
+  methods: {
+    onMoleculeChange() {
+      this.molecule.valid = this.isValid();
+      this.$emit('input', this.molecule);
     },
-    data() {
-      return {
-        constants,
-        molecule: { ...this.value },
-      };
+    isValid() {
+      return this.molecule.name.trim() && this.molecule.definition;
     },
-    methods: {
-      onMoleculeChange() {
-        this.molecule.valid = this.isValid();
-        this.$emit('input', this.molecule);
-      },
-      isValid() {
-        return this.molecule.name.trim() && this.molecule.definition;
-      },
-      onDefinitionInputTab() {
-        this.$refs.annotationInput.focus();
-      },
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-      },
+    onDefinitionInputTab() {
+      this.$refs.annotationInput.focus();
     },
-    watch: {
-      value() {
-        this.molecule = { ...this.value };
-      },
+    focus() {
+      this.$refs.nameInput.focus();
     },
-  };
+    refresh() {
+      this.$refs.definitionInput.refresh();
+    },
+  },
+  watch: {
+    value() {
+      this.molecule = { ...this.value };
+    },
+  },
+};
 </script>

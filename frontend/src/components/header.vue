@@ -24,40 +24,40 @@
 </template>
 
 <script>
-  import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue';
+import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue';
 
-  export default {
-    name: 'header-component',
-    components: {
-      'user-profile-drawer': UserProfileDrawer,
+export default {
+  name: 'header-component',
+  components: {
+    'user-profile-drawer': UserProfileDrawer,
+  },
+  data() {
+    return {
+      userProfileVisible: false,
+    };
+  },
+  methods: {
+    showUserProfile() {
+      this.userProfileVisible = true;
     },
-    data() {
-      return {
-        userProfileVisible: false,
-      };
+  },
+  computed: {
+    modelName() {
+      return this.$store.state.model.name;
     },
-    methods: {
-      showUserProfile() {
-        this.userProfileVisible = true;
-      },
+    user() {
+      return this.$store.state.user;
     },
-    computed: {
-      modelName() {
-        return this.$store.state.model.name;
-      },
-      user() {
-        return this.$store.state.user;
-      },
-    },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .title {
-    display: inline-block;
-  }
-  .menu-item {
-    float: right;
-    cursor: pointer;
-  }
+.title {
+  display: inline-block;
+}
+.menu-item {
+  float: right;
+  cursor: pointer;
+}
 </style>
