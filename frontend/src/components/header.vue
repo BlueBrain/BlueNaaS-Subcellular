@@ -6,10 +6,7 @@
     </div>
 
     <div class="menu-item ml-12" style="marginleft: 10px">
-      <a
-        href="https://humanbrainproject.github.io/hbp-sp6-guidebook/online_usecases/subcellular_level/subcellular_app/subcellular_app.html"
-        target="_blank"
-      >
+      <a href="https://subcellular-bsp-epfl.apps.hbp.eu/docs/docs.html" target="_blank">
         <span style="color: white">Help and Documentation</span>
       </a>
     </div>

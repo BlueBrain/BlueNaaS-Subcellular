@@ -354,7 +354,7 @@ with umask():
 
 app = Application(
     [
-        ("/docs(.*)", StaticFileHandler, {"path": "docs", "default_filename": "docs.html"}),
+        ("/docs/(.*)", StaticFileHandler, {"path": "docs"}),
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
         ("/api/health", HealthHandler),
@@ -376,6 +376,7 @@ app = Application(
     websocket_max_message_size=100 * 1024 * 1024,
     ping_interval=30,
     ping_timeout=10,
+    static_path=os.path.join(os.path.dirname(__file__), "docs"),
 )
 
 L.debug("starting tornado io loop")
