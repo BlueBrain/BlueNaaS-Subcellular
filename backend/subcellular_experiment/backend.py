@@ -7,8 +7,7 @@ import signal
 
 import tornado.ioloop
 import tornado.websocket
-import tornado.web
-from tornado.web import StaticFileHandler
+from tornado.web import RequestHandler, Application, StaticFileHandler
 import sentry_sdk
 from sentry_sdk.integrations.tornado import TornadoIntegration
 
@@ -292,7 +291,46 @@ class SimRunnerWSHandler(WebSocketHandler):
             L.exception(e)
 
 
-class HealthHandler(tornado.web.RequestHandler):
+class ModelsHandler(RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        self.set_header(
+            "Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type"
+        )
+
+    async def get(self) -> None:
+        user_id = self.get_argument("user_id", "")
+        models = await db.db.models.find({"userId": user_id}).to_list(None)
+        self.write(json.dumps(models, cls=ExtendedJSONEncoder))
+
+    async def options(self) -> None:
+        self.set_status(204)
+        self.finish()
+
+    async def post(self) -> None:
+        data = tornado.escape.json_decode(self.request.body)
+        res = await db.db.models.update_one({"_id": data["id"]}, {"$set": data}, True)
+        id_ = str(getattr(res, "inserted_id", data["id"]))
+        self.write({"id": id_})
+
+
+class RunSimulationHandler(RequestHandler):
+    async def post(self) -> None:
+        data = tornado.escape.json_decode(self.request.body)
+        sim_conf = SimConfig(**data)
+        await sim_manager.schedule_sim(sim_conf)
+
+
+class GetSimTracesHandler(RequestHandler):
+    async def get(self) -> None:
+        sim_id = self.get_argument("sim_id")
+        traces = await db.get_sim_trace(sim_id)
+        self.write(json.dumps(traces, cls=ExtendedJSONEncoder))
+
+
+class HealthHandler(RequestHandler):
     def get(self) -> None:
         self.write("ok")
 
@@ -314,12 +352,12 @@ with umask():
         os.makedirs("/data/traces", 0o777)
 
 
-app = tornado.web.Application(
+app = Application(
     [
         ("/docs(.*)", StaticFileHandler, {"path": "docs", "default_filename": "docs.html"}),
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
-        ("/health", HealthHandler),
+        ("/api/health", HealthHandler),
         (
             "/data/spatial-traces/(.*)",
             StaticFileHandler,
@@ -330,6 +368,9 @@ app = tornado.web.Application(
             StaticFileHandler,
             {"path": "/data/traces"},
         ),
+        ("/api/run_sim", RunSimulationHandler),
+        ("/api/get_sim_traces", GetSimTracesHandler),
+        ("/api/models", ModelsHandler),
     ],
     debug=os.getenv("DEBUG", None) or False,
     websocket_max_message_size=100 * 1024 * 1024,

@@ -32,62 +32,57 @@
       />
     </FormItem>
     <FormItem label="Annotation">
-      <i-input
-        ref="annotationInput"
-        type="textarea"
-        v-model="reaction.annotation"
-        @input="onReactionChange"
-      />
+      <i-input ref="annotationInput" type="textarea" v-model="reaction.annotation" @input="onReactionChange" />
     </FormItem>
   </i-form>
 </template>
 
 <script>
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
-  export default {
-    name: 'reaction-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'reaction-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      reaction: { ...this.value },
+    }
+  },
+  methods: {
+    onReactionChange() {
+      this.reaction.valid = this.isValid()
+      this.$emit('input', this.reaction)
     },
-    data() {
-      return {
-        reaction: { ...this.value },
-      };
+    isValid() {
+      // TODO: add reaction validation
+      // TODO: add kr validation if reaction is bidirectional
+      return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf
     },
-    methods: {
-      onReactionChange() {
-        this.reaction.valid = this.isValid();
-        this.$emit('input', this.reaction);
-      },
-      isValid() {
-        // TODO: add reaction validation
-        // TODO: add kr validation if reaction is bidirectional
-        return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf;
-      },
-      onDefinitionInputTab() {
-        this.$refs.kfInput.focus();
-      },
-      onKfInputTab() {
-        this.$refs.krInput.focus();
-      },
-      onKrInputTab() {
-        this.$refs.annotationInput.focus();
-      },
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        this.$refs.kfInput.refresh();
-        this.$refs.krInput.refresh();
-      },
+    onDefinitionInputTab() {
+      this.$refs.kfInput.focus()
     },
-    watch: {
-      value() {
-        this.reaction = { ...this.value };
-      },
+    onKfInputTab() {
+      this.$refs.krInput.focus()
     },
-  };
+    onKrInputTab() {
+      this.$refs.annotationInput.focus()
+    },
+    focus() {
+      this.$refs.nameInput.focus()
+    },
+    refresh() {
+      this.$refs.definitionInput.refresh()
+      this.$refs.kfInput.refresh()
+      this.$refs.krInput.refresh()
+    },
+  },
+  watch: {
+    value() {
+      this.reaction = { ...this.value }
+    },
+  },
+}
 </script>

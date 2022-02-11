@@ -179,6 +179,10 @@ class Db:
         await self.db.simTraces.insert_one(sim_trace)
 
     @mongo_autoreconnect
+    async def get_sim_trace(self, sim_id: str) -> None:
+        return await self.db.simTraces.find({"simId": sim_id}).to_list(None)
+
+    @mongo_autoreconnect
     async def delete_sim_trace(self, simulation: SimId):
         await self.db.simTraces.delete_many({"simId": simulation.id})
 

@@ -43,13 +43,7 @@
       </FormItem>
 
       <FormItem prop="description" label="Description">
-        <i-input
-          type="textarea"
-          ref="descriptionInput"
-          autosize
-          v-model="reaction.description"
-          @input="onChange"
-        />
+        <i-input type="textarea" ref="descriptionInput" autosize v-model="reaction.description" @input="onChange" />
       </FormItem>
 
       <FormItem prop="comments" label="Comments">
@@ -60,47 +54,47 @@
 </template>
 
 <script>
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
-  export default {
-    name: 'reaction-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'reaction-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      reaction: { ...this.value },
+    }
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus()
     },
-    data() {
-      return {
-        reaction: { ...this.value },
-      };
+    refresh() {
+      this.$refs.definitionInput.refresh()
+      this.$refs.kfInput.refresh()
+      this.$refs.krInput.refresh()
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        this.$refs.kfInput.refresh();
-        this.$refs.krInput.refresh();
-      },
-      onDefinitionInputTab() {
-        this.$refs.kfInput.focus();
-      },
-      onKfInputTab() {
-        this.$refs.krInput.focus();
-      },
-      onKrInputTab() {
-        this.$refs.descriptionInput.focus();
-      },
-      onChange() {
-        // TODO: add validation
-        this.reaction.valid = true;
-        this.$emit('input', this.reaction);
-      },
+    onDefinitionInputTab() {
+      this.$refs.kfInput.focus()
     },
-    watch: {
-      value() {
-        this.reaction = { ...this.value };
-      },
+    onKfInputTab() {
+      this.$refs.krInput.focus()
     },
-  };
+    onKrInputTab() {
+      this.$refs.descriptionInput.focus()
+    },
+    onChange() {
+      // TODO: add validation
+      this.reaction.valid = true
+      this.$emit('input', this.reaction)
+    },
+  },
+  watch: {
+    value() {
+      this.reaction = { ...this.value }
+    },
+  },
+}
 </script>

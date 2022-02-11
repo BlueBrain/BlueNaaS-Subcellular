@@ -16,6 +16,7 @@
     "@types/plotly.js": "^1.54.2",
     "@types/uuid": "^8.3.0",
     "ajv": "^6.11.0",
+    "axios": "^0.23.0",
     "chroma-js": "^2.1.0",
     "codemirror": "^5.51.0",
     "core-js": "^3.6.4",
@@ -54,13 +55,10 @@
     "@vue/eslint-config-airbnb": "^5.0.2",
     "@vue/eslint-config-typescript": "^5.0.2",
     "babel-eslint": "^10.0.3",
-    "eslint": "7.2.0",
-    "eslint-config-airbnb-base": "14.2.0",
-    "eslint-config-prettier": "^6.15.0",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "15.0.0",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.21.2",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-vue": "^6.1.2",
+    "eslint-plugin-import": "^2.25.2",
     "prettier": "^2.1.2",
     "sass-loader": "^8.0.2",
     "typescript": "~3.9.3",
@@ -72,15 +70,9 @@
     ]
   },
   "eslintConfig": {
-    "env": {
-      "node": true
-    },
     "extends": [
-      "plugin:vue/essential",
-      "@vue/airbnb",
       "airbnb-base",
-      "prettier",
-      "@vue/typescript"
+      "airbnb-typescript/base"
     ],
     "rules": {
       "max-classes-per-file": "off",
@@ -123,10 +115,9 @@
     }
   },
   "prettier": {
-    "printWidth": 100,
+    "printWidth": 120,
     "singleQuote": true,
-    "trailingComma": "all",
-    "vueIndentScriptAndStyle": true
+    "semi": false
   },
   "postcss": {
     "plugins": {

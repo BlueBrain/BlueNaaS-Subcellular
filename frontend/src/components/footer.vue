@@ -3,13 +3,13 @@
 </template>
 
 <script>
-  export default {
-    name: 'footer-component',
-  };
+export default {
+  name: 'footer-component',
+}
 </script>
 
 <style lang="scss" scoped>
-  footer {
-    position: relative;
-  }
+footer {
+  position: relative;
+}
 </style>

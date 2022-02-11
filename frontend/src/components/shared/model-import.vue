@@ -20,88 +20,88 @@
 </template>
 
 <script>
-  const formatByExt = {
-    json: {
-      type: 'ebngl',
-      label: 'eBNGL',
-    },
-    ebngl: {
-      type: 'ebngl',
-      label: 'eBNGL',
-    },
-    bngl: {
-      type: 'bngl',
-      label: 'BNGL',
-    },
-    xml: {
-      type: 'sbml',
-      label: 'SBML',
-    },
-  };
+const formatByExt = {
+  json: {
+    type: 'ebngl',
+    label: 'eBNGL',
+  },
+  ebngl: {
+    type: 'ebngl',
+    label: 'eBNGL',
+  },
+  bngl: {
+    type: 'bngl',
+    label: 'BNGL',
+  },
+  xml: {
+    type: 'sbml',
+    label: 'SBML',
+  },
+}
 
-  export default {
-    name: 'model-import',
-    data() {
-      return {
-        allowedExtensions: Object.keys(formatByExt),
-        loading: false,
-      };
+export default {
+  name: 'model-import',
+  data() {
+    return {
+      allowedExtensions: Object.keys(formatByExt),
+      loading: false,
+    }
+  },
+  methods: {
+    beforeUpload(file) {
+      this.loading = true
+      this.modelName = file.name.split('.').slice(0, -1).join('.')
+
+      const fileExtNorm = file.name.split('.').slice(-1)[0].toLowerCase()
+
+      this.format = formatByExt[fileExtNorm]
+      const reader = new FileReader()
+      reader.onload = (e) => this.onFileRead(e.target.result)
+
+      // TODO: refactor
+      if (fileExtNorm === 'ebngl') {
+        reader.readAsArrayBuffer(file)
+      } else {
+        reader.readAsText(file)
+      }
+
+      // prevent default action to upload data to remote api
+      return false
     },
-    methods: {
-      beforeUpload(file) {
-        this.loading = true;
-        this.modelName = file.name.split('.').slice(0, -1).join('.');
-
-        const fileExtNorm = file.name.split('.').slice(-1)[0].toLowerCase();
-
-        this.format = formatByExt[fileExtNorm];
-        const reader = new FileReader();
-        reader.onload = (e) => this.onFileRead(e.target.result);
-
-        // TODO: refactor
-        if (fileExtNorm === 'ebngl') {
-          reader.readAsArrayBuffer(file);
-        } else {
-          reader.readAsText(file);
-        }
-
-        // prevent default action to upload data to remote api
-        return false;
-      },
-      onImportSuccess() {
-        this.$Notice.success({
-          title: 'Import success',
-          desc: `${this.format.label} model has been imported successfully`,
-        });
-        this.$emit('import-finish');
-      },
-      onImportError(err) {
-        this.$Notice.error({
-          title: 'Import error',
-          desc: err.message,
-        });
-      },
-      onFileRead(fileContent) {
-        const importModelPayload = {
-          fileContent,
-          modelName: this.modelName,
-          type: this.format.type,
-        };
-        this.$store
-          .dispatch('importModel', importModelPayload)
-          .then(() => this.onImportSuccess())
-          .catch((err) => this.onImportError(err))
-          .finally(() => {
-            this.loading = false;
-          });
-      },
+    onImportSuccess() {
+      this.$Notice.success({
+        title: 'Import success',
+        desc: `${this.format.label} model has been imported successfully`,
+      })
+      this.$emit('import-finish')
     },
-  };
+    onImportError(err) {
+      this.$Notice.error({
+        title: 'Import error',
+        desc: err.message,
+      })
+    },
+    onFileRead(fileContent) {
+      const importModelPayload = {
+        fileContent,
+        modelName: this.modelName,
+        type: this.format.type,
+      }
+      this.$store
+        .dispatch('importModel', importModelPayload)
+        .then(() => this.onImportSuccess())
+        .catch((err) => this.onImportError(err))
+        .finally(() => {
+          this.loading = false
+        })
+    },
+  },
+}
 </script>
 
 <style lang="scss" scoped>
-  .container {
-    padding: 12px;
-    padding-top: 20px;
-  }
+.container {
+  padding: 12px;
+  padding-top: 20px;
+}
 </style>

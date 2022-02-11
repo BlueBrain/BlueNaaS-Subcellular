@@ -37,48 +37,48 @@
 </template>
 
 <script>
-  import constants from '@/constants';
+import constants from '@/constants'
 
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import BnglInput from '@/components/shared/bngl-input.vue'
 
-  export default {
-    name: 'species-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'species-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      constants,
+      species: { ...this.value },
+    }
+  },
+  methods: {
+    onSpeciesChange() {
+      this.species.valid = this.isValid()
+      this.$emit('input', this.species)
     },
-    data() {
-      return {
-        constants,
-        species: { ...this.value },
-      };
+    isValid() {
+      return this.species.name.trim() && this.species.definition && this.species.concentration
     },
-    methods: {
-      onSpeciesChange() {
-        this.species.valid = this.isValid();
-        this.$emit('input', this.species);
-      },
-      isValid() {
-        return this.species.name.trim() && this.species.definition && this.species.concentration;
-      },
-      onDefinitionInputTab() {
-        this.$refs.concentrationInput.focus();
-      },
-      onConcentrationInputTab() {
-        this.$refs.annotationInput.focus();
-      },
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-        this.$refs.concentrationInput.refresh();
-      },
+    onDefinitionInputTab() {
+      this.$refs.concentrationInput.focus()
     },
-    watch: {
-      value() {
-        this.species = { ...this.value };
-      },
+    onConcentrationInputTab() {
+      this.$refs.annotationInput.focus()
     },
-  };
+    focus() {
+      this.$refs.nameInput.focus()
+    },
+    refresh() {
+      this.$refs.definitionInput.refresh()
+      this.$refs.concentrationInput.refresh()
+    },
+  },
+  watch: {
+    value() {
+      this.species = { ...this.value }
+    },
+  },
+}
 </script>

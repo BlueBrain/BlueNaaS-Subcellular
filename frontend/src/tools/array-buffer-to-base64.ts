@@ -1,11 +1,11 @@
 function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  const len = bytes.byteLength
   for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
+    binary += String.fromCharCode(bytes[i])
   }
-  return window.btoa(binary);
+  return window.btoa(binary)
 }
 
-export default arrayBufferToBase64;
+export default arrayBufferToBase64

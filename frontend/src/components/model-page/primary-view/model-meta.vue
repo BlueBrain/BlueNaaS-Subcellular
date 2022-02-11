@@ -10,9 +10,7 @@
         <i-input size="small" type="textarea" :rows="8" v-model="annotation" />
       </FormItem>
       <FormItem>
-        <i-button class="width-82" type="warning" disabled @click="clearModel">
-          Clear model
-        </i-button>
+        <i-button class="width-82" type="warning" disabled @click="clearModel"> Clear model </i-button>
         <i-button
           type="primary"
           class="ml-12 width-82"
@@ -38,91 +36,86 @@
       </FormItem>
     </i-form>
 
-    <Modal
-      title="Model import"
-      v-model="importModalVisible"
-      class-name="vertical-center-modal"
-      :footer-hide="true"
-    >
+    <Modal title="Model import" v-model="importModalVisible" class-name="vertical-center-modal" :footer-hide="true">
       <model-import @import-finish="onImportFinished" />
     </Modal>
   </div>
 </template>
 
 <script>
-  import ModelImport from '@/components/shared/model-import.vue';
+import ModelImport from '@/components/shared/model-import.vue'
 
-  export default {
-    name: 'model-meta',
-    components: {
-      'model-import': ModelImport,
+export default {
+  name: 'model-meta',
+  components: {
+    'model-import': ModelImport,
+  },
+  data() {
+    return {
+      importModalVisible: false,
+      saveInProgress: false,
+      saveBtnLabel: 'Save',
+    }
+  },
+  methods: {
+    clearModel() {
+      this.$store.dispatch('clearModel')
     },
-    data() {
-      return {
-        importModalVisible: false,
-        saveInProgress: false,
-        saveBtnLabel: 'Save',
-      };
+    saveModel() {
+      this.saveInProgress = true
+      this.saveBtnLabel = 'Saving'
+      this.$store.dispatch('saveModel')
+      setTimeout(() => {
+        this.saveBtnLabel = 'Saved!'
+      }, 300)
+      setTimeout(() => {
+        this.saveBtnLabel = 'Save'
+        this.saveInProgress = false
+      }, 1200)
     },
-    methods: {
-      clearModel() {
-        this.$store.dispatch('clearModel');
-      },
-      saveModel() {
-        this.saveInProgress = true;
-        this.saveBtnLabel = 'Saving';
-        this.$store.dispatch('saveModel');
-        setTimeout(() => {
-          this.saveBtnLabel = 'Saved!';
-        }, 300);
-        setTimeout(() => {
-          this.saveBtnLabel = 'Save';
-          this.saveInProgress = false;
-        }, 1200);
-      },
-      async exportModel(format) {
-        try {
-          await this.$store.dispatch('exportModel', format);
-        } catch (err) {
-          this.$Notice.error({
-            title: 'Export error',
-            desc: err.message,
-          });
-        }
-      },
-      showImportModal() {
-        this.importModalVisible = true;
-      },
-      onImportFinished() {
-        this.importModalVisible = false;
-      },
+    async exportModel(format) {
+      try {
+        await this.$store.dispatch('exportModel', format)
+      } catch (err) {
+        this.$Notice.error({
+          title: 'Export error',
+          desc: err.message,
+        })
+      }
     },
-    computed: {
-      name: {
-        get() {
-          return this.$store.state.model.name;
-        },
-        set(name) {
-          this.$store.commit('updateModelName', name);
-        },
+    showImportModal() {
+      this.importModalVisible = true
+    },
+    onImportFinished() {
+      this.importModalVisible = false
+    },
+  },
+  computed: {
+    name: {
+      get() {
+        return this.$store.state.model.name
       },
-      annotation: {
-        get() {
-          return this.$store.state.model.annotation;
-        },
-        set(annotation) {
-          this.$store.commit('updateModelAnnotation', annotation);
-        },
-      },
-      saveBtnAvailable() {
-        return !!this.name;
+      set(name) {
+        this.$store.commit('updateModelName', name)
       },
     },
-  };
+    annotation: {
+      get() {
+        return this.$store.state.model.annotation
+      },
+      set(annotation) {
+        this.$store.commit('updateModelAnnotation', annotation)
+      },
+    },
+    saveBtnAvailable() {
+      return !!this.name
+    },
+  },
+}
 </script>
 
 <style lang="scss" scoped>
-  .width-82 {
-    width: 82px;
-  }
+.width-82 {
+  width: 82px;
+}
 </style>

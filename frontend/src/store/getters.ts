@@ -7,39 +7,39 @@ const collectionNames = [
   'functions',
   'observables',
   'parameters',
-];
+]
 
 export default {
   queryResultVersions: (state) => {
-    if (!state.repoQueryResult) return [];
+    if (!state.repoQueryResult) return []
 
-    const versionMap = new Map();
+    const versionMap = new Map()
 
     collectionNames.forEach((collName) => {
       state.repoQueryResult[collName].forEach((entity) => {
-        const key = `${entity.branch}:${entity.rev}`;
+        const key = `${entity.branch}:${entity.rev}`
         if (!versionMap.has(key)) {
           const version = {
             key,
             branch: entity.branch,
             revision: entity.rev,
-          };
-          versionMap.set(key, version);
+          }
+          versionMap.set(key, version)
         }
-      });
-    });
+      })
+    })
 
-    return Array.from(versionMap.values());
+    return Array.from(versionMap.values())
   },
   revisionSources: (state) => {
-    const sourceSet = new Set();
+    const sourceSet = new Set()
 
     collectionNames.forEach((collName) => {
       state.revision[collName].forEach((entity) => {
-        sourceSet.add(entity.source);
-      });
-    });
+        sourceSet.add(entity.source)
+      })
+    })
 
-    return Array.from(sourceSet.values());
+    return Array.from(sourceSet.values())
   },
-};
+}

@@ -22,7 +22,7 @@ def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
     def log(message: str, source: Optional[str] = None):
         progress_cb(SimLogMessage(message=message, source=source))
 
-    bngl = model_to_bngl(sim_config["model"], write_xml_op=True)
+    bngl = sim_config["model_str"] or model_to_bngl(sim_config["model"], write_xml_op=True)
 
     solver_cfg = sim_config["solverConf"]
     t_end = solver_cfg["tEnd"]

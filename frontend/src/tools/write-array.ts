@@ -6,25 +6,20 @@
  * @param destinationIdx
  * @param length
  */
-function writeArray(
-  sourceArray: any[],
-  destinationArray: any[],
-  destinationIdx = 0,
-  length?: number,
-) {
-  const elementsToWrite = length || sourceArray.length;
+function writeArray(sourceArray: any[], destinationArray: any[], destinationIdx = 0, length?: number) {
+  const elementsToWrite = length || sourceArray.length
 
   if (length && length > sourceArray.length) {
-    throw new Error("Number of copied elements can't be more then source array length");
+    throw new Error("Number of copied elements can't be more then source array length")
   }
 
   if (elementsToWrite > destinationArray.length - destinationIdx) {
-    throw new Error('Destination array is too small to fit all copied elements');
+    throw new Error('Destination array is too small to fit all copied elements')
   }
 
   for (let i = 0; i < elementsToWrite; i += 1) {
-    destinationArray[destinationIdx + i] = sourceArray[i];
+    destinationArray[destinationIdx + i] = sourceArray[i]
   }
 }
 
-export default writeArray;
+export default writeArray

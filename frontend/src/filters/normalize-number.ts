@@ -6,17 +6,17 @@
  *   - round to 2 decimals
  */
 
-const locale = 'EN';
+const locale = 'EN'
 
 function roundToNDecimalPlaces(numberToRound, digits) {
-  const m = 10 ** digits;
-  return parseFloat((Math.round(numberToRound * m) / m).toFixed(digits));
+  const m = 10 ** digits
+  return parseFloat((Math.round(numberToRound * m) / m).toFixed(digits))
 }
 
 function normalizeNumber(val) {
-  if (typeof val !== 'number' || !Number.isFinite(val)) return val;
+  if (typeof val !== 'number' || !Number.isFinite(val)) return val
 
-  return roundToNDecimalPlaces(val, val > 100 ? 0 : 2).toLocaleString(locale);
+  return roundToNDecimalPlaces(val, val > 100 ? 0 : 2).toLocaleString(locale)
 }
 
-export default normalizeNumber;
+export default normalizeNumber

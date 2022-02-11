@@ -56,43 +56,43 @@
 </template>
 
 <script>
-  import constants from '@/constants';
-  import BnglInput from '@/components/shared/bngl-input.vue';
+import constants from '@/constants'
+import BnglInput from '@/components/shared/bngl-input.vue'
 
-  const { agentType } = constants;
+const { agentType } = constants
 
-  export default {
-    name: 'molecule-form',
-    props: ['value'],
-    components: {
-      'bngl-input': BnglInput,
+export default {
+  name: 'molecule-form',
+  props: ['value'],
+  components: {
+    'bngl-input': BnglInput,
+  },
+  data() {
+    return {
+      agentType,
+      molecule: { ...this.value },
+    }
+  },
+  methods: {
+    focus() {
+      this.$refs.nameInput.focus()
     },
-    data() {
-      return {
-        agentType,
-        molecule: { ...this.value },
-      };
+    refresh() {
+      this.$refs.definitionInput.refresh()
     },
-    methods: {
-      focus() {
-        this.$refs.nameInput.focus();
-      },
-      refresh() {
-        this.$refs.definitionInput.refresh();
-      },
-      onDefinitionInputTab() {
-        this.$refs.pubChemInput.focus();
-      },
-      onChange() {
-        // TODO: add validation
-        this.molecule.valid = true;
-        this.$emit('input', this.molecule);
-      },
+    onDefinitionInputTab() {
+      this.$refs.pubChemInput.focus()
     },
-    watch: {
-      value() {
-        this.molecule = { ...this.value };
-      },
+    onChange() {
+      // TODO: add validation
+      this.molecule.valid = true
+      this.$emit('input', this.molecule)
     },
-  };
+  },
+  watch: {
+    value() {
+      this.molecule = { ...this.value }
+    },
+  },
+}
 </script>
