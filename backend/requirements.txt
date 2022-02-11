@@ -9,7 +9,7 @@ sympy==1.5.1
 msgpack==0.6.2
 xlrd==1.2.0
 pydantic==1.6.1
-typing-extensions==3.7.4.3
+typing-extensions>=3.7.4.3
 wrapt==1.12.1
 sentry-sdk==0.19.5
 motor==2.3.0

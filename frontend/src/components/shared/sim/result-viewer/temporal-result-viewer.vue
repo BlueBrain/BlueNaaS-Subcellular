@@ -18,7 +18,6 @@ import Plotly from 'plotly.js-basic-dist'
 
 import { getTrace, subscribeTrace, unsubscribeTrace } from '@/services/sim-data-storage'
 import socket from '@/services/websocket'
-// eslint-disable-next-line
 import { SimTrace, Simulation } from '@/types'
 
 const layout: Plotly.Layout = {
