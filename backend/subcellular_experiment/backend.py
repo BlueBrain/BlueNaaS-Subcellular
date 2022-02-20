@@ -4,6 +4,7 @@ import asyncio
 from types import FrameType
 from typing import Union, Any, Optional
 import signal
+from uuid import uuid4
 
 import tornado.ioloop
 import tornado.websocket
@@ -135,13 +136,13 @@ class WSHandler(WebSocketHandler):
 
         if msg.cmd == "create_geometry":
             geometry_config = msg.data
-            geometry_db = await db.create_geometry(geometry_config)
-            geometry_id = str(geometry_db.inserted_id)
-            structure_sizes = create_geometry(geometry_id, geometry_config)
-            L.debug(f"new geometry {geometry_id} has been created")
+
+            id = str(uuid4())
+            structure_sizes = create_geometry(id, geometry_config)
+
             await self.send_message(
                 "geometry",
-                {"id": geometry_id, "structureSize": structure_sizes},
+                {"id": id, "structureSize": structure_sizes},
                 cmdid=msg.cmdid,
             )
 

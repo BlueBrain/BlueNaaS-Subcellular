@@ -77,7 +77,7 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
             return await wrapped(*args, **kwargs)
         except AutoReconnect:
             log_many("Mongodb retrying", L.info, capture_message)
-            await asyncio.sleep(2**i)
+            await asyncio.sleep(2 ** i)
     log_many("Can't connect to mongodb", L.error, capture_message)
 
 
@@ -128,20 +128,6 @@ class Db:
         await self.db.simLogs.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
 
         L.debug("Created db indexes")
-
-    @mongo_autoreconnect
-    async def create_geometry(self, geometry_config):
-        db_geometry = {
-            "name": geometry_config["name"],
-            "description": geometry_config["description"],
-            "meta": geometry_config["meta"],
-            "deleted": False,
-        }
-        return await self.db.geometries.insert_one(db_geometry)
-
-    @mongo_autoreconnect
-    async def get_geometry(self, geometry_id):
-        return await self.db.find_one({"id": geometry_id})
 
     @mongo_autoreconnect
     async def create_simulation(self, simulation: Simulation):
