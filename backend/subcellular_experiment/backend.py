@@ -137,8 +137,8 @@ class WSHandler(WebSocketHandler):
         if msg.cmd == "create_geometry":
             geometry_config = msg.data
 
-            id = str(uuid4())
-            structure_sizes = create_geometry(id, geometry_config)
+            id_ = str(uuid4())
+            structure_sizes = create_geometry(id_, geometry_config)
 
             await self.send_message(
                 "geometry",

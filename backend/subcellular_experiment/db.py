@@ -77,7 +77,7 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
             return await wrapped(*args, **kwargs)
         except AutoReconnect:
             log_many("Mongodb retrying", L.info, capture_message)
-            await asyncio.sleep(2 ** i)
+            await asyncio.sleep(2**i)
     log_many("Can't connect to mongodb", L.error, capture_message)
 
 
