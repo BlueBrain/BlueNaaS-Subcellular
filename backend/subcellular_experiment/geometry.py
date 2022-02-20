@@ -19,7 +19,7 @@ if not os.path.exists(GEOMETRY_ROOT_PATH):
     os.umask(umask)
 
 
-def create_geometry(id: str, geometry_config: dict) -> Dict[str, float]:
+def create_geometry(id_: str, geometry_config: dict) -> Dict[str, float]:
     meta = geometry_config["meta"]
     mesh_name_root = meta["meshNameRoot"]
 
