@@ -161,60 +161,6 @@ export default {
       model.geometry = await storage.getItem(`geometry:${model.geometry.id}`)
     }
 
-    if (model.geometry && model.geometry.nodes) {
-      console.info(`Transforming model ${model.name} to new format`)
-      // this is an old format of geometry, needs to be restructured
-      // TODO: remove this after 20.10.2019
-      model.geometry.parsed = true
-      model.geometry.initialized = false
-      const {
-        name,
-        annotation,
-        id,
-        scale,
-        structures,
-        meshNameRoot,
-        freeDiffusionBoundaries,
-        nodes,
-        faces,
-        elements,
-      } = model.geometry
-
-      const restructuredGeometry = {
-        name,
-        id,
-        parsed: true,
-        initialized: false,
-        description: annotation,
-        meta: {
-          scale,
-          structures,
-          meshNameRoot,
-          freeDiffusionBoundaries,
-        },
-        mesh: {
-          volume: {
-            nodes,
-            faces,
-            elements,
-          },
-          surface: {},
-        },
-      }
-
-      model.geometry = restructuredGeometry
-
-      const models = { ...state.dbModels }
-      const tmpModel = { ...model }
-      const geometryId = tmpModel.geometry.id
-      await storage.setItem(`geometry:${geometryId}`, tmpModel.geometry)
-      tmpModel.geometry = { id: geometryId }
-
-      models[tmpModel.name] = tmpModel
-      await storage.setItem('models', models)
-      commit('updateDbModels', { ...models })
-    }
-
     if (model.simulations) {
       model.simulations.forEach(modelTools.upgradeSimStimulation)
     }

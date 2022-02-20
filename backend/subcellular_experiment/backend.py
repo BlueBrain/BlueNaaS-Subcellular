@@ -130,6 +130,7 @@ class WSHandler(WebSocketHandler):
         if msg.cmd == "get_simulations":
             model_id = GetSimulations(**msg.data).modelId
             simulations = await db.get_simulations(self.user_id, model_id)
+
             await self.send_message("simulations", {"simulations": simulations}, cmdid=msg.cmdid)
 
         if msg.cmd == "create_geometry":

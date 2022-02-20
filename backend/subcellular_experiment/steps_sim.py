@@ -187,21 +187,10 @@ class StepsSim:
         with open(os.path.join(geometry_path, "geometry.json"), "r") as file:
             geometry = json.loads(file.read())
 
-        # restructure geometry.json if it has old format
-        # mesh files are written as read only, can't resave file with preper format
-        # TODO: find solution to restructure existing files
-        if "scale" in geometry:
-            geometry["meta"] = {
-                "scale": geometry["scale"],
-                "meshNameRoot": geometry["meshNameRoot"],
-                "structures": geometry["structures"],
-                "freeDiffusionBoundaries": geometry["freeDiffusionBoundaries"],
-            }
-
-            geometry.pop("scale", None)
-            geometry.pop("meshNameRoot", None)
-            geometry.pop("structures", None)
-            geometry.pop("freeDiffusionBoundaries", None)
+        if "scale" in geometry or not all(
+            field in geometry for field in ["meshNameRoot", "structures", "freeDifussionBoundaries"]
+        ):
+            raise ValueError("Invalid geometry file")
 
         geom_struct_dict = {
             structure["name"]: structure for structure in geometry["meta"]["structures"]

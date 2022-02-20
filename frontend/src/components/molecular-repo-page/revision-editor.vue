@@ -81,9 +81,7 @@ export default {
     userBranchesFilter(searchStr, branch) {
       return branch.toUpperCase().indexOf(searchStr.toUpperCase()) !== -1
     },
-    validateBranch() {
-      // TODO: validate if branch does not exist
-    },
+    
     async saveRevision() {
       this.saving = true
       const meta = await this.$store.dispatch('saveRevision')
