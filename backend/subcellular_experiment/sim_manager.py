@@ -141,9 +141,7 @@ class SimManager:
                 "userId": worker.sim_conf.userId,
                 "simId": worker.sim_conf.id,
             }
-            await self.send_message(
-                worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=msg.cmdid
-            )
+            await self.send_message(worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=msg.cmdid)
 
     async def schedule_sim(self, sim_conf: SimConfig) -> None:
         L.debug("scheduling a simulation")
@@ -167,11 +165,7 @@ class SimManager:
 
     async def request_tmp_sim_log(self, sim_id, cmdid):
         worker = next(
-            (
-                worker
-                for worker in self.workers
-                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
-            ),
+            (worker for worker in self.workers if worker.sim_conf is not None and worker.sim_conf.id == sim_id),
             None,
         )
 
@@ -180,11 +174,7 @@ class SimManager:
 
     async def request_tmp_sim_trace(self, sim_id, cmdid):
         worker = next(
-            (
-                worker
-                for worker in self.workers
-                if worker.sim_conf is not None and worker.sim_conf.id == sim_id
-            ),
+            (worker for worker in self.workers if worker.sim_conf is not None and worker.sim_conf.id == sim_id),
             None,
         )
 
@@ -193,11 +183,7 @@ class SimManager:
 
     async def cancel_sim(self, sim: SimId):
         queue_idx = next(
-            (
-                index
-                for (index, sim_conf) in enumerate(self.sim_conf_queue)
-                if sim_conf.id == sim.id
-            ),
+            (index for (index, sim_conf) in enumerate(self.sim_conf_queue) if sim_conf.id == sim.id),
             None,
         )
 
@@ -209,11 +195,7 @@ class SimManager:
             return
 
         worker = next(
-            (
-                worker
-                for worker in self.workers
-                if worker.sim_conf is not None and worker.sim_conf.id == sim.id
-            ),
+            (worker for worker in self.workers if worker.sim_conf is not None and worker.sim_conf.id == sim.id),
             None,
         )
 
@@ -224,9 +206,7 @@ class SimManager:
         L.debug("sending message to worker to cancel the sim")
         await worker.ws.send_message("cancel_sim")  # type: ignore
 
-    async def process_sim_status(
-        self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}
-    ) -> None:
+    async def process_sim_status(self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}) -> None:
         await self.db.update_simulation(
             UpdateSimulation(**{**context, "id": sim_id, "userId": user_id, "status": status})
         )
@@ -239,9 +219,7 @@ class SimManager:
             UpdateSimulation(**{**context, "id": sim_id, "userId": user_id, "progress": progress})
         )
 
-        await self.send_message(
-            user_id, "simProgress", {**context, "simId": sim_id, "progress": progress}
-        )
+        await self.send_message(user_id, "simProgress", {**context, "simId": sim_id, "progress": progress})
 
     async def process_sim_spatial_step_trace(
         self, sim_conf: SimConfig, spatial_step_trace: SimSpatialStepTrace
@@ -250,9 +228,7 @@ class SimManager:
 
         trace = spatial_step_trace.dict()
 
-        await self.db.create_sim_spatial_step_trace(
-            {**trace, "userId": user_id, "simId": sim_conf.id}
-        )
+        await self.db.create_sim_spatial_step_trace({**trace, "userId": user_id, "simId": sim_conf.id})
 
         with open(f"/data/spatial-traces/{sim_conf.id}.json", "a") as file:
             file.seek(0, os.SEEK_END)
@@ -302,9 +278,7 @@ class SimManager:
         if sim_trace.stream:
             await self.send_message(user_id, "simTrace", status_message)
 
-    async def send_sim_status(
-        self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}
-    ) -> None:
+    async def send_sim_status(self, user_id: str, sim_id: str, status: SimStatusLiteral, context={}) -> None:
         await self.send_message(
             user_id,
             "simStatus",

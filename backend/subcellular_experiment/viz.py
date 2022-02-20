@@ -56,9 +56,7 @@ def reactivity_network(model: dict):
         # color species with an initial condition differently
         if len([s for s in ic_species if s.is_equivalent_to(cp)]):
             color = "#aaffff"
-        graph["nodes"].append(
-            {"id": species_node, "label": label, "type": "rect", "style": {"fill": color}}
-        )
+        graph["nodes"].append({"id": species_node, "label": label, "type": "rect", "style": {"fill": color}})
 
     for i, reaction in enumerate(pysb_model.reactions_bidirectional):
         reaction_node = "r%d" % i

@@ -144,9 +144,7 @@ class NfSim:
             times_chunk = times[i : i + elements_per_chunk]
             values_chunk = values[i : i + elements_per_chunk].T
 
-            values_by_observable = {
-                observables[i]: values_chunk[i].tolist() for i in range(len(observables))
-            }
+            values_by_observable = {observables[i]: values_chunk[i].tolist() for i in range(len(observables))}
             self.send_progress(
                 SimTrace(
                     index=i,

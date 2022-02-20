@@ -161,9 +161,7 @@ class WSHandler(WebSocketHandler):
             model = ""
             error_msg = ""
             try:
-                model = get_exported_model(
-                    model_data.model.dict(exclude_none=True), model_data.format
-                )
+                model = get_exported_model(model_data.model.dict(exclude_none=True), model_data.format)
             except Exception as error:
                 L.warning("Model export error")
                 error_msg = error.args[0] if len(error.args) > 0 else "Model export error"
@@ -185,9 +183,7 @@ class WSHandler(WebSocketHandler):
             await self.send_message("from_sbml", sbml, cmdid=msg.cmdid)
 
         if msg.cmd == "revision_from_excel":
-            await self.send_message(
-                "revision_from_excel", revision_from_excel(msg.data), cmdid=msg.cmdid
-            )
+            await self.send_message("revision_from_excel", revision_from_excel(msg.data), cmdid=msg.cmdid)
 
         if msg.cmd == "query_molecular_repo":
             query = msg.data
@@ -221,9 +217,7 @@ class WSHandler(WebSocketHandler):
         if msg.cmd == "get_branch_latest_rev":
             branch = msg.data
             branch_latest_rev = await db.get_branch_latest_rev(branch)
-            await self.send_message(
-                "branch_latest_rev", {"rev": branch_latest_rev}, cmdid=msg.cmdid
-            )
+            await self.send_message("branch_latest_rev", {"rev": branch_latest_rev}, cmdid=msg.cmdid)
 
         if msg.cmd == "get_spatial_step_trace":
             sim_id = msg.data["simId"]
@@ -297,9 +291,7 @@ class ModelsHandler(RequestHandler):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-        self.set_header(
-            "Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type"
-        )
+        self.set_header("Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type")
 
     async def get(self) -> None:
         user_id = self.get_argument("user_id", "")

@@ -58,11 +58,7 @@ def get_def_molecule_ids(definition, db_entities):
 
     molecules = [entity for entity in db_entities if entity["entityType"] == "molecule"]
 
-    spec_mol_ids = [
-        mol["_id"]
-        for mol in molecules
-        if mol_def_r.search(mol["definition"]).groups()[0] in mol_def_set
-    ]
+    spec_mol_ids = [mol["_id"] for mol in molecules if mol_def_r.search(mol["definition"]).groups()[0] in mol_def_set]
 
     return spec_mol_ids
 
@@ -88,11 +84,7 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
 class Db:
     def __init__(self):
 
-        uri = (
-            f"mongodb://admin:{DB_PASSWORD}@{DB_HOST}:27017/"
-            if DB_PASSWORD
-            else f"mongodb://{DB_HOST}:27017/"
-        )
+        uri = f"mongodb://admin:{DB_PASSWORD}@{DB_HOST}:27017/" if DB_PASSWORD else f"mongodb://{DB_HOST}:27017/"
 
         self.mongo_client = AsyncIOMotorClient(uri)
         L.debug(uri)
@@ -133,9 +125,7 @@ class Db:
             background=True,
         )
 
-        await self.db.simLogs.create_index(
-            [("simId", pymongo.ASCENDING)], unique=True, background=True
-        )
+        await self.db.simLogs.create_index([("simId", pymongo.ASCENDING)], unique=True, background=True)
 
         L.debug("Created db indexes")
 
@@ -159,9 +149,7 @@ class Db:
 
     @mongo_autoreconnect
     async def get_simulations(self, user_id: str, model_id: str):
-        return await self.db.simulations.find(
-            {"userId": user_id, "modelId": model_id, "deleted": False}
-        ).to_list(None)
+        return await self.db.simulations.find({"userId": user_id, "modelId": model_id, "deleted": False}).to_list(None)
 
     @mongo_autoreconnect
     async def update_simulation(self, simulation: UpdateSimulation):
@@ -249,9 +237,7 @@ class Db:
         entity_q_type_set = set(query_dict["entityTypes"])
 
         mol_q_tokens = [token.strip() for token in mol_q_str.split("\n") if token.strip() != ""]
-        struct_q_tokens = [
-            token.strip() for token in struct_q_str.split("\n") if token.strip() != ""
-        ]
+        struct_q_tokens = [token.strip() for token in struct_q_str.split("\n") if token.strip() != ""]
 
         found_entities = []
 
@@ -262,11 +248,7 @@ class Db:
         for version in versions:
             branch = version["branch"]
             rev = version["revision"]
-            query_rev = (
-                rev
-                if rev != "latest"
-                else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
-            )
+            query_rev = rev if rev != "latest" else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
             rev_q.append({"branch": branch, "rev": query_rev})
 
         structure_q["$and"].append({"$or": rev_q})
@@ -331,14 +313,10 @@ class Db:
 
         # Filter out structures without species
         spec_structure_ids = [
-            entity_id
-            for spec in species
-            for entity_id in get_def_structure_ids(spec["definition"], structures)
+            entity_id for spec in species for entity_id in get_def_structure_ids(spec["definition"], structures)
         ]
 
-        structures_with_species = [
-            structure for structure in structures if structure["_id"] in spec_structure_ids
-        ]
+        structures_with_species = [structure for structure in structures if structure["_id"] in spec_structure_ids]
 
         found_entities += structures_with_species
 
@@ -364,11 +342,7 @@ class Db:
 
     @mongo_autoreconnect
     async def get_revision(self, branch, rev):
-        query_rev = (
-            rev
-            if rev != "latest"
-            else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
-        )
+        query_rev = rev if rev != "latest" else max(await self.db.repo.find({"branch": branch}).distinct("rev"))
         all_entities = await self.db.repo.find({"branch": branch, "rev": query_rev}).to_list(None)
         return revision_data_from_entity_list(all_entities)
 

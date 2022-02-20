@@ -21,9 +21,7 @@ def parse_unit(unit_definition: UnitDefinition) -> str:
 
 
 def parse_species(species: Species, model: Model) -> str:
-    compartment_by_id = {
-        compartment.getId(): compartment for compartment in model.getListOfCompartments()
-    }
+    compartment_by_id = {compartment.getId(): compartment for compartment in model.getListOfCompartments()}
 
     compartment = compartment_by_id.get(species.getCompartment())
 
@@ -47,8 +45,7 @@ def species_str(species_refs: List[SpeciesReference], model: Model):
     species_objs = (species_by_id[species_ref.getSpecies()] for species_ref in species_refs)
 
     return " + ".join(
-        f"{species.getName()}()@{compartment_name_by_id[species.getCompartment()]}"
-        for species in species_objs
+        f"{species.getName()}()@{compartment_name_by_id[species.getCompartment()]}" for species in species_objs
     )
 
 
@@ -65,15 +62,10 @@ def rate_laws(i: int, formula: str, model: Model):
         return f"rate_f{i}() TotalRate"
 
     parameter_name_by_id = {
-        parameter.getId(): parameter.getName().strip().replace(" ", "_")
-        for parameter in model.getListOfParameters()
+        parameter.getId(): parameter.getName().strip().replace(" ", "_") for parameter in model.getListOfParameters()
     }
 
-    return ", ".join(
-        parameter_name_by_id[id_]
-        for id_ in re.split("[-|+|*|/]", formula)
-        if id_ in parameter_name_by_id
-    )
+    return ", ".join(parameter_name_by_id[id_] for id_ in re.split("[-|+|*|/]", formula) if id_ in parameter_name_by_id)
 
 
 def sbml_to_bngl(xml: str):
@@ -102,9 +94,7 @@ def sbml_to_bngl(xml: str):
         compartment.getId(): compartment.getName() for compartment in model.getListOfCompartments()
     }
 
-    kinetic_law_formulas = (
-        reaction.getKineticLaw().getFormula() for reaction in model.getListOfReactions()
-    )
+    kinetic_law_formulas = (reaction.getKineticLaw().getFormula() for reaction in model.getListOfReactions())
 
     functions = "\n".join(
         f"rate_f{i}() = {formula}"
@@ -112,9 +102,7 @@ def sbml_to_bngl(xml: str):
         if is_non_standard_kinetic_law(formula)
     )
 
-    molecules = "\n".join(
-        f"{species.getName().strip().replace(' ', '_')}()" for species in model.getListOfSpecies()
-    )
+    molecules = "\n".join(f"{species.getName().strip().replace(' ', '_')}()" for species in model.getListOfSpecies())
 
     species = "\n".join(parse_species(species, model) for species in model.getListOfSpecies())
 

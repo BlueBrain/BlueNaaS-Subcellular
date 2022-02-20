@@ -47,9 +47,7 @@ def revision_from_excel(base64_encoded_xlsx_data):
     for sheet_name in REVISION_STRUCTURE:
         try:
             L.debug(f"reading {sheet_name} sheet")
-            sheet_data = pd.read_excel(
-                table_io, sheet_name=sheet_name, keep_default_na=False
-            ).to_dict(orient="records")
+            sheet_data = pd.read_excel(table_io, sheet_name=sheet_name, keep_default_na=False).to_dict(orient="records")
             L.debug(f"done reading {sheet_name} sheet")
 
             revision_data[sheet_name] = [
