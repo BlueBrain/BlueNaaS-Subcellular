@@ -50,6 +50,9 @@ export default Vue.extend({
       ],
     })
 
+    this.graph.minZoom(0.3)
+    this.graph.maxZoom(5)
+
     this.graph.on('scrollzoom dragpan', () => {
       const conf = this.config || { viewport: {}, nodes: {} }
       store.commit('setReactivityNetworkCfg', {
