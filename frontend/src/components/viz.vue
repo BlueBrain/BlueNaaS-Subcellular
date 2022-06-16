@@ -1,34 +1,19 @@
 <template>
-  <Split class="split-container p-12" v-model="split.vertical" min="200px" :max="0.4" @input="onLayoutChange">
-    <div slot="left">
-      <div slot="top">
-        <model-menu />
-      </div>
-      <div slot="bottom" class="pt-6">
-        <db-view />
-      </div>
-    </div>
-
-    <div slot="right">
-      <div class="p-12 h-100 o-scroll-y">
-        <h2>Visualizations</h2>
-        <Tabs>
-          <TabPane label="Contact Map" name="contact">
-            <contact-map />
-          </TabPane>
-          <TabPane label="Reactivity network" name="reactivity">
-            <reactivity-network />
-          </TabPane>
-        </Tabs>
-      </div>
-    </div>
-  </Split>
+  <div class="p-12 h-100 o-scroll-y">
+    <h2>Visualizations</h2>
+    <Tabs>
+      <TabPane label="Contact Map" name="contact">
+        <contact-map />
+      </TabPane>
+      <TabPane label="Reactivity network" name="reactivity">
+        <reactivity-network />
+      </TabPane>
+    </Tabs>
+  </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-
-import bus from '@/services/event-bus'
 import ModelMenu from './model-page/menu.vue'
 import DbView from './model-page/db.vue'
 import ContactMap from './contact-map.vue'
@@ -50,12 +35,6 @@ export default Vue.extend({
     'db-view': DbView,
     'contact-map': ContactMap,
     'reactivity-network': ReactivityNetwork,
-  },
-
-  methods: {
-    onLayoutChange() {
-      bus.$emit('layoutChange')
-    },
   },
 })
 </script>

@@ -1,42 +1,54 @@
 <template>
-  <div class="h-100 pos-relative o-hidden">
-    <div class="block-head">
-      <h3>Observables</h3>
-    </div>
+  <split selected-type="observabe">
+    <template v-slot:primary>
+      <div class="h-100 pos-relative o-hidden">
+        <div class="block-head">
+          <h3>Observables</h3>
+        </div>
 
-    <div class="block-main" ref="mainBlock">
-      <i-table
-        highlight-row
-        :no-data-text="emptyTableText"
-        :height="tableHeight"
-        :columns="columns"
-        :data="filteredEntities"
-        @on-row-click="onObservableSelect"
-      />
-    </div>
+        <div class="block-main" ref="mainBlock">
+          <i-table
+            highlight-row
+            :no-data-text="emptyTableText"
+            :height="tableHeight"
+            :columns="columns"
+            :data="filteredEntities"
+            @on-row-click="onObservableSelect"
+          />
+        </div>
 
-    <div class="block-footer">
-      <Row>
-        <i-col span="12">
-          <i-button type="primary" @click="addObservable"> New Observable </i-button>
-          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeObservable">
-            Delete
-          </i-button>
-        </i-col>
-        <i-col span="12">
-          <i-input search v-model="searchStr" placeholder="Search" />
-        </i-col>
-      </Row>
-    </div>
+        <div class="block-footer">
+          <Row>
+            <i-col span="12">
+              <i-button type="primary" @click="addObservable"> New Observable </i-button>
+              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeObservable">
+                Delete
+              </i-button>
+            </i-col>
+            <i-col span="12">
+              <i-input search v-model="searchStr" placeholder="Search" />
+            </i-col>
+          </Row>
+        </div>
 
-    <Modal v-model="newObservableModalVisible" title="New Reaction" class-name="vertical-center-modal" @on-ok="onOk">
-      <observable-form ref="observableForm" v-model="newObservable" />
-      <div slot="footer">
-        <i-button class="mr-6" type="text" @click="hideNewObservableModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!newObservable.valid" @click="onOk"> OK </i-button>
+        <Modal
+          v-model="newObservableModalVisible"
+          title="New Reaction"
+          class-name="vertical-center-modal"
+          @on-ok="onOk"
+        >
+          <observable-form ref="observableForm" v-model="newObservable" />
+          <div slot="footer">
+            <i-button class="mr-6" type="text" @click="hideNewObservableModal"> Cancel </i-button>
+            <i-button type="primary" :disabled="!newObservable.valid" @click="onOk"> OK </i-button>
+          </div>
+        </Modal>
       </div>
-    </Modal>
-  </div>
+    </template>
+    <template v-slot:secondary>
+      <properties />
+    </template>
+  </split>
 </template>
 
 <script>
@@ -47,6 +59,8 @@ import bus from '@/services/event-bus'
 
 import BnglText from '@/components/shared/bngl-text.vue'
 import ObservableForm from '@/components/shared/entities/observable-form.vue'
+import Split from '@/components/split.vue'
+import Properties from '@/components/model-page/secondary-view/observable-properties.vue'
 
 import findUniqName from '@/tools/find-uniq-name'
 import objStrSearchFilter from '@/tools/obj-str-search-filter'
@@ -64,6 +78,8 @@ const searchProps = ['name', 'definition']
 export default {
   name: 'observables-component',
   components: {
+    split: Split,
+    properties: Properties,
     'observable-form': ObservableForm,
   },
   data() {
@@ -96,10 +112,11 @@ export default {
     }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
+    window.clearTimeout(this.timeoutId)
     bus.$off('layoutChange')
   },
   methods: {

@@ -142,7 +142,7 @@ class WSHandler(WebSocketHandler):
 
             await self.send_message(
                 "geometry",
-                {"id": id, "structureSize": structure_sizes},
+                {"id": id_, "structureSize": structure_sizes},
                 cmdid=msg.cmdid,
             )
 
@@ -348,7 +348,6 @@ with umask():
 
 app = Application(
     [
-        ("/docs/(.*)", StaticFileHandler, {"path": "docs"}),
         ("/ws", WSHandler),
         ("/sim", SimRunnerWSHandler),
         ("/api/health", HealthHandler),
@@ -370,8 +369,10 @@ app = Application(
     websocket_max_message_size=100 * 1024 * 1024,
     ping_interval=30,
     ping_timeout=10,
-    static_path=os.path.join(os.path.dirname(__file__), "docs"),
+    static_path=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "docs")),
 )
+
+print(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "docs")))
 
 L.debug("starting tornado io loop")
 app.listen(8000)

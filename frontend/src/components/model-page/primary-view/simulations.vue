@@ -1,78 +1,85 @@
 <template>
-  <div class="h-100 pos-relative o-hidden">
-    <div class="block-head">
-      <h3>Simulations</h3>
-    </div>
+  <split selected-type="simulation">
+    <template v-slot:primary>
+      <div class="h-100 pos-relative o-hidden">
+        <div class="block-head">
+          <h3>Simulations</h3>
+        </div>
 
-    <div class="block-main" ref="mainBlock">
-      <i-table
-        ref="table"
-        highlight-row
-        :no-data-text="emptyTableText"
-        :height="tableHeight"
-        :columns="columns"
-        :data="filteredSimulations"
-        @on-row-click="onSimulationSelect"
-      />
-    </div>
+        <div class="block-main" ref="mainBlock">
+          <i-table
+            ref="table"
+            highlight-row
+            :no-data-text="emptyTableText"
+            :height="tableHeight"
+            :columns="columns"
+            :data="filteredSimulations"
+            @on-row-click="onSimulationSelect"
+          />
+        </div>
 
-    <div class="block-footer">
-      <Row>
-        <i-col span="12">
-          <i-button type="primary" @click="addSimulation"> New Simulation </i-button>
-          <i-button class="ml-12" type="default" :disabled="!selectedSimulation" @click="copySimulation">
-            Copy
-          </i-button>
-          <i-button class="ml-24 mr-24" type="warning" :disabled="!selectedSimulation" @click="removeSimulation">
-            Delete
-          </i-button>
+        <div class="block-footer">
+          <Row>
+            <i-col span="12">
+              <i-button type="primary" @click="addSimulation"> New Simulation </i-button>
+              <i-button class="ml-12" type="default" :disabled="!selectedSimulation" @click="copySimulation">
+                Copy
+              </i-button>
+              <i-button class="ml-24 mr-24" type="warning" :disabled="!selectedSimulation" @click="removeSimulation">
+                Delete
+              </i-button>
 
-          <ButtonGroup class="mr-24">
-            <i-button type="primary" :disabled="!runBtnAvailable" @click="runSimulation"> Run </i-button>
-            <i-button type="default" :disabled="!cancelBtnAvailable" @click="cancelSimulation"> Stop </i-button>
-          </ButtonGroup>
+              <ButtonGroup class="mr-24">
+                <i-button type="primary" :disabled="!runBtnAvailable" @click="runSimulation"> Run </i-button>
+                <i-button type="default" :disabled="!cancelBtnAvailable" @click="cancelSimulation"> Stop </i-button>
+              </ButtonGroup>
 
-          <ButtonGroup>
-            <i-button type="primary" :disabled="!traceGraphBtnAvailable" @click="showSimGraph"> Graph </i-button>
-            <i-button :disabled="!logBtnAvailable" @click="showSimLogs"> Log </i-button>
-          </ButtonGroup>
-        </i-col>
+              <ButtonGroup>
+                <i-button type="primary" :disabled="!traceGraphBtnAvailable" @click="showSimGraph"> Graph </i-button>
+                <i-button :disabled="!logBtnAvailable" @click="showSimLogs"> Log </i-button>
+              </ButtonGroup>
+            </i-col>
 
-        <i-col span="12">
-          <i-input search v-model="searchStr" placeholder="Search" />
-        </i-col>
-      </Row>
-    </div>
+            <i-col span="12">
+              <i-input search v-model="searchStr" placeholder="Search" />
+            </i-col>
+          </Row>
+        </div>
 
-    <Modal
-      v-model="newSimulationModalVisible"
-      title="New Simulation"
-      width="800"
-      class-name="vertical-center-modal modal-height-400"
-      @on-ok="onOk"
-    >
-      <simulation-form ref="simulationForm" v-model="newSimulation" />
-      <div slot="footer">
-        <i-button class="mr-6" type="text" @click="hideNewSimulationModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!newSimulation.valid" @click="onOk"> OK </i-button>
+        <Modal
+          v-model="newSimulationModalVisible"
+          title="New Simulation"
+          width="800"
+          class-name="vertical-center-modal modal-height-400"
+          @on-ok="onOk"
+        >
+          <simulation-form ref="simulationForm" v-model="newSimulation" />
+          <div slot="footer">
+            <i-button class="mr-6" type="text" @click="hideNewSimulationModal"> Cancel </i-button>
+            <i-button type="primary" :disabled="!newSimulation.valid" @click="onOk"> OK </i-button>
+          </div>
+        </Modal>
+
+        <Modal title="Simulation result" v-model="simTraceViewerVisible" fullscreen class="modal--no-padding">
+          <result-viewer v-if="simTraceViewerVisible" :sim-id="selectedSimulation.id" />
+
+          <div slot="footer">
+            <i-button class="wide-button" type="primary" @click="hideSimGraph"> OK </i-button>
+          </div>
+        </Modal>
+
+        <Modal title="Simulation logs" v-model="simLogViewerVisible" fullscreen>
+          <sim-log-viewer v-if="simLogViewerVisible" :sim-id="selectedSimulation.id" />
+          <div slot="footer">
+            <i-button class="wide-button" type="primary" @click="hideSimLogs"> OK </i-button>
+          </div>
+        </Modal>
       </div>
-    </Modal>
-
-    <Modal title="Simulation result" v-model="simTraceViewerVisible" fullscreen class="modal--no-padding">
-      <result-viewer v-if="simTraceViewerVisible" :sim-id="selectedSimulation.id" />
-
-      <div slot="footer">
-        <i-button class="wide-button" type="primary" @click="hideSimGraph"> OK </i-button>
-      </div>
-    </Modal>
-
-    <Modal title="Simulation logs" v-model="simLogViewerVisible" fullscreen>
-      <sim-log-viewer v-if="simLogViewerVisible" :sim-id="selectedSimulation.id" />
-      <div slot="footer">
-        <i-button class="wide-button" type="primary" @click="hideSimLogs"> OK </i-button>
-      </div>
-    </Modal>
-  </div>
+    </template>
+    <template v-slot:secondary>
+      <properties />
+    </template>
+  </split>
 </template>
 
 <script lang="ts">
@@ -84,6 +91,8 @@ import cloneDeep from 'lodash/cloneDeep'
 import { v4 as uuid } from 'uuid'
 
 import bus from '@/services/event-bus'
+import Split from '@/components/split.vue'
+import Properties from '@/components/model-page/secondary-view/simulation-properties.vue'
 
 import SimulationForm from '@/components/shared/entities/simulation-form.vue'
 import ResultViewer from '@/components/shared/sim/result-viewer.vue'
@@ -150,6 +159,8 @@ const simulationStatus = {
 export default Vue.extend({
   name: 'simulations-component',
   components: {
+    split: Split,
+    properties: Properties,
     'simulation-form': SimulationForm,
     'result-viewer': ResultViewer,
     'sim-log-viewer': SimLogViewer,
@@ -239,10 +250,11 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
+    window.clearTimeout(this.timeoutId)
     bus.$off('layoutChange')
   },
   methods: {

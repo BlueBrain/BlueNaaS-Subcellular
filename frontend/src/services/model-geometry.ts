@@ -1,30 +1,12 @@
 //@ts-nocheck
-import get from 'lodash/get'
-import webWorker from 'simple-web-worker'
+import { uniq } from 'lodash'
 
-import writeArray from '@/tools/write-array'
-
-/**
- * Get array representation of a particular type
- *
- * @param {Array} array
- * @param {Function} TypedArrayCtor
- */
-function getFlatTypedArray(array, TypedArrayCtor) {
-  return array instanceof TypedArrayCtor ? array : TypedArrayCtor.from(array.flat())
-}
-
-/**
- * Parse TetGen text based file
- *
- * @param {String} fileContent
- */
-function parseTetGenFileSync(fileContent) {
+function parseTetGenFile(fileContent: string) {
   const NUMBER_R = /[\d.-]+/g
 
-  const parseLine = (line) => line.match(NUMBER_R).map(parseFloat)
+  const parseLine = (line: string) => line.match(NUMBER_R).map(parseFloat)
 
-  const parsed = []
+  const parsed: number[][] = []
   let currentIdx = 0
   let nextNewLineIdx = fileContent.indexOf('\n', currentIdx)
 
@@ -45,146 +27,51 @@ function parseTetGenFileSync(fileContent) {
   return parsed
 }
 
-/**
- * Parse TetGen text based file using WebWorker
- *
- * @param {String} fileContent
- */
-function parseTetGenFile(fileContent) {
-  return webWorker.run(parseTetGenFileSync, [fileContent])
-}
-
-class GeometryCompartment {
-  type = 'compartment'
-
-  constructor(name, tetIdxs) {
-    this.name = name
-    this.tetIdxs = tetIdxs
-  }
-}
-
-function generateCompartmentSurfaceMeshSync(volMesh, compartment) {
-  function getElementByIdx(idx) {
-    return [
-      volMesh.elements[idx * 4],
-      volMesh.elements[idx * 4 + 1],
-      volMesh.elements[idx * 4 + 2],
-      volMesh.elements[idx * 4 + 3],
-    ]
-  }
-
-  function getNodeByIdx(idx) {
-    return [volMesh.nodes[idx * 3], volMesh.nodes[idx * 3 + 1], volMesh.nodes[idx * 3 + 2]]
-  }
-
+function generateCompartmentSurfaceMesh(volMesh, compartment) {
   const vertexMap = new Map()
+  const tets: number[][] = compartment.tetIdxs.map((elIdx) => volMesh.elements[elIdx])
 
-  const tets = compartment.tetIdxs.map((elIdx) => getElementByIdx(elIdx))
-
-  tets.forEach((tet) => {
+  for (const tet of tets) {
     const vert1 = tet[0]
     const vert2 = tet[1]
     const vert3 = tet[2]
     const vert4 = tet[3]
-    ;[
+
+    const vertCombos = [
       [vert1, vert3, vert2],
       [vert2, vert3, vert4],
       [vert1, vert2, vert4],
       [vert1, vert4, vert3],
-    ].forEach((tri) => {
-      const key = tri.slice().sort().join('_')
+    ]
 
+    for (const vert of vertCombos) {
+      const key = [...vert].sort().join('_')
       if (vertexMap.has(key)) {
         vertexMap.delete(key)
       } else {
-        vertexMap.set(key, tri)
+        vertexMap.set(key, vert)
       }
-    })
-  })
+    }
+  }
 
   const surfTris = Array.from(vertexMap.values())
+  const surfVertices = uniq(surfTris.flat())
 
-  const vertexSet = new Set()
-  surfTris.forEach((vertices) => vertices.forEach((vertex) => vertexSet.add(vertex)))
-  const surfVertices = Array.from(vertexSet)
+  const surfVertexIdxMap = new Map(surfVertices.map((v, i) => [v, i]))
 
-  const surfVertexIdxMap = new Map()
-  surfVertices.forEach((v, idx) => {
-    surfVertexIdxMap[v] = idx
-  })
-
-  const mesh = {
-    vertices: [],
-    faces: [],
+  return {
+    vertices: surfVertices.map((i) => volMesh.nodes[i]),
+    faces: surfTris.map((tri: number[][]) => tri.map((triIdx) => surfVertexIdxMap.get(triIdx))),
   }
-
-  surfVertices.forEach((nodeIdx) => {
-    const coords = getNodeByIdx(nodeIdx)
-    mesh.vertices.push(coords)
-  })
-
-  surfTris.forEach((tris) => {
-    const face = tris.map((triIdx) => surfVertexIdxMap[triIdx])
-    mesh.faces.push(face)
-  })
-
-  return mesh
 }
 
-function generateCompartmentSurfaceMesh(volMesh, compartment) {
-  return webWorker.run(generateCompartmentSurfaceMeshSync, [volMesh, compartment])
-}
+function generateMembraneSurfaceMesh(volMesh, { triIdxs }) {
+  const vertexIdxs = uniq(triIdxs.map((triIdx) => volMesh.faces[triIdx]).flat())
+  const vertexIdxMap = new Map(vertexIdxs.map((vi, i) => [vi, i]))
 
-function generateMembraneSurfaceMeshSync(volMesh, compartment) {
-  function getFaceByIdx(idx) {
-    return [volMesh.faces[idx * 3], volMesh.faces[idx * 3 + 1], volMesh.faces[idx * 3 + 2]]
-  }
-
-  function getNodeByIdx(idx) {
-    return [volMesh.nodes[idx * 3], volMesh.nodes[idx * 3 + 1], volMesh.nodes[idx * 3 + 2]]
-  }
-
-  const { triIdxs } = compartment
-
-  const vertexIdxSet = new Set()
-  triIdxs.forEach((triIdx) => {
-    getFaceByIdx(triIdx).forEach((vertexIdx) => vertexIdxSet.add(vertexIdx))
-  })
-
-  const vertexIdxs = Array.from(vertexIdxSet)
-  const vertexIdxMap = vertexIdxs.reduce((acc, vertexIdx, idx) => {
-    acc[vertexIdx] = idx
-    return acc
-  }, {})
-
-  const mesh = {
-    vertices: [],
-    faces: [],
-  }
-
-  vertexIdxs.forEach((vertexIdx) => {
-    const coords = getNodeByIdx(vertexIdx)
-    mesh.vertices.push(coords)
-  })
-
-  triIdxs.forEach((triIdx) => {
-    const faceReindexedVertexIdxs = getFaceByIdx(triIdx).map((vertexIdx) => vertexIdxMap[vertexIdx])
-    mesh.faces.push(faceReindexedVertexIdxs)
-  })
-
-  return mesh
-}
-
-function generateMembraneSurfaceMesh(volMesh, compartment) {
-  return webWorker.run(generateMembraneSurfaceMeshSync, [volMesh, compartment])
-}
-
-class GeometryMembrane {
-  type = 'membrane'
-
-  constructor(name, triIdxs) {
-    this.name = name
-    this.triIdxs = triIdxs
+  return {
+    vertices: vertexIdxs.map((vi) => volMesh.nodes[vi]),
+    faces: triIdxs.map((triIdx) => volMesh.faces[triIdx].map((vertexIdx) => vertexIdxMap.get(vertexIdx))),
   }
 }
 
@@ -221,34 +108,16 @@ class ModelGeometry {
 
   static from(modelGeometrySrc) {
     const modelGeometry = new ModelGeometry()
-    const { name, id, description, initialized, meta, mesh } = modelGeometrySrc
+    const { name, id, description, meta, mesh } = modelGeometrySrc
+
     Object.assign(modelGeometry, {
       name,
       id,
       description,
-      initialized,
+      initialized: true,
       meta,
+      mesh,
     })
-
-    modelGeometry.mesh.volume.raw = Object.freeze(mesh.volume.raw)
-
-    const srcNodes = get(mesh, 'volume.nodes', [])
-    modelGeometry.mesh.volume.nodes = getFlatTypedArray(srcNodes, Float64Array)
-
-    const srcFaces = get(mesh, 'volume.faces', [])
-    modelGeometry.mesh.volume.faces = getFlatTypedArray(srcFaces, Uint32Array)
-
-    const srcElements = get(mesh, 'volume.elements', [])
-    modelGeometry.mesh.volume.elements = getFlatTypedArray(srcElements, Uint32Array)
-
-    modelGeometry.mesh.surface = Object.entries(get(mesh, 'surface', {})).reduce(
-      (acc, [structName, structMesh]) => ({
-        ...acc,
-        ...{ [structName]: Object.freeze(structMesh) },
-      }),
-      {}
-    )
-
     return modelGeometry
   }
 
@@ -288,13 +157,9 @@ class ModelGeometry {
       await this.parseTetGen()
     }
 
-    if (removeRawMesh) this.removeRawMesh()
+    if (removeRawMesh) delete this.mesh.volume.raw
 
-    await this.generateSurfaceMeshes()
-  }
-
-  removeRawMesh() {
-    delete this.mesh.volume.raw
+    this.generateSurfaceMeshes()
   }
 
   async addTetGenMesh({ nodes, faces, elements }) {
@@ -311,27 +176,17 @@ class ModelGeometry {
     })
   }
 
-  async generateSurfaceMeshes() {
-    const surfGenPromises = []
+  generateSurfaceMeshes() {
+    for (const structure of this.meta.structures) {
+      const genMeshFunc =
+        structure.type === 'compartment' ? generateCompartmentSurfaceMesh : generateMembraneSurfaceMesh
 
-    this.meta.structures.forEach((structure) => {
-      surfGenPromises.push(
-        //eslint-disable-next-line
-        new Promise(async (done) => {
-          const genMeshFunc =
-            structure.type === 'compartment' ? generateCompartmentSurfaceMesh : generateMembraneSurfaceMesh
+      const { nodes, faces, elements } = this.mesh.volume
+      const volMesh = { nodes, faces, elements }
+      const mesh = genMeshFunc(volMesh, structure)
 
-          const { nodes, faces, elements } = this.mesh.volume
-          const volMesh = { nodes, faces, elements }
-          const mesh = await genMeshFunc(volMesh, structure)
-          this.mesh.surface[structure.name] = Object.freeze(mesh)
-
-          done()
-        })
-      )
-    })
-
-    await Promise.all(surfGenPromises)
+      this.mesh.surface[structure.name] = Object.freeze(mesh)
+    }
 
     this.initialized = true
   }
@@ -341,41 +196,9 @@ class ModelGeometry {
    * @see http://wias-berlin.de/software/tetgen/fformats.html
    */
   async parseTetGen() {
-    const nodeIdxMap = new Map()
-
-    const nodesRaw = await parseTetGenFile(this.mesh.volume.raw.nodes)
-    const nodes = new Float64Array(nodesRaw.length * 3)
-    nodesRaw.forEach((node, nodeIdx) => {
-      const [nodeNum, x, y, z] = node
-      nodeIdxMap.set(nodeNum, nodeIdx)
-      writeArray([x, y, z], nodes, nodeIdx * 3)
-    })
-    this.mesh.volume.nodes = nodes
-    // eslint-disable-next-line
-    const parseFaces = new Promise(async (done) => {
-      const facesRaw = await parseTetGenFile(this.mesh.volume.raw.faces)
-      const faces = new Uint32Array(facesRaw.length * 3)
-      facesRaw.forEach((rawFace, faceIdx) => {
-        const face = rawFace.splice(1, 3).map((nodeNum) => nodeIdxMap.get(nodeNum))
-        writeArray(face, faces, faceIdx * 3)
-      })
-      this.mesh.volume.faces = faces
-      done()
-    })
-
-    // eslint-disable-next-line
-    const parseElements = new Promise(async (done) => {
-      const elementsRaw = await parseTetGenFile(this.mesh.volume.raw.elements)
-      const elements = new Uint32Array(elementsRaw.length * 4)
-      elementsRaw.map((rawElement, elementIdx) => {
-        const element = rawElement.splice(1, 4).map((nodeNum) => nodeIdxMap.get(nodeNum))
-        return writeArray(element, elements, elementIdx * 4)
-      })
-      this.mesh.volume.elements = elements
-      done()
-    })
-
-    await Promise.all([parseFaces, parseElements])
+    this.mesh.volume.nodes = parseTetGenFile(this.mesh.volume.raw.nodes).map((n) => n.slice(1))
+    this.mesh.volume.faces = parseTetGenFile(this.mesh.volume.raw.faces).map((f) => f.map((n) => n - 1).slice(1))
+    this.mesh.volume.elements = parseTetGenFile(this.mesh.volume.raw.elements).map((f) => f.map((n) => n - 1).slice(1))
   }
 
   getRaw() {

@@ -90,7 +90,7 @@ export default {
 
   async createGeometry({ state, commit, dispatch }, geometry) {
     const { id, structureSize } = await socket.request('create_geometry', geometry.getRaw())
-    geometry.removeRawMesh()
+    console.log(id)
     geometry.id = id
     geometry.meta.structures.forEach((structure) => {
       structure.size = structureSize[structure.name]

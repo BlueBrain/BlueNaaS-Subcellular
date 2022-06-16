@@ -1,13 +1,10 @@
 //@ts-nocheck
 import Vue from 'vue'
 import get from 'lodash/get'
-import set from 'lodash/set'
 import cloneDeep from 'lodash/cloneDeep'
 
 import constants from '@/constants'
 import ModelValidator from '@/tools/model-validator'
-import { uniqBy, sortBy } from 'lodash'
-import { State, SimTrace } from '@/types'
 
 const { entityTypeCollectionMap, defaultEmptyModel, DEFAULT_VISIBLE_CONC_N_PER_REV } = constants
 

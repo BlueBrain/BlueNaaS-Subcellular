@@ -50,7 +50,7 @@ export default {
         entity: nodeArray[0].model,
       }
       this.$store.commit('setEntitySelection', selection)
-      this.$router.push({ path: '/model' })
+      if (this.$router.history.current.path !== '/load-model') this.$router.push({ path: '/load-model' })
     },
   },
   computed: {

@@ -1,10 +1,10 @@
 <template>
-  <div class="p-12">
+  <div v-if="model" class="p-12">
     <h2>Subcellular model: {{ model.name }}</h2>
 
     <br />
 
-    <pre>{{ model.annotation }}</pre>
+    <p style="font-family: monospace; max-width: 80%; font-size: 16px">{{ model.annotation }}</p>
 
     <i-button class="mt-12 mr-12" type="primary" :loading="loading" @click="loadModel"> Load </i-button>
 
@@ -18,16 +18,18 @@ export default {
   data() {
     return { loading: false }
   },
+  created() {
+    if (!this.model) this.$router.push('/model')
+  },
   methods: {
     async loadModel() {
-      const { model } = this
       this.loading = true
 
-      await this.$store.dispatch('loadDbModel', model)
+      await this.$store.dispatch('loadDbModel', this.model)
 
       this.loading = false
       this.$store.commit('resetEntitySelection')
-      this.$router.push('/model/meta')
+      this.$router.go(-1)
     },
     deleteModel() {
       this.$store.dispatch('deleteDbModel', this.model)
@@ -35,7 +37,7 @@ export default {
   },
   computed: {
     model() {
-      return this.$store.state.selectedEntity.entity
+      return this.$store.state.selectedEntity?.entity
     },
   },
 }

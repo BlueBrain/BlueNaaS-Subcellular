@@ -76,14 +76,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: 'model-menu',
   methods: {
-    onEntityTypeSelect(entityType) {
+    onEntityTypeSelect(value: string) {
       this.$store.commit('resetEntitySelection')
-      let path = `/model/${entityType}`
-      if (entityType === 'viz') path = '/viz'
+      const path = '/' + value
       if (path !== this.$router.currentRoute.path) {
         this.$router.push({ path })
       }
@@ -94,7 +93,7 @@ export default {
       return this.$store.state.model
     },
     currentEntityType() {
-      return this.$route.path.split('/')[2]
+      return this.$route.path.split('/')[1]
     },
   },
 }

@@ -89,15 +89,15 @@ function disposeMesh(obj) {
   obj.material.dispose()
 }
 
-function getNormScalar(nodes) {
+function getNormScalar(nodes: number[][]) {
   const xVec = []
   const yVec = []
   const zVec = []
 
-  for (let i = 0; i < nodes.length / 3; i += 3) {
-    xVec.push(nodes[i])
-    yVec.push(nodes[i + 1])
-    zVec.push(nodes[i + 2])
+  for (const n of nodes) {
+    xVec.push(n[0])
+    yVec.push(n[1])
+    zVec.push(n[2])
   }
 
   const deltaX = Math.max(...xVec) - Math.min(...xVec)
@@ -319,7 +319,6 @@ class ModelGeometryRenderer {
 
   renderMolecules(spatialSample) {
     if (!this.moleculeCloud) return
-    console.log(spatialSample)
 
     let pntIdx = 0
 

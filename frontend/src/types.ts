@@ -42,4 +42,3 @@ export interface Structure {
   annotation: string
   entityId: string
 }
-

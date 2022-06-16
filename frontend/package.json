@@ -7,7 +7,7 @@
     "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
     "prettier": "npx prettier --write src",
-    "lint": "npx prettier --check src && vue-cli-service lint --no-fix && npx tsc --noEmit"
+    "lint": "npx prettier --check src && npx tsc --noEmit"
   },
   "dependencies": {
     "@msgpack/msgpack": "^1.11.0",

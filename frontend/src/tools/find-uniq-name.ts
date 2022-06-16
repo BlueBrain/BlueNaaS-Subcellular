@@ -1,17 +1,11 @@
 /**
- * Based on collecton find unique item name
+ * Based on an array of  find unique item name
  * which constists of prefix and index
- *
- * @param {Object[]} collection
- * @param {String} prefix
- *
- * @returns {String} Unique item name
  */
-function findUniqName(collection, prefix) {
-  let i = 0
-  const isEntityPresent = (entity) => entity.name === `${prefix}${i}`
-  while (collection.find(isEntityPresent)) i += 1
-  return `${prefix}${i}`
+function findUniqName(array: { name: string }[], prefix: string) {
+  const regex = new RegExp(`${prefix}[0-9]+`)
+  const n = array.filter((e) => !!e.name.match(regex))
+  return `${prefix}${n.length}`
 }
 
 export default findUniqName

@@ -87,13 +87,11 @@ class StepsSim:
                 st["geometryStructureName"] for st in model_dict["structures"] if st["name"] == model_struct_name
             )
 
-            return next(st for st in geometry["meta"]["structures"] if st["name"] == geom_struct_name)
+            return next(st for st in geometry["structures"] if st["name"] == geom_struct_name)
 
         def get_comp_name_by_tet_idx(tet_idx):
             geom_comp_name = next(
-                st["name"]
-                for st in geometry["meta"]["structures"]
-                if st["type"] == COMPARTMENT and tet_idx in st["tetIdxs"]
+                st["name"] for st in geometry["structures"] if st["type"] == COMPARTMENT and tet_idx in st["tetIdxs"]
             )
 
             comp_name = next(
@@ -179,7 +177,9 @@ class StepsSim:
         with open(os.path.join(geometry_path, "geometry.json"), "r") as file:
             geometry = json.loads(file.read())
 
-        geom_struct_dict = {structure["name"]: structure for structure in geometry["meta"]["structures"]}
+            print(geometry)
+
+        geom_struct_dict = {structure["name"]: structure for structure in geometry["structures"]}
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}
@@ -448,7 +448,7 @@ class StepsSim:
         self.log("about to create STEPS diffusion boundaries")
         diff_boundaries = []
         diff_boundary_spec_names_dict = {}
-        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry["meta"]["freeDiffusionBoundaries"]):
+        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry["freeDiffusionBoundaries"]):
             tris = diff_boundary_dict["triIdxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in tris]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]

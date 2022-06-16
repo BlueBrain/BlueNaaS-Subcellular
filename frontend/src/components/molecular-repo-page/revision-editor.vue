@@ -81,7 +81,7 @@ export default {
     userBranchesFilter(searchStr, branch) {
       return branch.toUpperCase().indexOf(searchStr.toUpperCase()) !== -1
     },
-    
+
     async saveRevision() {
       this.saving = true
       const meta = await this.$store.dispatch('saveRevision')

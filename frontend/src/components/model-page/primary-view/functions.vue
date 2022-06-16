@@ -1,42 +1,49 @@
 <template>
-  <div class="h-100 pos-relative o-hidden">
-    <div class="block-head">
-      <h3>Functions</h3>
-    </div>
+  <split selected-type="function">
+    <template v-slot:primary>
+      <div class="h-100 pos-relative o-hidden">
+        <div class="block-head">
+          <h3>Functions</h3>
+        </div>
 
-    <div class="block-main" ref="mainBlock">
-      <i-table
-        highlight-row
-        :no-data-text="emptyTableText"
-        :height="tableHeight"
-        :columns="columns"
-        :data="filteredFunctions"
-        @on-row-click="onFunctionSelect"
-      />
-    </div>
+        <div class="block-main" ref="mainBlock">
+          <i-table
+            highlight-row
+            :no-data-text="emptyTableText"
+            :height="tableHeight"
+            :columns="columns"
+            :data="filteredFunctions"
+            @on-row-click="onFunctionSelect"
+          />
+        </div>
 
-    <div class="block-footer">
-      <Row>
-        <i-col span="12">
-          <i-button type="primary" @click="addFunction"> New Function </i-button>
-          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeFunction">
-            Delete
-          </i-button>
-        </i-col>
-        <i-col span="12">
-          <i-input search v-model="searchStr" placeholder="Search" />
-        </i-col>
-      </Row>
-    </div>
+        <div class="block-footer">
+          <Row>
+            <i-col span="12">
+              <i-button type="primary" @click="addFunction"> New Function </i-button>
+              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeFunction">
+                Delete
+              </i-button>
+            </i-col>
+            <i-col span="12">
+              <i-input search v-model="searchStr" placeholder="Search" />
+            </i-col>
+          </Row>
+        </div>
 
-    <Modal v-model="newFunctionModalVisible" title="New Function" class-name="vertical-center-modal" @on-ok="onOk">
-      <function-form ref="functionForm" v-model="newFunction" />
-      <div slot="footer">
-        <i-button class="mr-6" type="text" @click="hideNewFunctionModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!newFunction.valid" @click="onOk"> OK </i-button>
+        <Modal v-model="newFunctionModalVisible" title="New Function" class-name="vertical-center-modal" @on-ok="onOk">
+          <function-form ref="functionForm" v-model="newFunction" />
+          <div slot="footer">
+            <i-button class="mr-6" type="text" @click="hideNewFunctionModal"> Cancel </i-button>
+            <i-button type="primary" :disabled="!newFunction.valid" @click="onOk"> OK </i-button>
+          </div>
+        </Modal>
       </div>
-    </Modal>
-  </div>
+    </template>
+    <template v-slot:secondary>
+      <function-properties />
+    </template>
+  </split>
 </template>
 
 <script>
@@ -46,6 +53,8 @@ import get from 'lodash/get'
 import bus from '@/services/event-bus'
 
 import BnglText from '@/components/shared/bngl-text.vue'
+import Split from '@/components/split.vue'
+import FunctionProperties from '@/components/model-page/secondary-view/function-properties.vue'
 import FunctionForm from '@/components/shared/entities/function-form.vue'
 
 import findUniqName from '@/tools/find-uniq-name'
@@ -65,6 +74,8 @@ const searchProps = ['name', 'definition']
 export default {
   name: 'function-component',
   components: {
+    split: Split,
+    'function-properties': FunctionProperties,
     'function-form': FunctionForm,
   },
   data() {
@@ -103,10 +114,11 @@ export default {
     }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
+    window.clearTimeout(this.timeoutId)
     bus.$off('layoutChange')
   },
   methods: {

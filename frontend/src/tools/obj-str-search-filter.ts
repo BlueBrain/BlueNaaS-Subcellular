@@ -12,11 +12,7 @@ import lowerCase from 'lodash/lowerCase'
  *
  * @returns {Boolean}
  */
-function objStrSearchFilter(
-  searchStr,
-  obj,
-  { include, exclude }: { include: any; exclude: any } = { include: null, exclude: null }
-) {
+function objStrSearchFilter(searchStr, obj, { include, exclude }: { include?: string[]; exclude?: string[] } = {}) {
   if (!searchStr) return true
 
   const searchStrNorm = lowerCase(searchStr)

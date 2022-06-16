@@ -41,7 +41,7 @@
       <div slot="footer">
         <i-button @click="hideModal"> Cancel </i-button>
 
-        <i-button class="ml-12" type="primary" to="/model/meta"> Go to Model page </i-button>
+        <i-button class="ml-12" type="primary" to="/model"> Go to Model page </i-button>
       </div>
     </Modal>
   </div>

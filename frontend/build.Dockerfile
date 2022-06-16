@@ -1,6 +1,5 @@
-FROM node
+FROM node:16
 
-ENV NODE_OPTIONS=--openssl-legacy-provider
 ARG VUE_APP_SENTRY_DSN
 
 WORKDIR /subcellular-app

@@ -1,42 +1,49 @@
 <template>
-  <div class="h-100 pos-relative o-hidden">
-    <div class="block-head">
-      <h3>Molecules</h3>
-    </div>
+  <split selected-type="molecule">
+    <template v-slot:primary>
+      <div class="h-100 pos-relative o-hidden">
+        <div class="block-head">
+          <h3>Molecules</h3>
+        </div>
 
-    <div class="block-main" ref="mainBlock">
-      <i-table
-        highlight-row
-        :no-data-text="emptyTableText"
-        :height="tableHeight"
-        :columns="columns"
-        :data="filteredMolecules"
-        @on-row-click="onMoleculeSelect"
-      />
-    </div>
+        <div class="block-main" ref="mainBlock">
+          <i-table
+            highlight-row
+            :no-data-text="emptyTableText"
+            :height="tableHeight"
+            :columns="columns"
+            :data="filteredMolecules"
+            @on-row-click="onMoleculeSelect"
+          />
+        </div>
 
-    <div class="block-footer">
-      <Row>
-        <i-col span="12">
-          <i-button type="primary" @click="addEntity"> New Molecule </i-button>
-          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeMolecule">
-            Delete
-          </i-button>
-        </i-col>
-        <i-col span="12">
-          <i-input search v-model="searchStr" placeholder="Search" />
-        </i-col>
-      </Row>
-    </div>
+        <div class="block-footer">
+          <Row>
+            <i-col span="12">
+              <i-button type="primary" @click="addEntity"> New Molecule </i-button>
+              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeMolecule">
+                Delete
+              </i-button>
+            </i-col>
+            <i-col span="12">
+              <i-input search v-model="searchStr" placeholder="Search" />
+            </i-col>
+          </Row>
+        </div>
 
-    <Modal v-model="newMoleculeModalVisible" title="New Molecule" class-name="vertical-center-modal" @on-ok="onOk">
-      <molecule-form ref="moleculeForm" v-model="newMolecule" />
-      <div slot="footer">
-        <i-button class="mr-6" type="text" @click="hideNewMoleculeModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!newMolecule.valid" @click="onOk"> OK </i-button>
+        <Modal v-model="newMoleculeModalVisible" title="New Molecule" class-name="vertical-center-modal" @on-ok="onOk">
+          <molecule-form ref="moleculeForm" v-model="newMolecule" />
+          <div slot="footer">
+            <i-button class="mr-6" type="text" @click="hideNewMoleculeModal"> Cancel </i-button>
+            <i-button type="primary" :disabled="!newMolecule.valid" @click="onOk"> OK </i-button>
+          </div>
+        </Modal>
       </div>
-    </Modal>
-  </div>
+    </template>
+    <template v-slot:secondary>
+      <molecule-properties />
+    </template>
+  </split>
 </template>
 
 <script>
@@ -47,6 +54,8 @@ import bus from '@/services/event-bus'
 
 import BnglText from '@/components/shared/bngl-text.vue'
 import MoleculeForm from '@/components/shared/entities/molecule-form.vue'
+import Split from '@/components/split.vue'
+import MoleculeProperties from '@/components/model-page/secondary-view/molecule-properties.vue'
 
 import findUniqName from '@/tools/find-uniq-name'
 import objStrSearchFilter from '@/tools/obj-str-search-filter'
@@ -64,6 +73,8 @@ const searchProps = ['name', 'definition']
 export default {
   name: 'molecules-component',
   components: {
+    split: Split,
+    'molecule-properties': MoleculeProperties,
     'molecule-form': MoleculeForm,
   },
   data() {
@@ -96,10 +107,11 @@ export default {
     }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
+    window.clearTimeout(this.timeoutId)
     bus.$off('layoutChange')
   },
   methods: {

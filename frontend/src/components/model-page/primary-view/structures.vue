@@ -1,47 +1,54 @@
 <template>
-  <div class="h-100 pos-relative o-hidden">
-    <div class="block-head">
-      <h3>Structures</h3>
-    </div>
+  <split selected-type="structure">
+    <template v-slot:primary>
+      <div class="h-100 pos-relative o-hidden">
+        <div class="block-head">
+          <h3>Structures</h3>
+        </div>
 
-    <div class="block-main" ref="mainBlock">
-      <i-table
-        highlight-row
-        :no-data-text="emptyTableText"
-        :height="tableHeight"
-        :columns="columns"
-        :data="filteredStructures"
-        @on-row-click="onStructureSelect"
-      />
-    </div>
+        <div class="block-main" ref="mainBlock">
+          <i-table
+            highlight-row
+            :no-data-text="emptyTableText"
+            :height="tableHeight"
+            :columns="columns"
+            :data="filteredStructures"
+            @on-row-click="onStructureSelect"
+          />
+        </div>
 
-    <div class="block-footer">
-      <Row>
-        <i-col span="12">
-          <i-button type="primary" @click="addStructure"> New Structure </i-button>
-          <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeStructure">
-            Delete
-          </i-button>
-        </i-col>
-        <i-col span="12">
-          <i-input search v-model="searchStr" placeholder="Search" />
-        </i-col>
-      </Row>
-    </div>
+        <div class="block-footer">
+          <Row>
+            <i-col span="12">
+              <i-button type="primary" @click="addStructure"> New Structure </i-button>
+              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeStructure">
+                Delete
+              </i-button>
+            </i-col>
+            <i-col span="12">
+              <i-input search v-model="searchStr" placeholder="Search" />
+            </i-col>
+          </Row>
+        </div>
 
-    <Modal
-      v-model="newStructureModalVisible"
-      title="New Molecule"
-      class-name="vertical-center-modal"
-      @on-ok="onNewStructureOk"
-    >
-      <structure-form ref="structureForm" v-model="newStructure" @on-submit="onNewStructureOk" />
-      <div slot="footer">
-        <i-button class="mr-6" type="text" @click="hideNewStructureModal"> Cancel </i-button>
-        <i-button type="primary" :disabled="!newStructure.valid" @click="onNewStructureOk"> OK </i-button>
+        <Modal
+          v-model="newStructureModalVisible"
+          title="New Molecule"
+          class-name="vertical-center-modal"
+          @on-ok="onNewStructureOk"
+        >
+          <structure-form ref="structureForm" v-model="newStructure" @on-submit="onNewStructureOk" />
+          <div slot="footer">
+            <i-button class="mr-6" type="text" @click="hideNewStructureModal"> Cancel </i-button>
+            <i-button type="primary" :disabled="!newStructure.valid" @click="onNewStructureOk"> OK </i-button>
+          </div>
+        </Modal>
       </div>
-    </Modal>
-  </div>
+    </template>
+    <template v-slot:secondary>
+      <structure-properties />
+    </template>
+  </split>
 </template>
 
 <script>
@@ -54,7 +61,9 @@ import findUniqName from '@/tools/find-uniq-name'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 import StructureForm from '@/components/shared/entities/structure-form.vue'
+import Split from '@/components/split.vue'
 import BnglText from '@/components/shared/bngl-text.vue'
+import StructureProperties from '@/components/model-page/secondary-view/structure-properties.vue'
 
 const defaultStructure = {
   name: '',
@@ -75,6 +84,8 @@ const searchProps = ['name', 'type']
 export default {
   name: 'structures-component',
   components: {
+    split: Split,
+    'structure-properties': StructureProperties,
     'structure-form': StructureForm,
   },
   data() {
@@ -86,10 +97,11 @@ export default {
     }
   },
   mounted() {
-    this.$nextTick(() => this.$nextTick(() => this.computeTableHeight(), 0))
+    this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
   },
   beforeDestroy() {
+    window.clearTimeout(this.timeoutId)
     bus.$off('layoutChange')
   },
   methods: {
