@@ -1,8 +1,7 @@
 import os
 import subprocess
 import math
-from typing import Callable, Any, Optional
-
+from typing import Callable, Any
 import numpy as np
 import pandas as pd
 
@@ -11,18 +10,20 @@ from .model_to_bngl import model_to_bngl
 from .settings import BNG_PATH
 from .logger import get_logger
 from .utils import tempdir
+from .api import fetch_model
 
 L = get_logger(__name__)
 
-BNG_MODEL_EXPORT_TIMEOUT = 5
+BNG_MODEL_EXPORT_TIMEOUT = 60
 
 
 @tempdir()
 def run_bng(sim_config: dict, progress_cb: Callable[[Any], None]) -> None:
-    def log(message: str, source: Optional[str] = None):
+    def log(message: str, source="system"):
         progress_cb(SimLogMessage(message=message, source=source))
 
-    bngl = sim_config["model_str"] or model_to_bngl(sim_config["model"], write_xml_op=True)
+    model = fetch_model(sim_config["modelId"], sim_config["userId"])
+    bngl = sim_config["model_str"] or model_to_bngl(model, write_xml_op=True)
 
     solver_cfg = sim_config["solverConf"]
     t_end = solver_cfg["tEnd"]

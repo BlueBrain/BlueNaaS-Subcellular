@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="function">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -21,7 +21,7 @@
           <Row>
             <i-col span="12">
               <i-button type="primary" @click="addFunction"> New Function </i-button>
-              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeFunction">
+              <i-button class="ml-24" type="warning" :disabled="!currentFunction.id" @click="removeFunction">
                 Delete
               </i-button>
             </i-col>
@@ -32,23 +32,30 @@
         </div>
 
         <Modal v-model="newFunctionModalVisible" title="New Function" class-name="vertical-center-modal" @on-ok="onOk">
-          <function-form ref="functionForm" v-model="newFunction" />
+          <function-form ref="functionForm" v-model="currentFunction" @on-submit="onOk" />
           <div slot="footer">
             <i-button class="mr-6" type="text" @click="hideNewFunctionModal"> Cancel </i-button>
-            <i-button type="primary" :disabled="!newFunction.valid" @click="onOk"> OK </i-button>
+            <i-button type="primary" :disabled="!currentFunction.valid" @click="onOk"> OK </i-button>
           </div>
         </Modal>
       </div>
     </template>
     <template v-slot:secondary>
-      <function-properties />
+      <function-properties v-if="currentFunction.id" v-model="currentFunction" :error="error" @apply="onOk" />
+      <div v-else class="h-100 p-12">
+        <p>Select function to view/edit properties</p>
+      </div>
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view its functions</div>
 </template>
 
-<script>
+<script lang="ts">
 import { mapState } from 'vuex'
 import get from 'lodash/get'
+import { get as getr, post, patch, del } from '@/services/api'
+import { Function } from '@/types'
+import { AxiosResponse } from 'axios'
 
 import bus from '@/services/event-bus'
 
@@ -62,6 +69,7 @@ import objStrSearchFilter from '@/tools/obj-str-search-filter'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultFunction = {
+  id: undefined,
   name: '',
   valid: false,
   definition: '',
@@ -80,10 +88,13 @@ export default {
   },
   data() {
     return {
+      error: false,
+      deleteError: false,
+      functions: [],
       searchStr: '',
       tableHeight: null,
       newFunctionModalVisible: false,
-      newFunction: { ...defaultFunction },
+      currentFunction: { ...defaultFunction },
       columns: [
         {
           title: 'Name',
@@ -113,6 +124,14 @@ export default {
       ],
     }
   },
+  async created() {
+    const model = this.$store.state.model
+    let funcRes: AxiosResponse<Function>
+    if (model?.id) {
+      funcRes = await getr('functions', { user_id: model?.user_id, model_id: model?.id })
+      this.functions = funcRes.data
+    }
+  },
   mounted() {
     this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
@@ -123,7 +142,7 @@ export default {
   },
   methods: {
     addFunction() {
-      this.newFunction = {
+      this.currentFunction = {
         ...defaultFunction,
         name: findUniqName(this.functions, 'f'),
       }
@@ -134,41 +153,63 @@ export default {
         this.$refs.functionForm.focus()
       })
     },
+
+    async removeFunction() {
+      const model = this.$store.state.model
+      const res = await del<null>(`functions/${this.currentFunction.id}`)
+      if (!res) {
+        this.deleteError = true
+        return
+      }
+
+      this.deleteError = false
+
+      this.currentFunction = { ...defaultFunction }
+      this.functions = (await getr<Function[]>('functions', { model_id: model?.id })).data
+    },
     showNewFunctionModal() {
       this.newFunctionModalVisible = true
     },
     hideNewFunctionModal() {
       this.newFunctionModalVisible = false
     },
-    removeFunction() {
-      this.$store.commit('removeSelectedEntity')
+    onFunctionSelect(func: Function) {
+      this.currentFunction = func
     },
-    onFunctionSelect(func, index) {
-      this.$store.commit('setEntitySelection', {
-        index,
-        type: 'function',
-        entity: func,
-      })
-    },
-    onOk() {
+    async onOk() {
+      this.error = false
+
+      const model_id = this.$store.state.model?.id
+      let res: AxiosResponse<Function> | undefined
+
+      if (!this.currentFunction.id) res = await post<Function>('functions', { ...this.currentFunction, model_id })
+      else res = await patch<Function>(`functions/${this.currentFunction.id}`, this.currentFunction)
+
+      if (!res) {
+        this.error = true
+        return
+      }
+
       this.hideNewFunctionModal()
-      this.$store.commit('addFunction', this.newFunction)
+
+      this.functions = (await getr<Function[]>('functions', { model_id })).data
     },
     computeTableHeight() {
       this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
-    functions(state) {
-      return state.model.functions
-    },
     filteredFunctions() {
       return this.functions.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
       return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below'
     },
-    removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'function',
   }),
+  watch: {
+    currentFunction() {
+      console.log(this.currentFunction)
+    },
+  },
 }
 </script>

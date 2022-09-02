@@ -23,14 +23,6 @@ export default new VueRouter({
         ),
     },
     {
-      path: '/load-model',
-      component: () =>
-        import(
-          /* webpackChunkName: "model-geometry" */
-          './components/model-page/secondary-view/db-model.vue'
-        ),
-    },
-    {
       path: '/simulations',
       component: () =>
         import(

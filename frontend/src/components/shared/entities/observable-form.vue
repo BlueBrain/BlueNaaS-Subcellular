@@ -26,7 +26,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
@@ -46,7 +46,7 @@ export default {
       this.$emit('input', this.observable)
     },
     isValid() {
-      return this.observable.name.trim() && this.observable.definition
+      return !!this.observable.name.trim() && !!this.observable.definition
     },
     onDefinitionInputTab() {
       this.$refs.annotationInput.focus()

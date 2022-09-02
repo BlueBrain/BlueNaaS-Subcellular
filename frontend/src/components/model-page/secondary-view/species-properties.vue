@@ -2,17 +2,18 @@
   <div class="p-12">
     <h3>Species properties</h3>
 
-    <species-form class="mt-12" ref="speciesForm" v-model="tmpEntity" @on-submit="applySpeciesChange" />
+    <species-form class="mt-12" ref="speciesForm" v-model="modified" @on-submit="apply" @input="onInput" />
 
     <div class="action-block">
-      <i-button class="mr-12" type="warning" :disabled="!speciesEdited" @click="resetSpeciesChange"> Reset </i-button>
+      <i-button class="mr-12" type="warning" :disabled="!edited" @click="reset"> Reset </i-button>
 
-      <i-button type="primary" :disabled="!speciesEdited" @click="applySpeciesChange"> Apply </i-button>
+      <i-button type="primary" :disabled="!edited" @click="apply"> Apply </i-button>
+      <div v-if="error" style="color: red">An error ocurred, try again.</div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
 
 import SpeciesForm from '@/components/shared/entities/species-form.vue'
@@ -22,9 +23,11 @@ export default {
   components: {
     'species-form': SpeciesForm,
   },
+  props: ['value', 'error'],
   data() {
     return {
-      tmpEntity: this.getTmpEntity(),
+      modified: this.value,
+      original: this.value,
     }
   },
   mounted() {
@@ -34,28 +37,28 @@ export default {
     focusForm() {
       this.$nextTick(() => this.$refs.speciesForm.focus())
     },
-    applySpeciesChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity)
+    onInput() {
+      this.$emit('input', this.modified)
     },
-    resetSpeciesChange() {
-      this.tmpEntity = this.getTmpEntity()
+    apply() {
+      this.$emit('apply')
     },
-    getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+    reset() {
+      this.modified = this.original
     },
   },
   computed: {
-    speciesEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'definition', 'concentration', 'annotation'])
-    },
-    selection() {
-      return this.$store.state.selectedEntity
+    edited() {
+      return !isEqualBy(this.modified, this.original, ['name', 'definition', 'concentration', 'annotation'])
     },
   },
   watch: {
-    selection() {
-      this.tmpEntity = this.getTmpEntity()
-      this.focusForm()
+    value(val, oldVal) {
+      if (val.id !== oldVal.id) {
+        this.modified = val
+        this.original = val
+        this.focusNameInput()
+      }
     },
   },
 }

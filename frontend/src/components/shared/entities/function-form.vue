@@ -29,7 +29,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import constants from '@/constants'
 
 import BnglInput from '@/components/shared/bngl-input.vue'
@@ -52,7 +52,7 @@ export default {
       this.$emit('input', this.func)
     },
     isValid() {
-      return this.func.name.trim() && this.func.definition
+      return !!this.func.name.trim() && !!this.func.definition
     },
     onDefinitionInputTab() {
       this.$refs.annotationInput.focus()

@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="parameter">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -21,9 +21,12 @@
           <Row>
             <i-col span="12">
               <i-button type="primary" @click="addParameter"> New Parameter </i-button>
-              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeParameter">
+              <i-button class="ml-24" type="warning" :disabled="!currentParameter.id" @click="removeParameter">
                 Delete
               </i-button>
+              <div v-if="deleteError" style="margin-left: 8px; color: red; display: inline-block">
+                An error ocurred please try again
+              </div>
             </i-col>
             <i-col span="12">
               <i-input search v-model="searchStr" placeholder="Search" />
@@ -32,24 +35,34 @@
         </div>
 
         <Modal v-model="newParameterModalVisible" title="New Parameter" class-name="vertical-center-modal">
-          <parameter-form ref="parameterForm" v-model="newParameter" @on-submit="onOk" />
+          <parameter-form ref="parameterForm" v-model="currentParameter" @on-submit="onOk" />
           <div slot="footer">
             <i-button class="mr-6" type="text" @click="hideNewParameterModal"> Cancel </i-button>
-            <i-button type="primary" :disabled="!newParameter.valid" @click="onOk"> OK </i-button>
+            <i-button type="primary" :disabled="!currentParameter.valid" @click="onOk"> OK </i-button>
+            <div v-if="error" style="margin-left: 8px; color: red; display: inline-block">
+              An error ocurred please try again
+            </div>
           </div>
         </Modal>
       </div>
     </template>
 
     <template v-slot:secondary>
-      <parameter-properties />
+      <parameter-properties v-if="currentParameter.id" v-model="currentParameter" :error="error" @apply="onOk" />
+      <div v-else class="h-100 p-12">
+        <p>Select parameter view/edit properties</p>
+      </div>
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view its parameters</div>
 </template>
 
-<script>
+<script lang="ts">
 import { mapState } from 'vuex'
 import get from 'lodash/get'
+import { get as getr, post, patch, del } from '@/services/api'
+import { Parameter } from '@/types'
+import { AxiosResponse } from 'axios'
 
 import bus from '@/services/event-bus'
 
@@ -63,6 +76,7 @@ import objStrSearchFilter from '@/tools/obj-str-search-filter'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultParameter = {
+  id: undefined,
   valid: false,
   name: '',
   definition: '',
@@ -81,10 +95,13 @@ export default {
   },
   data() {
     return {
+      error: false,
+      deleteError: false,
+      parameters: [],
       searchStr: '',
       tableHeight: null,
       newParameterModalVisible: false,
-      newParameter: { ...defaultParameter },
+      currentParameter: { ...defaultParameter },
       columns: [
         {
           title: 'Name',
@@ -113,6 +130,9 @@ export default {
       ],
     }
   },
+  async created() {
+    this.parameters = await this.getParameters()
+  },
   mounted() {
     this.timeoutId = setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
@@ -122,8 +142,20 @@ export default {
     bus.$off('layoutChange')
   },
   methods: {
+    async getParameters() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Parameter[]> = await getr('parameters', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
+    },
     addParameter() {
-      this.newParameter = {
+      this.currentParameter = {
         ...defaultParameter,
         name: findUniqName(this.parameters, 'p'),
       }
@@ -134,33 +166,54 @@ export default {
         this.$refs.parameterForm.focus()
       })
     },
-    removeParameter() {
-      this.$store.commit('removeSelectedEntity')
+    async removeParameter() {
+      const model = this.$store.state.model
+      const res = await del<null>(`parameterss/${this.currentParameter.id}`)
+      if (!res) {
+        this.deleteError = true
+        return
+      }
+
+      this.deleteError = false
+
+      this.currentParameter = { ...defaultParameter }
+      this.parameters = await this.getParameters()
     },
-    onParameterSelect(parameter, index) {
-      this.$store.commit('setEntitySelection', {
-        index,
-        type: 'parameter',
-        entity: parameter,
-      })
+    onParameterSelect(parameter: Parameter) {
+      this.currentParameter = parameter
     },
-    onOk() {
+    async onOk() {
+      this.error = false
+
+      const model_id = this.$store.state.model?.id
+      let res: AxiosResponse<Parameter> | undefined
+
+      if (!this.currentParameter.id) res = await post<Parameter>('parameters', { ...this.currentParameter, model_id })
+      else res = await patch<Parameter>(`parameters/${this.currentParameter.id}`, this.currentParameter)
+
+      if (!res) {
+        this.error = true
+        return
+      }
+
       this.hideNewParameterModal()
-      this.$store.commit('addParameter', this.newParameter)
+
+      this.parameters = await this.getParameters()
     },
     showNewParameterModal() {
       this.newParameterModalVisible = true
     },
     hideNewParameterModal() {
+      this.error = false
       this.newParameterModalVisible = false
     },
     computeTableHeight() {
       this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
-  computed: mapState({
-    parameters(state) {
-      return state.model.parameters
+  computed: {
+    modelId() {
+      return this.$store.state.model.id
     },
     filteredParameters() {
       return this.parameters.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
@@ -168,7 +221,16 @@ export default {
     emptyTableText() {
       return this.searchStr ? 'No matching parameters' : 'Create a parameter by using buttons below'
     },
-    removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'parameter',
-  }),
+  },
+  watch: {
+    async modelId() {
+      this.parameters = await this.getParameters()
+    },
+
+    currentParameter() {
+      this.error = false
+      this.deleteError = false
+    },
+  },
 }
 </script>

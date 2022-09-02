@@ -2,7 +2,7 @@
   <codemirror ref="bnglCm" :class="{ editable: !readOnly }" :value="value" :options="cmOptions" @input="onCodeChange" />
 </template>
 
-<script>
+<script lang="ts">
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/addon//lint/lint.css'
 

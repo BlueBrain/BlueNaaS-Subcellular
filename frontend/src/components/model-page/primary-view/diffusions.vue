@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="diffusion">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -21,7 +21,7 @@
           <Row>
             <i-col span="12">
               <i-button type="primary" @click="addDiffusion"> New Diffusion </i-button>
-              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeDiffusion">
+              <i-button class="ml-24" type="warning" :disabled="!current.id" @click="removeDiffusion">
                 Delete
               </i-button>
             </i-col>
@@ -32,23 +32,33 @@
         </div>
 
         <Modal v-model="newDiffusionModalVisible" title="New Diffusion" class-name="vertical-center-modal">
-          <diffusion-form ref="diffusionForm" v-model="newDiffusion" @on-submit="onOk" />
+          <diffusion-form ref="diffusionForm" v-model="current" @on-submit="onOk" />
           <div slot="footer">
             <i-button class="mr-6" type="text" @click="hideNewDiffusionModal"> Cancel </i-button>
-            <i-button type="primary" :disabled="!newDiffusion.valid" @click="onOk"> OK </i-button>
+            <i-button type="primary" :disabled="!current.valid" @click="onOk"> OK </i-button>
+            <div v-if="error" style="margin-left: 8px; color: red; display: inline-block">
+              An error ocurred please try again
+            </div>
           </div>
         </Modal>
       </div>
     </template>
     <template v-slot:secondary>
-      <properties />
+      <properties v-if="current.id" v-model="current" :error="error" @apply="onOk" />
+      <div v-else class="h-100 p-12">
+        <p>Select a diffusion to view/edit properties</p>
+      </div>
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view its diffusions</div>
 </template>
 
-<script>
+<script lang="ts">
 import { mapState } from 'vuex'
 import get from 'lodash/get'
+import { get as getr, post, patch, del } from '@/services/api'
+import { Diffusion } from '@/types'
+import { AxiosResponse } from 'axios'
 
 import bus from '@/services/event-bus'
 
@@ -62,10 +72,11 @@ import objStrSearchFilter from '@/tools/obj-str-search-filter'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultDiffusion = {
+  id: undefined,
   valid: false,
   name: '',
-  speciesDefinition: '',
-  diffusionConstant: '',
+  species_definition: '',
+  diffusion_constant: '',
   compartment: '',
   annotation: '',
 }
@@ -81,10 +92,13 @@ export default {
   },
   data() {
     return {
+      error: false,
+      deleteError: false,
+      diffusions: [],
       searchStr: '',
       tableHeight: null,
       newDiffusionModalVisible: false,
-      newDiffusion: { ...defaultDiffusion },
+      current: { ...defaultDiffusion },
       columns: [
         {
           title: 'Name',
@@ -102,7 +116,7 @@ export default {
             h(BnglText, {
               props: {
                 entityType: 'diffusion',
-                value: params.row.speciesDefinition,
+                value: params.row.species_definition,
               },
             }),
         },
@@ -112,7 +126,7 @@ export default {
             h(BnglText, {
               props: {
                 entityType: 'parameter',
-                value: params.row.diffusionConstant,
+                value: params.row.diffusion_constant,
               },
             }),
         },
@@ -123,6 +137,9 @@ export default {
       ],
     }
   },
+  async created() {
+    this.diffusions = await this.getDiffusions()
+  },
   mounted() {
     this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
@@ -132,10 +149,23 @@ export default {
     bus.$off('layoutChange')
   },
   methods: {
+    async getDiffusions() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Diffusion[]> = await getr('diffusions', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data.map((d) => ({ ...d, diffusion_constant: d.diffusion_constant.toString() }))
+    },
+
     addDiffusion() {
-      this.newDiffusion = {
+      this.current = {
         ...defaultDiffusion,
-        name: findUniqName(this.diffusions, 'diff'),
+        name: findUniqName(this.diffusions, 'r'),
       }
       this.showNewDiffusionModal()
 
@@ -144,19 +174,40 @@ export default {
         this.$refs.diffusionForm.focus()
       })
     },
-    removeDiffusion() {
-      this.$store.commit('removeSelectedEntity')
+    async removeDiffusion() {
+      const res = await del<null>(`diffusions/${this.current.id}`)
+      if (!res) {
+        this.deleteError = true
+        return
+      }
+
+      this.deleteError = false
+
+      this.current = { ...defaultDiffusion }
+      this.diffusions = await this.getDiffusions()
     },
-    onDiffusionSelect(diffusion, index) {
-      this.$store.commit('setEntitySelection', {
-        index,
-        type: 'diffusion',
-        entity: diffusion,
-      })
+    onDiffusionSelect(diffusion: Diffusion) {
+      this.current = diffusion
     },
-    onOk() {
+    async onOk() {
+      this.error = false
+
+      const model_id = this.$store.state.model?.id
+      let res: AxiosResponse<Diffusion> | undefined
+
+      const current = { ...this.current, diffusion_constant: Number(this.current.diffusion_constant) }
+
+      if (!this.current.id) res = await post<Diffusion>('diffusions', { ...current, model_id })
+      else res = await patch<Diffusion>(`diffusions/${this.current.id}`, this.current)
+
+      if (!res) {
+        this.error = true
+        return
+      }
+
       this.hideNewDiffusionModal()
-      this.$store.commit('addDiffusion', this.newDiffusion)
+
+      this.diffusions = await this.getDiffusions()
     },
     hideNewDiffusionModal() {
       this.newDiffusionModalVisible = false
@@ -169,16 +220,12 @@ export default {
     },
   },
   computed: mapState({
-    diffusions(state) {
-      return state.model.diffusions
-    },
     filteredDiffusions() {
       return this.diffusions.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
       return this.searchStr ? 'No matching diffusions' : 'Create a diffusion by using buttons below'
     },
-    removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'diffusion',
   }),
 }
 </script>

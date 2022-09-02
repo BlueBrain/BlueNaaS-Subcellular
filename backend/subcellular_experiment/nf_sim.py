@@ -2,9 +2,10 @@ import os
 import subprocess
 import math
 from typing import Callable, Any
-
 import numpy as np
 import pandas as pd
+
+from subcellular_experiment.api import fetch_model
 
 from .sim import SimStatus, SimTrace, SimLogMessage, decompress_stimulation
 from .model_to_bngl import model_to_bngl
@@ -74,7 +75,9 @@ class NfSim:
     @tempdir()
     def run(self) -> None:
 
-        bngl = model_to_bngl(self.sim_config["model"], write_xml_op=True)
+        model_dict = fetch_model(self.sim_config["modelId"], self.sim_config["userId"])
+
+        bngl = model_to_bngl(model_dict, write_xml_op=True)
 
         self.log(bngl, source="model_bngl")
 

@@ -2,31 +2,32 @@
   <div class="p-12">
     <h3>Observable properties</h3>
 
-    <observable-form class="mt-12" ref="observableForm" v-model="tmpEntity" @on-submit="applyObservableChange" />
+    <observable-form class="mt-12" ref="observableForm" v-model="modified" @on-submit="apply" @input="onInput" />
 
     <div class="action-block">
-      <i-button class="mr-12" type="warning" :disabled="!observableEdited" @click="resetObservableChange">
-        Reset
-      </i-button>
+      <i-button class="mr-12" type="warning" :disabled="!observableEdited" @click="reset"> Reset </i-button>
 
-      <i-button type="primary" :disabled="!observableEdited" @click="applyObservableChange"> Apply </i-button>
+      <i-button type="primary" :disabled="!observableEdited" @click="apply"> Apply </i-button>
+      <div v-if="error" style="color: red">An error ocurred, try again.</div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
 
 import ObservableForm from '@/components/shared/entities/observable-form.vue'
 
 export default {
   name: 'observable-properties',
+  props: ['value', 'error'],
   components: {
     'observable-form': ObservableForm,
   },
   data() {
     return {
-      tmpEntity: this.getTmpEntity(),
+      modified: this.value,
+      original: this.value,
     }
   },
   mounted() {
@@ -36,28 +37,29 @@ export default {
     focusObservableForm() {
       this.$nextTick(() => this.$refs.observableForm.focus())
     },
-    applyObservableChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity)
+
+    onInput() {
+      this.$emit('input', this.modified)
     },
-    resetObservableChange() {
-      this.tmpEntity = this.getTmpEntity()
+    reset() {
+      this.modified = this.original
     },
-    getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+    apply() {
+      this.$emit('apply')
     },
   },
   computed: {
     observableEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'definition', 'annotation'])
-    },
-    selection() {
-      return this.$store.state.selectedEntity
+      return !isEqualBy(this.modified, this.original, ['name', 'definition', 'annotation'])
     },
   },
   watch: {
-    selection() {
-      this.tmpEntity = this.getTmpEntity()
-      this.focusObservableForm()
+    value(val, oldVal) {
+      if (val.id !== oldVal.id) {
+        this.modified = val
+        this.original = val
+        this.focusNameInput()
+      }
     },
   },
 }

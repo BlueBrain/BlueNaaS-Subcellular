@@ -27,10 +27,12 @@ import {
   PointsMaterial,
   VertexColors,
   TextureLoader,
+  Triangle,
 } from 'three'
 import distinctColors from 'distinct-colors'
 
 import TrackballControls from './trackball-controls'
+import { uniq } from 'lodash'
 
 const DEFAULT_STRUCTURE_COLOR = 0x47cb89
 const MAX_MOLECULES = 30000
@@ -171,15 +173,7 @@ class ModelGeometryRenderer {
     if (this.meshes) throw new Error('Model geometry has been already initialized')
 
     this.modelGeometry = modelGeometry
-
-    const getDefaultStructure = () => ({
-      name: 'main',
-      type: 'compartment',
-      tetIdxs: range(modelGeometry.mesh.volume.elements.length),
-      color: chroma(DEFAULT_STRUCTURE_COLOR),
-    })
-
-    const structures = modelGeometry.meta.structures || [getDefaultStructure()]
+    const structures = modelGeometry.structures
 
     this.colors = distinctColors({
       count: structures.length,
@@ -199,29 +193,45 @@ class ModelGeometryRenderer {
       {}
     )
 
-    this.normScalar = getNormScalar(modelGeometry.mesh.volume.nodes)
+    const nodes = this.nestArray(modelGeometry.nodes, 3)
+    const tris = this.nestArray(modelGeometry.tris, 3)
+    const tets = this.nestArray(modelGeometry.tets, 4)
 
-    const createGeometry = (structureName) => {
+    this.normScalar = getNormScalar(nodes)
+
+    const createGeometry = (structure) => {
       const geometry = new Geometry()
       const bufferGeometry = new BufferGeometry()
 
-      modelGeometry.mesh.surface[structureName].vertices.forEach((coords) => {
-        const vertexVec = new Vector3(...coords.map((coord) => coord * this.normScalar))
-        geometry.vertices.push(vertexVec)
-      })
+      nodes.forEach((node) => geometry.vertices.push(new Vector3(...node.map((v) => v * this.normScalar))))
 
-      modelGeometry.mesh.surface[structureName].faces.forEach((triIdxs) => geometry.faces.push(new Face3(...triIdxs)))
+      structure.idxs.forEach((idx) => {
+        if (structure.type === 'membrane') {
+          geometry.faces.push(new Face3(...tris[idx]))
+        } else {
+          const tet = tets[idx]
+          const faces = [
+            [0, 1, 2],
+            [0, 1, 3],
+            [0, 2, 3],
+            [1, 2, 3],
+          ]
+
+          for (const face of faces) {
+            geometry.faces.push(new Face3(...face.map((f) => tet[f])))
+          }
+        }
+      })
 
       geometry.mergeVertices()
       geometry.computeFaceNormals()
 
       bufferGeometry.fromGeometry(geometry)
-
       return bufferGeometry
     }
 
     structures.forEach((structure, idx) => {
-      const geometry = createGeometry(structure.name)
+      const geometry = createGeometry(structure)
 
       const color = this.colors[idx].num()
 
@@ -239,7 +249,7 @@ class ModelGeometryRenderer {
       const wireframeGeometry = new WireframeGeometry(geometry)
       const lineMaterial = new MeshBasicMaterial({
         color,
-        opacity: 0,
+        opacity: 0.5,
         transparent: true,
         depthTest: false,
       })
@@ -251,6 +261,15 @@ class ModelGeometryRenderer {
     this.setDisplayConf(displayConf)
     this.alignCamera()
     this.ctrl.renderOnce()
+  }
+
+  nestArray<T>(array: T[], n: number) {
+    const nested: T[][] = []
+    for (let i = 0; i < array.length; i += n) {
+      nested.push(array.slice(i, i + n))
+    }
+
+    return nested
   }
 
   clearGeometry() {

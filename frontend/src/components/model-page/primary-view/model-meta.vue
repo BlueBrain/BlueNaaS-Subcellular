@@ -10,7 +10,7 @@
         <i-input size="small" type="textarea" :rows="8" v-model="annotation" />
       </FormItem>
       <FormItem>
-        <i-button class="width-82" type="warning" disabled @click="clearModel"> Clear model </i-button>
+        <i-button type="warning" @click="clearModel"> Clear model </i-button>
         <i-button
           type="primary"
           class="ml-12 width-82"
@@ -20,19 +20,28 @@
         >
           {{ saveBtnLabel }}
         </i-button>
+        <i-button :disabled="!modelId" class="ml-12" @click="cloneModel"> Clone </i-button>
         <i-button class="ml-12 width-82" type="default" @click="showImportModal"> Import </i-button>
         <Dropdown trigger="click" :transfer="true" @on-click="exportModel">
-          <i-button type="primary" class="ml-12 width-82">
+          <i-button type="primary" class="ml-12 width-82" :disabled="!modelId">
             Export
             <Icon type="ios-arrow-down"></Icon>
           </i-button>
           <DropdownMenu slot="list">
             <DropdownItem name="bngl">BNGL</DropdownItem>
-            <DropdownItem name="ebngl">eBNGL</DropdownItem>
-            <DropdownItem name="pysb_flat">PySB</DropdownItem>
-            <DropdownItem name="sbml" disabled>SBML</DropdownItem>
+            <!-- <DropdownItem name="ebngl" disabled>eBNGL</DropdownItem>
+            <DropdownItem name="pysb_flat" disabled>PySB</DropdownItem>
+            <DropdownItem name="sbml" disabled>SBML</DropdownItem> -->
           </DropdownMenu>
         </Dropdown>
+        <i-button
+          class="ml-12 width-82"
+          type="error"
+          @click="deleteModel"
+          :disabled="!modelId || $store.state.model.user_id === pid"
+        >
+          Delete
+        </i-button>
       </FormItem>
     </i-form>
 
@@ -42,8 +51,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import ModelImport from '@/components/shared/model-import.vue'
+import { post, patch, get, del } from '@/services/api'
+import { AxiosResponse } from 'axios'
+import { ModelBase } from '@/types'
+import { PUBLIC_USER_ID } from '@/constants'
+import saveAs from 'file-saver'
 
 export default {
   name: 'model-meta',
@@ -52,6 +66,7 @@ export default {
   },
   data() {
     return {
+      pid: PUBLIC_USER_ID,
       importModalVisible: false,
       saveInProgress: false,
       saveBtnLabel: 'Save',
@@ -59,29 +74,60 @@ export default {
   },
   methods: {
     clearModel() {
-      this.$store.dispatch('clearModel')
+      this.$store.commit('loadDbModel', {})
     },
-    saveModel() {
+    async cloneModel() {
+      if (!this.modelId) return
+      const res = await post('clone-model', { model_id: this.modelId })
+      this.$store.commit('loadDbModel', res.data)
+
+      this.getModels()
+    },
+    async saveModel() {
       this.saveInProgress = true
       this.saveBtnLabel = 'Saving'
-      this.$store.dispatch('saveModel')
-      setTimeout(() => {
-        this.saveBtnLabel = 'Saved!'
-      }, 300)
-      setTimeout(() => {
-        this.saveBtnLabel = 'Save'
-        this.saveInProgress = false
-      }, 1200)
+
+      const model = this.$store.state.model
+
+      let modelRes: AxiosResponse<ModelBase>
+
+      if (!model?.id || model?.user_id === PUBLIC_USER_ID)
+        modelRes = await post('models', { name: this.name, annotation: this.annotation })
+      else modelRes = await patch(`models/${model.id}`, { name: this.name, annotation: this.annotation })
+
+      this.$store.commit('loadDbModel', modelRes.data)
+
+      this.saveBtnLabel = 'Saved!'
+      this.saveBtnLabel = 'Save'
+      this.saveInProgress = false
+
+      this.getModels()
     },
-    async exportModel(format) {
-      try {
-        await this.$store.dispatch('exportModel', format)
-      } catch (err) {
+
+    async getModels() {
+      const models = await get('models')
+      this.$store.commit('updateDbModels', models.data)
+    },
+
+    async deleteModel() {
+      if (!this.modelId) return
+      const res = await del(`models/${this.modelId}`)
+      if (res.status == 200) {
+        this.getModels()
+        this.clearModel()
+      }
+    },
+
+    async exportModel() {
+      let res: AxiosResponse<string> | undefined
+
+      if (this.modelId) res = await get(`export-model/${this.modelId}`)
+
+      if (!res)
         this.$Notice.error({
           title: 'Export error',
-          desc: err.message,
         })
-      }
+      else saveAs(new Blob([res.data]), `${this.name}.bngl`)
     },
     showImportModal() {
       this.importModalVisible = true
@@ -91,6 +137,10 @@ export default {
     },
   },
   computed: {
+    modelId() {
+      return this.$store.state.model?.id
+    },
+
     name: {
       get() {
         return this.$store.state.model.name

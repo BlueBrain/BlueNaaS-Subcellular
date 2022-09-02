@@ -1,14 +1,12 @@
 from typing import List
 from typing_extensions import Literal
 
-
 NA = 6.02214086e23
 
 
 DIFF_PREFIX = "___int_sys_diff___"
 STIM_PREFIX = "___int_sys_stim___"
 SPAT_PREFIX = "___int_sys_spat___"
-
 
 Entity = Literal[
     "parameter",
@@ -97,7 +95,9 @@ def entity_to_str(entity_type: Entity, entity: dict) -> str:
 
     if entity_type == "structure":
         dimensions = 3 if entity["type"] == "compartment" else 2
-        parent_name = entity["parentName"] if entity["parentName"] != "-" else ""
+        parent_name = entity.get("parentName", "")
+        if parent_name == "-":
+            parent_name = ""
         return f"  {entity['name']} {dimensions} {entity['size']} {parent_name}"
 
     if entity_type == "molecule":
@@ -107,7 +107,7 @@ def entity_to_str(entity_type: Entity, entity: dict) -> str:
         return f"  Molecules {entity['name']} {entity['definition']}"
 
     if entity_type == "diffusion":
-        return f"  Molecules {DIFF_PREFIX}{entity['name']} {entity['speciesDefinition']}@{entity['compartment']}"
+        return f"  Molecules {DIFF_PREFIX}{entity['name']} {entity['species_definition']}@{entity['compartment']}"
 
     if entity_type == "species":
         return f"  {entity['definition']} {entity['concentration']}"

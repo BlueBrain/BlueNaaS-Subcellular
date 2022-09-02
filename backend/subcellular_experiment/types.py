@@ -19,7 +19,6 @@ class SimConfig(BaseModel):
     progress: Optional[int]
     name: str
     modelId: Optional[str]
-    model: dict = {}
     id: str
     annotation: str
     model_str = ""

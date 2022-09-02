@@ -144,6 +144,7 @@ class SimManager:
             await self.send_message(worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=msg.cmdid)
 
     async def schedule_sim(self, sim_conf: SimConfig) -> None:
+
         L.debug("scheduling a simulation")
         self.sim_conf_queue.append(sim_conf)
 

@@ -36,7 +36,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import constants from '@/constants'
 
 import BnglInput from '@/components/shared/bngl-input.vue'
@@ -59,7 +59,7 @@ export default {
       this.$emit('input', this.species)
     },
     isValid() {
-      return this.species.name.trim() && this.species.definition && this.species.concentration
+      return !!this.species.name.trim() && !!this.species.definition && !!this.species.concentration
     },
     onDefinitionInputTab() {
       this.$refs.concentrationInput.focus()

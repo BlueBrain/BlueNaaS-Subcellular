@@ -2,28 +2,37 @@
   <div class="p-12">
     <h3>Function properties</h3>
 
-    <function-form class="mt-12" ref="functionForm" v-model="tmpEntity" @on-submit="applyFunctionChange" />
+    <function-form
+      class="mt-12"
+      ref="functionForm"
+      v-model="modifiedFunction"
+      @on-submit="applyFunctionChange"
+      @input="onInput"
+    />
 
     <div class="action-block">
       <i-button class="mr-12" type="warning" :disabled="!functionEdited" @click="resetFunctionChange"> Reset </i-button>
       <i-button type="primary" :disabled="!functionEdited" @click="applyFunctionChange"> Apply </i-button>
+      <div v-if="error" style="color: red">An error ocurred, try again.</div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
 
 import FunctionForm from '@/components/shared/entities/function-form.vue'
 
 export default {
   name: 'function-properties',
+  props: ['value', 'error'],
   components: {
     'function-form': FunctionForm,
   },
   data() {
     return {
-      tmpEntity: this.getTmpEntity(),
+      modifiedFunction: this.value,
+      oFunction: this.value,
     }
   },
   mounted() {
@@ -33,28 +42,28 @@ export default {
     focusNameInput() {
       this.$nextTick(() => this.$refs.functionForm.focus())
     },
+    onInput() {
+      this.$emit('input', this.modifiedFunction)
+    },
     applyFunctionChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity)
+      this.$emit('apply')
     },
     resetFunctionChange() {
-      this.tmpEntity = this.getTmpEntity()
-    },
-    getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+      this.modifiedFunction = this.oFunction
     },
   },
   computed: {
     functionEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'definition', 'annotation'])
-    },
-    selection() {
-      return this.$store.state.selectedEntity
+      return !isEqualBy(this.modifiedFunction, this.oFunction, ['name', 'definition', 'annotation'])
     },
   },
   watch: {
-    selection() {
-      this.tmpEntity = this.getTmpEntity()
-      this.focusNameInput()
+    value(val, oldVal) {
+      if (val.id !== oldVal.id) {
+        this.modifiedFunction = val
+        this.oFunction = val
+        this.focusNameInput()
+      }
     },
   },
 }

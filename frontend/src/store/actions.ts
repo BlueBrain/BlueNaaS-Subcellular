@@ -5,6 +5,7 @@ import saveAs from 'file-saver'
 import uuidv4 from 'uuid/v4'
 import { decode, encode } from '@msgpack/msgpack'
 import axios from 'axios'
+import { post, get } from '@/services/api'
 
 import * as Sentry from '@sentry/browser'
 
@@ -17,21 +18,128 @@ import constants from '@/constants'
 import modelTools from '@/tools/model-tools'
 import arrayBufferToBase64 from '@/tools/array-buffer-to-base64'
 import publicModels from '@/data/public-models'
+import { User } from '@/types'
+import { post } from '@/services/api'
+
+const defaultSim = {
+  valid: true,
+  status: 'created',
+  name: 'Main STEPS example with stimuli',
+  progress: null,
+  solver: 'tetexact',
+  solverConf: {
+    valid: true,
+    dt: 0.01,
+    tEnd: 10,
+    stimuli: [
+      {
+        t: 0.1,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 0.105,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+      {
+        t: 0.3,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 0.302,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+      {
+        t: 0.5,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 0.502,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+      {
+        t: 0.7,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 0.702,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+      {
+        t: 0.9,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 0.902,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+      {
+        t: 1.1,
+        type: 'setParam',
+        target: 'kCa',
+        value: 1,
+      },
+      {
+        t: 1.102,
+        type: 'setParam',
+        target: 'kCa',
+        value: 0,
+      },
+    ],
+    spatialSampling: {
+      enabled: false,
+      structures: [],
+      observables: [],
+    },
+  },
+
+  annotation: '',
+}
 
 export default {
   async init({ dispatch }) {
-    let user = await storage.getItem('user')
-    if (!user) {
-      user = {
-        id: uuidv4(),
-        fullName: '',
-        email: '',
-      }
+    let user = (await storage.getItem('user')) as User | undefined
+
+    let userId = user?.id
+
+    let dbUser: User | undefined
+
+    if (userId) dbUser = await get<User>(`users/${userId}`)
+
+    if (!userId | !dbUser) {
+      userId = userId || uuidv4()
+      await post<{ success: true }, User>('users', { id: userId })
+      await storage.setItem('user', user)
     }
+
+    user = {
+      id: userId,
+      fullName: '',
+      email: '',
+    }
+
     dispatch('setUser', user)
     socket.userId = user.id
     socket.init()
-    await dispatch('loadDbModels')
   },
 
   setUser({ commit }, user) {
@@ -66,121 +174,6 @@ export default {
     }
 
     commit('modifySelectedEntity', entity)
-  },
-
-  async saveModel({ state, commit }) {
-    const models = cloneDeep(state.dbModels)
-    const currentModel = { ...state.model }
-    currentModel.userId = state.user.id
-
-    const res = await axios.post('https://subcellular-bsp-epfl.apps.hbp.eu/api/models', currentModel)
-
-    currentModel.id = res.data.id
-
-    if (currentModel.geometry) {
-      const geometryId = currentModel.geometry.id
-      await storage.setItem(`geometry:${geometryId}`, currentModel.geometry)
-      currentModel.geometry = { id: geometryId }
-    }
-
-    models[currentModel.name] = currentModel
-    commit('updateDbModels', cloneDeep(models))
-    await storage.setItem('models', models)
-  },
-
-  async createGeometry({ state, commit, dispatch }, geometry) {
-    const { id, structureSize } = await socket.request('create_geometry', geometry.getRaw())
-    console.log(id)
-    geometry.id = id
-    geometry.meta.structures.forEach((structure) => {
-      structure.size = structureSize[structure.name]
-    })
-
-    commit('setGeometry', geometry)
-    dispatch('saveModel')
-    dispatch('setStructParamsFromGeometry')
-  },
-
-  removeGeometry({ commit }) {
-    commit('removeGeometry')
-  },
-
-  setStructParamsFromGeometry({ state, commit }) {
-    const { structures } = state.model.geometry.meta
-    structures.forEach((geomStruct) => {
-      const modelStructIdx = state.model.structures.findIndex((s) => s.name === geomStruct.name)
-      if (modelStructIdx === -1) return
-
-      commit('modifyEntity', {
-        type: 'structure',
-        entityIndex: modelStructIdx,
-        keyName: 'geometryStructureSize',
-        value: geomStruct.size.toPrecision(5),
-      })
-
-      commit('modifyEntity', {
-        type: 'structure',
-        entityIndex: modelStructIdx,
-        keyName: 'geometryStructureName',
-        value: geomStruct.name,
-      })
-
-      commit('modifyEntity', {
-        type: 'structure',
-        entityIndex: modelStructIdx,
-        keyName: 'type',
-        value: geomStruct.type,
-      })
-    })
-  },
-
-  async loadDbModels({ commit }) {
-    const storageModels = await storage.getItem('models')
-    const models = storageModels || {}
-    commit('updateDbModels', models)
-  },
-
-  async deleteDbModel({ state, commit }, model) {
-    const models = state.dbModels
-    delete models[model.name]
-    await storage.setItem('models', models)
-    commit('updateDbModels', cloneDeep(models))
-    commit('resetEntitySelection')
-  },
-
-  async loadPublicModelByName({ state, dispatch }, modelName) {
-    const model = publicModels.find((model) => model.name === modelName)
-    if (!model) return
-
-    dispatch('loadDbModel', model)
-  },
-
-  async loadDbModel({ commit, dispatch, state }, dbModel) {
-    const model = cloneDeep(dbModel)
-    if (model.geometry && !model.geometry.name) {
-      model.geometry = await storage.getItem(`geometry:${model.geometry.id}`)
-    }
-
-    if (model.simulations) {
-      model.simulations.forEach(modelTools.upgradeSimStimulation)
-    }
-
-    // TODO: refactor all those switches
-    if (model.geometry) {
-      model.geometry = ModelGeometry.from(model.geometry)
-      await model.geometry.init()
-    }
-
-    commit('loadDbModel', model)
-    if (model.geometry) {
-      dispatch('setStructParamsFromGeometry')
-    }
-
-    if (model.public) {
-      dispatch('cloneSimulations', model.simulations)
-    } else {
-      dispatch('getSimulations')
-    }
   },
 
   async exportModel({ state }, exportFormat) {
@@ -219,12 +212,20 @@ export default {
     socket.send('create_simulation', simulation)
   },
 
-  async getSimulations({ state, commit }) {
+  async getSimulations({ dispatch, state, commit }) {
     const { simulations } = await socket.request('get_simulations', {
       modelId: state.model.id,
     })
-    simulations.forEach(modelTools.upgradeSimStimulation)
+
+    console.log('here')
+
     commit('setSimulations', simulations)
+
+    if (simulations.length === 0 && state.user?.id && state.model?.id) {
+      const sim = { ...defaultSim, id: uuidv4(), modelId: state.model.id, userId: state.user.id }
+      console.log(sim)
+      dispatch('addSimulation', modelTools.upgradeSimStimulation(sim))
+    }
   },
 
   async cloneSimulations({ state, commit }, sampleSimulations) {
@@ -253,28 +254,22 @@ export default {
   },
 
   runSimulation({ state, commit }, simulation) {
-    commit('setSimulationStatusById', {
-      id: simulation.id,
-      status: constants.SimStatus.READY_TO_RUN,
-    })
-    commit('setEntitySelectionProp', {
-      propName: 'status',
-      value: constants.SimStatus.READY_TO_RUN,
-    })
-
-    const model = { ...state.model }
-    delete model.simulations
-
-    if (model.geometry) {
-      model.geometry = { id: model.geometry.id }
-    }
+    // commit('setSimulationStatusById', {
+    //   id: simulation.id,
+    //   status: constants.SimStatus.READY_TO_RUN,
+    // })
+    // commit('setEntitySelectionProp', {
+    //   propName: 'status',
+    //   value: constants.SimStatus.READY_TO_RUN,
+    // })
 
     const simConfig = {
       simId: simulation.id,
       userId: state.user.id,
-      model,
       ...simulation,
     }
+
+    console.log(simConfig)
 
     socket.send('run_simulation', simConfig)
   },

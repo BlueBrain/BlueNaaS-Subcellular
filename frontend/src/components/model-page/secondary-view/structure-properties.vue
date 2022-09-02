@@ -2,33 +2,48 @@
   <div class="p-12">
     <h3>Structure properties</h3>
 
-    <structure-form class="mt-12" ref="structureForm" v-model="tmpEntity" @on-submit="applyStructureChange" />
+    <structure-form
+      class="mt-12"
+      ref="structureForm"
+      v-model="modified"
+      @on-submit="applyStructureChange"
+      @input="onInput"
+    />
 
     <div class="actions-block">
-      <i-button class="mr-12" type="warning" :disabled="!structureEdited" @click="resetStructureChange">
+      <i-button
+        class="mr-12"
+        type="warning"
+        :disabled="!structureEdited || isPublicModel"
+        @click="resetStructureChange"
+      >
         Reset
       </i-button>
 
-      <i-button type="primary" :disabled="!structureEdited" @click="applyStructureChange"> Apply </i-button>
+      <i-button type="primary" :disabled="!structureEdited || isPublicModel" @click="applyStructureChange">
+        Apply
+      </i-button>
+      <div v-if="error" style="color: red">An error ocurred, try again.</div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
-import constants from '@/constants'
 
 import StructureForm from '@/components/shared/entities/structure-form.vue'
+import { PUBLIC_USER_ID } from '@/constants'
 
 export default {
   name: 'structure-properties',
   components: {
     'structure-form': StructureForm,
   },
+  props: ['value', 'error'],
   data() {
     return {
-      constants,
-      tmpEntity: this.getTmpEntity(),
+      modified: this.value,
+      original: this.value,
     }
   },
   mounted() {
@@ -38,19 +53,19 @@ export default {
     focusStructureForm() {
       this.$nextTick(() => this.$refs.structureForm.focus())
     },
+    onInput() {
+      this.$emit('input', this.modified)
+    },
     applyStructureChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity)
+      this.$emit('apply')
     },
     resetStructureChange() {
-      this.tmpEntity = this.getTmpEntity()
-    },
-    getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+      this.modified = this.original
     },
   },
   computed: {
     structureEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, [
+      return !isEqualBy(this.modified, this.original, [
         'name',
         'type',
         'parentName',
@@ -59,14 +74,18 @@ export default {
         'geometryStructureName',
       ])
     },
-    selection() {
-      return this.$store.state.selectedEntity
+    isPublicModel() {
+      return this.$store.state.model?.user_id === PUBLIC_USER_ID
     },
   },
   watch: {
-    selection() {
-      this.tmpEntity = this.getTmpEntity()
-      this.focusStructureForm()
+    value(val, oldVal) {
+      console.log('val', val)
+      if (val.id !== oldVal.id) {
+        this.modifiedParam = val
+        this.oParam = val
+        this.focusNameInput()
+      }
     },
   },
 }

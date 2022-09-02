@@ -1,5 +1,4 @@
 import os
-import json
 import re
 import time
 import math
@@ -16,9 +15,10 @@ import steps.geom as sgeom
 import steps.rng as srng
 import steps.solver as ssolver
 from steps.mpi.solver import TetOpSplit
-from steps.utilities import meshio
+from steps.geom import Tetmesh
 from typing_extensions import Literal
 
+from subcellular_experiment.api import fetch_model
 from .model_to_bngl import model_to_bngl, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
 from .sim import (
     SimProgress,
@@ -66,7 +66,11 @@ class StepsSim:
         self.send_progress(SimStatus(status="init"))
         self.log("init sim")
 
-        model_dict = self.sim_config["model"]
+        model_dict = fetch_model(self.sim_config["modelId"], self.sim_config["userId"])
+        geometry = model_dict["geometry"]
+
+        if (model_dict["geometry_id"]) is None:
+            raise ValueError("Model doesn't have a geometry defined.")
 
         react_with_standard_rate_laws = [
             reaction for reaction in model_dict["reactions"] if not has_functional_rate_laws(reaction)
@@ -91,14 +95,14 @@ class StepsSim:
 
         def get_comp_name_by_tet_idx(tet_idx):
             geom_comp_name = next(
-                st["name"] for st in geometry["structures"] if st["type"] == COMPARTMENT and tet_idx in st["tetIdxs"]
+                st["name"] for st in geometry["structures"] if st["type"] == COMPARTMENT and tet_idx in st["idxs"]
             )
 
             comp_name = next(
                 (
                     st["name"]
                     for st in model_dict["structures"]
-                    if st["type"] == COMPARTMENT and st["geometryStructureName"] == geom_comp_name
+                    if st["type"] == COMPARTMENT and st["name"] == geom_comp_name
                 ),
                 "",
             )
@@ -107,7 +111,13 @@ class StepsSim:
 
         if solver_config.get("stimulation") is not None:
             self.log("extend model observables with molecule definitions from stimulation")
-            stimuli = decompress_stimulation(solver_config["stimulation"])
+
+            stimuli = solver_config.get("stimulation", [])
+
+            if stimuli and (f in stimuli[0] for f in ("t", "type", "target", "value")):
+                pass
+            else:
+                stimuli = decompress_stimulation(stimuli)
 
             # TODO: refactor weird use of simplify_string, remove stim_name
             def stim_name(stim):
@@ -169,17 +179,8 @@ class StepsSim:
             pysb_spec = pysb_model.species[pysb_spec_idx]
             return next(steps_spec for steps_spec in steps_species if steps_spec.getID() == pysb_spec.name)
 
-        geometry_id = model_dict["geometry"]["id"]
-        geometry_path = os.path.join(GEOMETRY_ROOT_PATH, geometry_id)
-        self.log("load mesh id: {}".format(geometry_id))
-        mesh = meshio.loadMesh(os.path.join(geometry_path, "mesh"))[0]
-        self.log("load geometry.json")
-        with open(os.path.join(geometry_path, "geometry.json"), "r") as file:
-            geometry = json.loads(file.read())
-
-            print(geometry)
-
-        geom_struct_dict = {structure["name"]: structure for structure in geometry["structures"]}
+        self.log("load mesh id: {}".format(model_dict["geometry_id"]))
+        mesh = Tetmesh(geometry["nodes"], geometry["tets"], geometry["tris"])
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}
@@ -202,11 +203,11 @@ class StepsSim:
 
         self.log("about to create STEPS compartments (TmComp)")
         tm_comp_dict = {}
-        compartments = [structure for structure in model_dict["structures"] if structure["type"] == COMPARTMENT]
+        compartments = [structure for structure in geometry["structures"] if structure["type"] == COMPARTMENT]
+
         for compartment in compartments:
             name = compartment["name"]
-            geom_struct_name = compartment["geometryStructureName"]
-            tetIdxs = geom_struct_dict[geom_struct_name]["tetIdxs"]
+            tetIdxs = compartment["idxs"]
 
             self.log(f"add STEPS compartment (TmComp) for {name}")
 
@@ -242,14 +243,13 @@ class StepsSim:
 
         self.log("about to create STEPS membrane (TmPatch)")
         patch_dicts = []
-        membranes = [structure for structure in model_dict["structures"] if structure["type"] == MEMBRANE]
+        membranes = [structure for structure in geometry["structures"] if structure["type"] == MEMBRANE]
         for membrane in membranes:
             name = membrane["name"]
-            geom_struct_name = membrane["geometryStructureName"]
             self.log(f"add STEPS membrane (TmPatch) for {name}")
             # .getTriTetNeighb might return -1 if triangle is situated on border of the mesh, and there is no tet
             # from one side
-            triIdxs = geom_struct_dict[geom_struct_name]["triIdxs"]
+            triIdxs = membrane["idxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in triIdxs]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
 
@@ -383,7 +383,7 @@ class StepsSim:
                 pysb_spec = pysb_model.species[pysb_spec_idx]
                 comp_name = get_pysb_spec_comp_name(pysb_spec)
                 sys = sys_dict[comp_name]
-                dcst = float(model_diffs[observable_idx]["diffusionConstant"])
+                dcst = float(model_diffs[observable_idx]["diffusion_constant"])
                 diff_name = "{}_{}".format(diff_common_name, pysb_spec.name)
                 self.log(f"add diffusion for {pysb_spec.name} in {comp_name}")
                 diff = smodel.Diff(diff_name, sys, steps_spec, dcst=dcst)
@@ -448,7 +448,7 @@ class StepsSim:
         self.log("about to create STEPS diffusion boundaries")
         diff_boundaries = []
         diff_boundary_spec_names_dict = {}
-        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry["freeDiffusionBoundaries"]):
+        for diff_boundary_idx, diff_boundary_dict in enumerate(geometry.get("freeDiffusionBoundaries", [])):
             tris = diff_boundary_dict["triIdxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in tris]).flatten()
             neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]

@@ -14,7 +14,7 @@
       <bngl-input
         ref="speciesDefinitionInput"
         entity-type="diffusion"
-        v-model="diffusion.speciesDefinition"
+        v-model="diffusion.species_definition"
         @enter="onSubmit"
         @tab="onSpeciesDefinitionInputTab"
         @input="onDiffusionChange"
@@ -24,7 +24,7 @@
       <bngl-input
         ref="diffusionConstantInput"
         entity-type="parameter"
-        v-model="diffusion.diffusionConstant"
+        v-model="diffusion.diffusion_constant"
         @enter="onSubmit"
         @tab="onDiffusionConstantInputTab"
         @input="onDiffusionChange"
@@ -42,10 +42,12 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import constants from '@/constants'
 
 import BnglInput from '@/components/shared/bngl-input.vue'
+import { get } from '@/services/api'
+import { Structure } from '@/types'
 
 export default {
   name: 'diffusion-form',
@@ -57,7 +59,17 @@ export default {
     return {
       constants,
       diffusion: { ...this.value },
+      structures: [],
     }
+  },
+  async mounted() {
+    this.structures = (
+      await get<Structure[]>('structures', {
+        model_id: this.$store.state.model.id,
+        user_id: this.$store.state.model.user_id,
+      })
+    ).data
+    console.log(this.structures)
   },
   methods: {
     onDiffusionChange() {
@@ -65,7 +77,7 @@ export default {
       this.$emit('input', this.diffusion)
     },
     isValid() {
-      return this.diffusion.name.trim() && this.diffusion.speciesDefinition
+      return !!this.diffusion.name.trim() && !!this.diffusion.species_definition
     },
     onSpeciesDefinitionInputTab() {
       this.$refs.diffusionConstantInput.focus()
@@ -84,13 +96,8 @@ export default {
       this.$refs.diffusionConstantInput.refresh()
     },
   },
-  computed: {
-    structures() {
-      return this.$store.state.model.structures
-    },
-  },
   watch: {
-    value() {
+    async value() {
       this.diffusion = { ...this.value }
     },
   },

@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="species">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -20,10 +20,8 @@
         <div class="block-footer">
           <Row>
             <i-col span="12">
-              <i-button type="primary" @click="addSpecies"> New Species </i-button>
-              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeSpecies">
-                Delete
-              </i-button>
+              <i-button type="primary" @click="add"> New Species </i-button>
+              <i-button class="ml-24" type="warning" :disabled="!current.id" @click="remove"> Delete </i-button>
             </i-col>
             <i-col span="12">
               <i-input search v-model="searchStr" placeholder="Search" />
@@ -32,22 +30,30 @@
         </div>
 
         <Modal v-model="newSpeciesModalVisible" title="New Species" class-name="vertical-center-modal" @on-ok="onOk">
-          <species-form ref="speciesForm" v-model="newSpecies" />
+          <species-form ref="speciesForm" v-model="current" @on-submit="onOk" />
           <div slot="footer">
             <i-button class="mr-6" type="text" @click="hideNewSpeciesModal"> Cancel </i-button>
-            <i-button type="primary" :disabled="!newSpecies.valid" @click="onOk"> OK </i-button>
+            <i-button type="primary" :disabled="!current.valid" @click="onOk"> OK </i-button>
           </div>
         </Modal>
       </div>
     </template>
     <template v-slot:secondary>
-      <species-properties />
+      <species-properties v-if="current.id" v-model="current" :error="error" @apply="onOk" />
+      <div v-else class="h-100 p-12">
+        <p>Select species to view/edit properties</p>
+      </div>
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view its species</div>
 </template>
 
-<script>
+<script lang="ts">
 import get from 'lodash/get'
+import { get as getr, post, patch, del } from '@/services/api'
+import { Species } from '@/types'
+import { AxiosResponse } from 'axios'
+
 import { mapState } from 'vuex'
 
 import bus from '@/services/event-bus'
@@ -62,6 +68,7 @@ import objStrSearchFilter from '@/tools/obj-str-search-filter'
 import blockHeightWoPadding from '@/tools/block-height-wo-padding'
 
 const defaultSpecies = {
+  id: undefined,
   name: '',
   valid: false,
   definition: '',
@@ -80,10 +87,13 @@ export default {
   },
   data() {
     return {
+      error: false,
+      deleteError: false,
+      species: [],
       searchStr: '',
       tableHeight: null,
       newSpeciesModalVisible: false,
-      newSpecies: { ...defaultSpecies },
+      current: { ...defaultSpecies },
       columns: [
         {
           title: 'Name',
@@ -119,6 +129,9 @@ export default {
       ],
     }
   },
+  async created() {
+    this.species = await this.getSpecies()
+  },
   mounted() {
     this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
@@ -128,8 +141,24 @@ export default {
     bus.$off('layoutChange')
   },
   methods: {
-    addSpecies() {
-      this.newSpecies = {
+    async getSpecies() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Species[]> = await getr<Species[]>('species', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data.map((s) => ({
+        ...s,
+        concentration: s.concentration.toString(),
+      }))
+    },
+
+    add() {
+      this.current = {
         ...defaultSpecies,
         name: findUniqName(this.species, 's'),
       }
@@ -140,41 +169,58 @@ export default {
         this.$refs.speciesForm.focus()
       })
     },
+
+    async remove() {
+      const res = await del<null>(`species/${this.current.id}`)
+      if (!res) {
+        this.deleteError = true
+        return
+      }
+
+      this.deleteError = false
+
+      this.current = { ...defaultSpecies }
+      this.species = await this.getSpecies()
+    },
     showNewSpeciesModal() {
       this.newSpeciesModalVisible = true
     },
     hideNewSpeciesModal() {
       this.newSpeciesModalVisible = false
     },
-    removeSpecies() {
-      this.$store.commit('removeSelectedEntity')
+
+    onSpeciesSelect(species: Species) {
+      this.current = species
     },
-    onSpeciesSelect(species, index) {
-      this.$store.commit('setEntitySelection', {
-        index,
-        type: 'species',
-        entity: species,
-      })
-    },
-    onOk() {
-      this.newSpeciesModalVisible = false
-      this.$store.commit('addSpecies', this.newSpecies)
+    async onOk() {
+      this.error = false
+
+      const model_id = this.$store.state.model?.id
+      let res: AxiosResponse<Species> | undefined
+
+      if (!this.current.id) res = await post<Species>('species', { ...this.current, model_id })
+      else res = await patch<Species>(`species/${this.current.id}`, this.current)
+
+      if (!res) {
+        this.error = true
+        return
+      }
+
+      this.hideNewSpeciesModal()
+
+      this.species = await this.getSpecies()
     },
     computeTableHeight() {
       this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
   },
   computed: mapState({
-    species(state) {
-      return state.model.species
-    },
     filteredSpecies() {
       return this.species.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
       return this.searchStr ? 'No matching species' : 'Create a species by using buttons below'
     },
-    removeBtnDisabled: (state) => get(state, 'selectedEntity.type') !== 'species',
   }),
 }
 </script>

@@ -22,6 +22,7 @@ from .viz import contact_map, reactivity_network
 from .sbml_to_bngl import sbml_to_bngl
 from .logger import get_logger
 from .envvars import SENTRY_DSN
+from .api import fetch_model
 
 from .worker_message import SimWorkerMessage
 from .types import (
@@ -33,7 +34,6 @@ from .types import (
     UpdateSimulation,
     GetSimulations,
     GetExportedModel,
-    Model,
 )
 
 L = get_logger(__name__)
@@ -130,6 +130,7 @@ class WSHandler(WebSocketHandler):
 
         if msg.cmd == "get_simulations":
             model_id = GetSimulations(**msg.data).modelId
+
             simulations = await db.get_simulations(self.user_id, model_id)
 
             await self.send_message("simulations", {"simulations": simulations}, cmdid=msg.cmdid)
@@ -147,12 +148,14 @@ class WSHandler(WebSocketHandler):
             )
 
         if msg.cmd == "contact-map":
-            data = Model(**msg.data)
-            await self.send_message("contact-map", contact_map(data.dict()))
+            model = fetch_model(msg.data["model_id"], msg.data["user_id"])
+            cm = contact_map(model)
+
+            await self.send_message("contact-map", cm)
 
         if msg.cmd == "reactivity-network":
-            data = Model(**msg.data)
-            rn = reactivity_network(data.dict())
+            model = fetch_model(msg.data["model_id"], msg.data["user_id"])
+            rn = reactivity_network(model)
             await self.send_message("reactivity-network", rn)
 
         if msg.cmd == "get_exported_model":

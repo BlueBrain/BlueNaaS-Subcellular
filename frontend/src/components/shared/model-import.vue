@@ -1,11 +1,5 @@
 <template>
-  <Upload
-    type="drag"
-    action="/dummy-endpoint"
-    :format="['bngl', 'json', 'xml']"
-    :disabled="loading"
-    :before-upload="beforeUpload"
-  >
+  <Upload type="drag" action="/" :format="['bngl', 'json', 'xml']" :disabled="loading" :before-upload="beforeUpload">
     <div class="container">
       <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
       <p>Click or drag files here to upload</p>
@@ -19,7 +13,9 @@
   </Upload>
 </template>
 
-<script>
+<script lang="ts">
+import { post, get } from '@/services/api'
+
 const formatByExt = {
   json: {
     type: 'ebngl',
@@ -48,52 +44,33 @@ export default {
     }
   },
   methods: {
-    beforeUpload(file) {
+    async beforeUpload(file) {
       this.loading = true
-      this.modelName = file.name.split('.').slice(0, -1).join('.')
 
-      const fileExtNorm = file.name.split('.').slice(-1)[0].toLowerCase()
+      const user_id = this.$store.state.user?.id
+      if (!user_id) return
 
-      this.format = formatByExt[fileExtNorm]
-      const reader = new FileReader()
-      reader.onload = (e) => this.onFileRead(e.target.result)
+      const form = new FormData()
+      form.append('file', file)
+      form.append('user_id', user_id)
 
-      // TODO: refactor
-      if (fileExtNorm === 'ebngl') {
-        reader.readAsArrayBuffer(file)
-      } else {
-        reader.readAsText(file)
-      }
+      const model = await post('import-bngl', form)
 
-      // prevent default action to upload data to remote api
-      return false
-    },
-    onImportSuccess() {
-      this.$Notice.success({
-        title: 'Import success',
-        desc: `${this.format.label} model has been imported successfully`,
-      })
-      this.$emit('import-finish')
-    },
-    onImportError(err) {
-      this.$Notice.error({
-        title: 'Import error',
-        desc: err.message,
-      })
-    },
-    onFileRead(fileContent) {
-      const importModelPayload = {
-        fileContent,
-        modelName: this.modelName,
-        type: this.format.type,
-      }
-      this.$store
-        .dispatch('importModel', importModelPayload)
-        .then(() => this.onImportSuccess())
-        .catch((err) => this.onImportError(err))
-        .finally(() => {
-          this.loading = false
+      if (!model)
+        this.$Notice.error({
+          title: 'Import error',
+          desc: 'There was an error importing the model',
         })
+
+      this.$store.commit('loadDbModel', model.data)
+
+      this.loading = false
+      this.$emit('import-finish')
+
+      const models = await get('models')
+      this.$store.commit('updateDbModels', models.data)
+
+      return false
     },
   },
 }

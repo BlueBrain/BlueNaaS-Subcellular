@@ -1,7 +1,7 @@
 <template>
   <div class="p-12 h-100 o-scroll-y">
     <h2>Visualizations</h2>
-    <Tabs>
+    <Tabs v-if="$store.state.model.id">
       <TabPane label="Contact Map" name="contact">
         <contact-map />
       </TabPane>
@@ -9,6 +9,7 @@
         <reactivity-network />
       </TabPane>
     </Tabs>
+    <v-else>Load a model to show the visualizations</v-else>
   </div>
 </template>
 

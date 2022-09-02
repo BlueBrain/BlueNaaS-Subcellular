@@ -16,11 +16,8 @@ cytoscape.use(coseBilkent)
 
 export default Vue.extend({
   name: 'contact-map',
-
   created() {
-    if (this.model?.id !== null && !this.viz) {
-      socket.request('contact-map', this.model)
-    }
+    this.getGraph()
   },
 
   mounted() {
@@ -62,7 +59,7 @@ export default Vue.extend({
 
     this.graph.on('click', 'node', (e) => {
       const isChild = !!e.target.data('parent')
-      if (!isChild) this.$router.push('/model/species')
+      if (!isChild) this.$router.push('/species')
     })
 
     if (this.viz) {
@@ -71,6 +68,12 @@ export default Vue.extend({
   },
 
   methods: {
+    getGraph() {
+      const user_id = this.$store.state.user?.id
+      if (this.model?.id !== null && !this.viz && user_id) {
+        socket.request('contact-map', { model_id: this.model.id, user_id })
+      }
+    },
     draw() {
       const data = cloneDeep(this.viz)
       const nodes = this.config?.nodes
@@ -141,6 +144,9 @@ export default Vue.extend({
   watch: {
     viz() {
       this.draw()
+    },
+    model() {
+      this.getGraph()
     },
   },
 })

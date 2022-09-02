@@ -9,20 +9,32 @@
       <Tree :data="dbData" @on-select-change="onSelectChange" />
     </div>
 
-    <div class="block-footer">
+    <!-- <div class="block-footer">
       <i-button class="mb-12" type="primary" long to="/molecular-repo"> Open molecular repository </i-button>
-    </div>
+    </div> -->
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import get from 'lodash/get'
-import publicModels from '@/data/public-models'
+import * as api from '@/services/api'
+import { ModelBase } from '@/types'
 
 export default {
   name: 'db-component',
+
+  async created() {
+    const res = await api.getPublicModels<ModelBase[]>()
+
+    const myModelsRes = await api.get<ModelBase[]>('models')
+
+    if (myModelsRes) this.$store.commit('updateDbModels', myModelsRes.data)
+    this.dbData[1].children = res.data.map(this.model)
+    console.log(this.dbData)
+  },
   data() {
     return {
+      publicModels: [],
       dbData: [
         {
           title: 'My models',
@@ -32,41 +44,35 @@ export default {
         {
           title: 'Public models',
           expand: false,
-          children: publicModels.map((model) => ({
-            title: model.name,
-            type: 'model',
-            model,
-          })),
+          children: [],
         },
       ],
     }
   },
   methods: {
+    model(model: ModelBase) {
+      return {
+        title: model.name,
+        type: 'model',
+        model,
+      }
+    },
     onSelectChange(nodeArray) {
       if (get(nodeArray, '[0].type') !== 'model') return
-
-      const selection = {
-        type: 'dbModel',
-        entity: nodeArray[0].model,
-      }
-      this.$store.commit('setEntitySelection', selection)
-      if (this.$router.history.current.path !== '/load-model') this.$router.push({ path: '/load-model' })
+      this.$store.commit('loadDbModel', nodeArray[0].model)
     },
   },
   computed: {
-    modelNames() {
-      return Object.keys(this.$store.state.dbModels)
-    },
     dbModels() {
       return this.$store.state.dbModels
     },
   },
   watch: {
-    modelNames(modelNames) {
-      this.dbData[0].children = modelNames.map((n) => ({
-        title: n,
+    dbModels(models: ModelBase[]) {
+      this.dbData[0].children = models.map((model) => ({
+        title: model.name,
         type: 'model',
-        model: this.dbModels[n],
+        model,
       }))
     },
   },

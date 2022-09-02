@@ -8,7 +8,7 @@
   </i-select>
 </template>
 
-<script>
+<script lang="ts">
 import groupBy from 'lodash/groupBy'
 import get from 'lodash/get'
 

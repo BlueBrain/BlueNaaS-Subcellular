@@ -32,66 +32,8 @@ export default {
     state.model.geometry = geometry
   },
 
-  setSelectMode(state, mode) {
-    state.selectMode = mode
-  },
-
-  addTetIdx(state, idx) {
-    if (!state.selectedTetIdxs.includes(idx)) state.selectedTetIdxs.push(idx)
-  },
-
-  resetSelectedTetIdxs(state) {
-    state.selectedTetIdxs = []
-  },
-
-  removeGeometry(state) {
-    state.model.geometry = null
-
-    // reset geometry related structures' properties
-    state.model.structures.forEach((structure) => {
-      structure.geometryStructureSize = ''
-      structure.geometryStructureName = ''
-    })
-  },
-
-  addStructure(state, structure) {
-    state.model.structures.push(structure)
-  },
-
-  addParameter(state, parameter) {
-    state.model.parameters.push(parameter)
-  },
-
-  addFunction(state, fn) {
-    state.model.functions.push(fn)
-  },
-
-  addMolecule(state, molecule) {
-    state.model.molecules.push(molecule)
-  },
-
-  addSpecies(state, species) {
-    state.model.species.push(species)
-  },
-
-  addReaction(state, reaction) {
-    state.model.reactions.push(reaction)
-  },
-
-  addObservable(state, observable) {
-    state.model.observables.push(observable)
-  },
-
-  addDiffusion(state, diffusion) {
-    state.model.diffusions.push(diffusion)
-  },
-
   addSimulation(state, simulation) {
     state.model.simulations.push(simulation)
-  },
-
-  addEntity(state, entityType, entity) {
-    state.model[entityTypeCollectionMap[entityType]].push(entity)
   },
 
   setSimulationStatusById(state, { id: simId, status }) {
@@ -155,10 +97,6 @@ export default {
     Vue.set(state.selectedEntity.entity, propName, value)
   },
 
-  resetEntitySelection(state) {
-    state.selectedEntity = null
-  },
-
   modifySelectedEntity(state, modifiedEntityReactiveObj) {
     const modifiedEntity = { ...modifiedEntityReactiveObj }
     const entityCollection = entityTypeCollectionMap[state.selectedEntity.type]
@@ -168,14 +106,6 @@ export default {
 
   modifyEntity(state, { type, entityIndex, keyName, value }) {
     Vue.set(state.model[entityTypeCollectionMap[type]][entityIndex], keyName, value)
-  },
-
-  removeSelectedEntity(state) {
-    const entityCollection = entityTypeCollectionMap[state.selectedEntity.type]
-    const { index } = state.selectedEntity
-    state.model[entityCollection].splice(index, 1)
-
-    state.selectedEntity = null
   },
 
   updateModelName(state, name) {
@@ -188,6 +118,10 @@ export default {
 
   updateDbModels(state, models) {
     state.dbModels = models
+  },
+
+  addModel(state, model) {
+    state.dbModels.push(model)
   },
 
   loadDbModel(state, model) {
@@ -203,6 +137,14 @@ export default {
     entities.forEach((entity) => {
       state.model[entity] = state.model[entity].concat(modelDiff[entity])
     })
+  },
+
+  removeSelectedEntity(state) {
+    const entityCollection = entityTypeCollectionMap[state.selectedEntity.type]
+    const { index } = state.selectedEntity
+    state.model[entityCollection].splice(index, 1)
+
+    state.selectedEntity = null
   },
 
   resetMolecularRepo(state) {

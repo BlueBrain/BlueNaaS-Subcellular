@@ -48,7 +48,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import { SIM_TRACE_MAX_SIZE } from '@/constants'
 
 import StepsStimulationForm from './steps-stimulation-form.vue'

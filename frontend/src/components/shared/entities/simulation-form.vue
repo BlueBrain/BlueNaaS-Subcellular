@@ -97,15 +97,14 @@ export default {
       this.$emit('input', this.simulation)
     },
     isValid() {
-      return this.simulation.name.trim() && this.simulation.solverConf.valid && this.simulation.solver
+      return !!this.simulation.name.trim() && !!this.simulation.solverConf.valid && !!this.simulation.solver
     },
     focus() {
       this.$refs.nameInput.focus()
     },
     getInvalidReason(solver: Solver) {
       if (!this.solvers.includes(solver)) throw new Error(`Unrecognized solver ${solver}`)
-      if (solver === 'nfsim' && this.model.nonBnglStructures) return 'Non compliant BNG structs'
-      if ((solver === 'tetexact' || solver === 'tetopsplit') && !this.model.geometry) return 'No geometry provided'
+
       return ''
     },
   },

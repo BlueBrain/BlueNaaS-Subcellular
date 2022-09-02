@@ -4,22 +4,14 @@
       <slot name="primary"></slot>
     </div>
     <div slot="bottom" class="pl-6 pt-6 o-auto">
-      <slot v-if="this.$store.state.selectedEntity" name="secondary"></slot>
-      <div v-else class="h-100 p-12">
-        <p>
-          Select <span>{{ selectedType }}</span> to view/edit properties
-        </p>
-      </div>
+      <slot name="secondary"></slot>
     </div>
   </Split>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: 'split',
-  props: {
-    selectedType: String,
-  },
   data() {
     return {
       split: {

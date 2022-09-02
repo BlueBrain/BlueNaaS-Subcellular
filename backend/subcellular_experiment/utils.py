@@ -21,6 +21,7 @@ class ExtendedJSONEncoder(json.JSONEncoder):
 
 @contextmanager
 def tempdir():
+    tmp_dir = ""
     try:
         tmp_dir = tempfile.mkdtemp()
         os.chdir(tmp_dir)

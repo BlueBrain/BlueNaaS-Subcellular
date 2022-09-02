@@ -51,11 +51,8 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import get from 'lodash/get'
-
-import constants from '@/constants'
-
 import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
@@ -66,7 +63,6 @@ export default {
   },
   data() {
     return {
-      constants,
       structure: { ...this.value },
     }
   },
@@ -87,7 +83,7 @@ export default {
       this.$emit('input', this.structure)
     },
     isValid() {
-      return this.structure.name.trim()
+      return !!this.structure.name.trim()
     },
     onSizeInputTab() {
       this.$refs.annotationInput.focus()

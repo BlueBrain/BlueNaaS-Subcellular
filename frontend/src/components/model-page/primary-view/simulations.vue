@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="simulation">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -77,9 +77,10 @@
       </div>
     </template>
     <template v-slot:secondary>
-      <properties />
+      <properties v-if="selectedSimulation" />
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view simulations</div>
 </template>
 
 <script lang="ts">
@@ -249,6 +250,10 @@ export default Vue.extend({
       ],
     }
   },
+  created() {
+    if (this.modelId) this.$store.dispatch('getSimulations')
+  },
+
   mounted() {
     this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
     bus.$on('layoutChange', () => this.computeTableHeight())
@@ -316,7 +321,9 @@ export default Vue.extend({
     },
     onOk() {
       this.newSimulationModalVisible = false
+      console.log(this.newSimulation)
       this.$store.dispatch('addSimulation', this.newSimulation)
+
       this.$store.commit('setEntitySelection', {
         index: this.filteredSimulations.length - 1,
         type: 'simulation',
@@ -346,6 +353,9 @@ export default Vue.extend({
     },
   },
   computed: mapState<State>({
+    modelId(state) {
+      return state.model?.id
+    },
     simulations(state) {
       return state.model.simulations.map((sim) => {
         const solverConf = pick(sim.solverConf, ['tEnd', 'dt'])
@@ -363,6 +373,7 @@ export default Vue.extend({
     },
     selectedSimulation(state) {
       const selectedEntityType = get(state, 'selectedEntity.type')
+
       return selectedEntityType === 'simulation' ? state.selectedEntity.entity : null
     },
     runBtnAvailable() {
@@ -388,6 +399,12 @@ export default Vue.extend({
       )
     },
   }),
+  watch: {
+    modelId() {
+      console.log('getting sims')
+      this.$store.dispatch('getSimulations')
+    },
+  },
 })
 </script>
 

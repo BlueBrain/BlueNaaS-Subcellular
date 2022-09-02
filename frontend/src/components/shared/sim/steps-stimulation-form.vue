@@ -88,7 +88,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import sortBy from 'lodash/sortBy'
 
 import constants from '@/constants'

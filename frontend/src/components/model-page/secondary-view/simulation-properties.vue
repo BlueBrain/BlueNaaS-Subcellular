@@ -16,7 +16,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
 
 import SimulationForm from '@/components/shared/entities/simulation-form.vue'
@@ -45,11 +45,15 @@ export default {
       this.tmpEntity = this.getTmpEntity()
     },
     getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+      const entity = this.$store.state.selectedEntity?.entity
+      if (!entity) return null
+
+      return { ...entity }
     },
   },
   computed: {
     simulationEdited() {
+      if (!this.selection) return false
       return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'solverConf', 'annotation'])
     },
     selection() {

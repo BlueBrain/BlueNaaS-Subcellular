@@ -23,7 +23,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import constants from '@/constants'
 
 import BnglInput from '@/components/shared/bngl-input.vue'
@@ -44,11 +44,8 @@ export default {
   },
   methods: {
     onParameterChange() {
-      this.parameter.valid = this.isValid()
+      this.parameter.valid = !!this.parameter.name.trim() && !!this.parameter.definition
       this.$emit('input', this.parameter)
-    },
-    isValid() {
-      return this.parameter.name.trim() && this.parameter.definition
     },
     onDefinitionInputTab() {
       this.$refs.unitSelect.focus()

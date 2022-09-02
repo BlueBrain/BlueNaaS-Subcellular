@@ -1,4 +1,6 @@
 // TODO most constants here can be replaced by Typescript's literal types,
+export const PUBLIC_USER_ID = '68b8868e-11b4-49f3-93ff-e27b2197ddcc'
+
 const ServerMessageType = {
   SIM_TRACE: 'simTrace',
   SIM_STEP_TRACE: 'simStepTrace',

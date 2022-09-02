@@ -26,7 +26,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import constants from '@/constants'
 
 import BnglInput from '@/components/shared/bngl-input.vue'
@@ -49,7 +49,7 @@ export default {
       this.$emit('input', this.molecule)
     },
     isValid() {
-      return this.molecule.name.trim() && this.molecule.definition
+      return !!this.molecule.name.trim() && !!this.molecule.definition
     },
     onDefinitionInputTab() {
       this.$refs.annotationInput.focus()

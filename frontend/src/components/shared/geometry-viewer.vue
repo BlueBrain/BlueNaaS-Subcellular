@@ -38,7 +38,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import toggleFullscreen from 'toggle-fullscreen'
 
 import ModelGeometryRenderer from '@/services/model-geometry-renderer'
@@ -78,19 +78,19 @@ export default {
   mounted() {
     this.renderer = new ModelGeometryRenderer(this.$refs.canvas)
 
-    this.onLayoutChangeBinded = this.onLayoutChange.bind(this)
-    bus.$on('layoutChange', this.onLayoutChangeBinded)
+    this.onLayoutChangeBound = this.onLayoutChange.bind(this)
+    bus.$on('layoutChange', this.onLayoutChangeBound)
 
     setTimeout(() => this.initGeometry(), 10)
   },
   beforeDestroy() {
-    bus.$off('layoutChange', this.onLayoutChangeBinded)
+    bus.$off('layoutChange', this.onLayoutChangeBound)
     this.renderer.destroy()
   },
   methods: {
     initGeometry() {
       this.renderer.initGeometry(this.geometryData, displayConf.default)
-      const structure = (this.geometryData.meta.structures || []).map((st, idx) => ({
+      const structure = this.geometryData.structures.map((st, idx) => ({
         name: st.name,
         color: this.renderer.colors[idx].css(),
         visible: true,

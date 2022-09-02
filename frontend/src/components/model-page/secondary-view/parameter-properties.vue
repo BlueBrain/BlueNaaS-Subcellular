@@ -2,7 +2,13 @@
   <div class="p-12">
     <h3>Parameter properties</h3>
 
-    <parameter-form class="mt-12" ref="parameterForm" v-model="tmpEntity" @on-submit="applyParameterChange" />
+    <parameter-form
+      class="mt-12"
+      ref="parameterForm"
+      v-model="modifiedParam"
+      @on-submit="applyParameterChange"
+      @input="onInput"
+    />
 
     <div class="action-block">
       <i-button class="mr-12" type="warning" :disabled="!parameterEdited" @click="resetParameterChange">
@@ -10,23 +16,26 @@
       </i-button>
 
       <i-button type="primary" :disabled="!parameterEdited" @click="applyParameterChange"> Apply </i-button>
+      <div v-if="error" style="color: red">An error ocurred, try again.</div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import isEqualBy from '@/tools/is-equal-by'
 
 import ParameterForm from '@/components/shared/entities/parameter-form.vue'
 
 export default {
   name: 'parameter-properties',
+  props: ['value', 'error'],
   components: {
     'parameter-form': ParameterForm,
   },
   data() {
     return {
-      tmpEntity: this.getTmpEntity(),
+      modifiedParam: this.value,
+      oParam: this.value,
     }
   },
   mounted() {
@@ -36,28 +45,28 @@ export default {
     focusNameInput() {
       this.$nextTick(() => this.$refs.parameterForm.focus())
     },
+    onInput() {
+      this.$emit('input', this.modifiedParam)
+    },
     applyParameterChange() {
-      this.$store.commit('modifySelectedEntity', this.tmpEntity)
+      this.$emit('apply')
     },
     resetParameterChange() {
-      this.tmpEntity = this.getTmpEntity()
-    },
-    getTmpEntity() {
-      return { ...this.$store.state.selectedEntity.entity }
+      this.modifiedParam = this.oParam
     },
   },
   computed: {
     parameterEdited() {
-      return !isEqualBy(this.selection.entity, this.tmpEntity, ['name', 'definition', 'unit', 'annotation'])
-    },
-    selection() {
-      return this.$store.state.selectedEntity
+      return !isEqualBy(this.modifiedParam, this.oParam, ['name', 'definition', 'unit', 'annotation'])
     },
   },
   watch: {
-    selection() {
-      this.tmpEntity = this.getTmpEntity()
-      this.focusNameInput()
+    value(val, oldVal) {
+      if (val.id !== oldVal.id) {
+        this.modifiedParam = val
+        this.oParam = val
+        this.focusNameInput()
+      }
     },
   },
 }

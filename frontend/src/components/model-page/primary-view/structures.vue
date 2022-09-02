@@ -1,5 +1,5 @@
 <template>
-  <split selected-type="structure">
+  <split v-if="$store.state.model.id">
     <template v-slot:primary>
       <div class="h-100 pos-relative o-hidden">
         <div class="block-head">
@@ -20,39 +20,51 @@
         <div class="block-footer">
           <Row>
             <i-col span="12">
-              <i-button type="primary" @click="addStructure"> New Structure </i-button>
-              <i-button class="ml-24" type="warning" :disabled="removeBtnDisabled" @click="removeStructure">
+              <i-button type="primary" @click="addStructure" :disabled="isPublicModel"> New Structure </i-button>
+              <i-button class="ml-24" type="warning" :disabled="!current.id || isPublicModel" @click="removeStructure">
                 Delete
               </i-button>
+              <div v-if="deleteError" stylxe="margin-left: 8px; color: red; display: inline-block">
+                An error ocurred please try again
+              </div>
             </i-col>
             <i-col span="12">
               <i-input search v-model="searchStr" placeholder="Search" />
             </i-col>
           </Row>
         </div>
-
         <Modal
           v-model="newStructureModalVisible"
           title="New Molecule"
           class-name="vertical-center-modal"
           @on-ok="onNewStructureOk"
         >
-          <structure-form ref="structureForm" v-model="newStructure" @on-submit="onNewStructureOk" />
+          <structure-form ref="structureForm" v-model="current" @on-submit="onNewStructureOk" />
           <div slot="footer">
             <i-button class="mr-6" type="text" @click="hideNewStructureModal"> Cancel </i-button>
-            <i-button type="primary" :disabled="!newStructure.valid" @click="onNewStructureOk"> OK </i-button>
+            <i-button type="primary" :disabled="!current.valid" @click="onNewStructureOk"> OK </i-button>
+          </div>
+          <div v-if="error" style="margin-left: 8px; color: red; display: inline-block">
+            An error ocurred please try again
           </div>
         </Modal>
       </div>
     </template>
     <template v-slot:secondary>
-      <structure-properties />
+      <structure-properties v-if="current.id" v-model="current" :error="error" @apply="onNewStructureOk" />
+      <div v-else class="h-100 p-12">
+        <p>Select a structure to view/edit properties</p>
+      </div>
     </template>
   </split>
+  <div v-else style="margin-left: 20px; margin-top: 10px; font-size: 16px">Load a model to view its structures</div>
 </template>
 
-<script>
+<script lang="ts">
 import get from 'lodash/get'
+import { get as getr, post, patch, del } from '@/services/api'
+import { StructureBase } from '@/types'
+import { AxiosResponse } from 'axios'
 
 import bus from '@/services/event-bus'
 
@@ -64,8 +76,10 @@ import StructureForm from '@/components/shared/entities/structure-form.vue'
 import Split from '@/components/split.vue'
 import BnglText from '@/components/shared/bngl-text.vue'
 import StructureProperties from '@/components/model-page/secondary-view/structure-properties.vue'
+import { PUBLIC_USER_ID } from '@/constants'
 
 const defaultStructure = {
+  id: undefined,
   name: '',
   valid: false,
   type: 'compartment',
@@ -90,11 +104,17 @@ export default {
   },
   data() {
     return {
+      error: false,
+      deleteError: false,
       searchStr: '',
       tableHeight: null,
       newStructureModalVisible: false,
-      newStructure: { ...defaultStructure },
+      current: { ...defaultStructure },
+      structures: [],
     }
+  },
+  async created() {
+    this.structures = await this.getStructures()
   },
   mounted() {
     this.timeoutId = window.setTimeout(() => this.computeTableHeight(), 0)
@@ -105,11 +125,23 @@ export default {
     bus.$off('layoutChange')
   },
   methods: {
+    async getStructures() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<StructureBase[]> = await getr('structures', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
+    },
+
     addStructure() {
-      this.newStructure = {
+      this.current = {
         ...defaultStructure,
-        name: findUniqName(this.structures, 'ST'),
-        valid: true,
+        name: findUniqName(this.structures, 'r'),
       }
       this.showNewStructureModal()
 
@@ -122,38 +154,59 @@ export default {
       this.newStructureModalVisible = true
     },
     hideNewStructureModal() {
+      this.error = false
       this.newStructureModalVisible = false
     },
-    removeStructure() {
-      this.$store.commit('removeSelectedEntity')
+    async removeStructure() {
+      const res = await del<null>(`structures/${this.current.id}`)
+      if (!res) {
+        this.deleteError = true
+        return
+      }
+
+      this.deleteError = false
+
+      this.current = { ...defaultStructure }
+      this.structures = await this.getStructures()
     },
-    onStructureSelect(structure, index) {
-      this.$store.commit('setEntitySelection', {
-        index,
-        type: 'structure',
-        entity: structure,
-      })
+    onStructureSelect(structure: StructureBase) {
+      this.current = structure
     },
     computeTableHeight() {
       this.tableHeight = blockHeightWoPadding(this.$refs.mainBlock)
     },
-    onNewStructureOk() {
+    async onNewStructureOk() {
+      this.error = false
+
+      const model_id = this.$store.state.model?.id
+
+      let res: AxiosResponse<StructureBase> | undefined
+
+      if (!this.current.id) res = await post<StructureBase>('structures', { ...this.current, model_id })
+      else res = await patch<StructureBase>(`structures/${this.current.id}`, this.current)
+
+      if (!res) {
+        this.error = true
+        return
+      }
+
       this.hideNewStructureModal()
-      this.$store.commit('addStructure', this.newStructure)
+
+      this.structures = await this.getStructures()
     },
   },
   computed: {
-    structures() {
-      return this.$store.state.model.structures
+    model() {
+      return this.$store.state.model
+    },
+    isPublicModel() {
+      return this.model?.user_id === PUBLIC_USER_ID
     },
     filteredStructures() {
       return this.structures.filter((e) => objStrSearchFilter(this.searchStr, e, { include: searchProps }))
     },
     emptyTableText() {
       return this.searchStr ? 'No matching structures' : 'Create a structure by using buttons below'
-    },
-    removeBtnDisabled() {
-      return get(this.$store.state, 'selectedEntity.type') !== 'structure'
     },
     geometry() {
       return this.$store.state.model.geometry
@@ -205,6 +258,16 @@ export default {
       }
 
       return columns
+    },
+  },
+
+  watch: {
+    async model() {
+      this.structures = await this.getStructures()
+    },
+    current() {
+      this.error = false
+      this.deleteError = false
     },
   },
 }

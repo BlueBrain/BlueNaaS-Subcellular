@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   mongo:
     image: mongo
@@ -6,6 +6,8 @@ services:
       - ./tmp/mongo_data:/data/db
     ports:
       - "27017:27017"
+    networks:
+      - subcellular
   backend:
     image: sc-svc
     volumes:
@@ -13,19 +15,24 @@ services:
       - ./tmp:/data
     ports:
       - "8888:8000"
+    networks:
+      - subcellular
     environment:
       - DEBUG=True
       - DB_HOST=mongo
       - PYTHONUNBUFFERED=True
       - "MONGO_URI=subcellular_app"
     depends_on:
-      - 'mongo'
+      - "mongo"
     working_dir: /app
-    entrypoint: ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "main.py"]
+    entrypoint:
+      ["wait-for-it", "-t", "60", "mongo:27017", "--", "python", "main.py"]
   sim_worker:
     image: sc-svc
     depends_on:
       - backend
+    networks:
+      - subcellular
     volumes:
       - .:/app
       - ./tmp/geometries:/data/geometries
@@ -33,7 +40,10 @@ services:
       - MASTER_HOST=backend
       - DEBUG=True
       - PYTHONUNBUFFERED=True
-    depends_on:
-      - "backend"
     working_dir: /app
-    entrypoint: ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "main.py"]
+    entrypoint:
+      ["wait-for-it", "-t", "60", "backend:8000", "--", "python", "main.py"]
+
+networks:
+  subcellular:
+    name: subcellular

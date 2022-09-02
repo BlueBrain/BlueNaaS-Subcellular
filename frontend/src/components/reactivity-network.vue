@@ -1,17 +1,17 @@
 <template>
   <div style="position: relative">
-    <div id="reactivity-network" style="height: 50vh"></div>
-    <div style="position: absolute; background: white">
+    <div id="reactivity-network" style="height: 90vh"></div>
+    <!-- <div style="position: absolute; background: white">
       <span style="font-weight: bold">Select species</span>
-      <div class="mb-4" v-for="species in model.species" :key="species.name">
+      <div class="mb-4" v-for="sp in species" :key="sp.name">
         <i-switch
           class="mr-6 switch--extra-small"
-          :value="selectedSpecies.has(species.name)"
-          @on-change="handleSpeciesSelection(species.name)"
+          :value="selectedSpecies.has(sp.name)"
+          @on-change="handleSpeciesSelection(sp.name)"
         />
-        <span>{{ species.name }}</span>
+        <span>{{ sp.name }}</span>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -30,13 +30,12 @@ export default Vue.extend({
   name: 'reactivity-network',
   data() {
     return {
+      species: [],
       selectedSpecies: new Set([]),
     }
   },
-  created() {
-    if (this.model?.id !== null) {
-      socket.request('reactivity-network', this.model)
-    }
+  async created() {
+    this.getChart()
   },
 
   mounted() {
@@ -77,6 +76,12 @@ export default Vue.extend({
   },
 
   methods: {
+    async getChart() {
+      const user_id = this.$store.state.user?.id
+      if (this.model?.id !== null && user_id) {
+        socket.request('reactivity-network', { model_id: this.model.id, user_id })
+      }
+    },
     handleSpeciesSelection(species) {
       if (this.selectedSpecies.has(species)) this.selectedSpecies.delete(species)
       else this.selectedSpecies.add(species)
@@ -164,7 +169,7 @@ export default Vue.extend({
       this.draw()
     },
     model() {
-      this.selectedSpecies = new Set(this.model.species.map((sp) => sp.name))
+      this.getChart()
     },
   },
 })

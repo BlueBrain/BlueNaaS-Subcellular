@@ -22,7 +22,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import './styles.scss'
 import './server-events'
 import Header from './components/header.vue'
@@ -45,14 +45,8 @@ export default {
       },
     }
   },
-  async mounted() {
+  async created() {
     await this.$store.dispatch('init')
-
-    const { publicModel } = this.$route.query
-    if (publicModel) {
-      this.$router.replace({ query: {} })
-      await this.$store.dispatch('loadPublicModelByName', publicModel)
-    }
   },
 }
 </script>

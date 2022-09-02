@@ -37,7 +37,7 @@
   </i-form>
 </template>
 
-<script>
+<script lang="ts">
 import BnglInput from '@/components/shared/bngl-input.vue'
 
 export default {
@@ -59,7 +59,7 @@ export default {
     isValid() {
       // TODO: add reaction validation
       // TODO: add kr validation if reaction is bidirectional
-      return this.reaction.name.trim() && this.reaction.definition && this.reaction.kf
+      return !!this.reaction.name.trim() && !!this.reaction.definition && !!this.reaction.kf
     },
     onDefinitionInputTab() {
       this.$refs.kfInput.focus()
