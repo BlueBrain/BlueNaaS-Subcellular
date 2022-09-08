@@ -114,7 +114,7 @@ class StepsSim:
 
             stimuli = solver_config.get("stimulation", [])
 
-            if stimuli and (f in stimuli[0] for f in ("t", "type", "target", "value")):
+            if isinstance(stimuli, list):
                 pass
             else:
                 stimuli = decompress_stimulation(stimuli)

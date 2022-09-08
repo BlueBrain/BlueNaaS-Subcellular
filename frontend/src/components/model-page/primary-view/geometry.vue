@@ -31,7 +31,7 @@
 <script lang="ts">
 import NewGeometryForm from '@/components/shared/new-geometry-form.vue'
 import GeometryViewer from '@/components/shared/geometry-viewer.vue'
-import { get, del } from '@/services/api'
+import { get, del, patch } from '@/services/api'
 import { PUBLIC_USER_ID } from '@/constants'
 
 export default {
@@ -68,10 +68,11 @@ export default {
       this.loading = false
     },
     async removeGeometry() {
-      if (!this.geometry) return
-      const res = await del(`geometries/${this.geometry.id}`)
+      if (!this.geometry || !this.model?.id) return
+      const res = await patch(`models/${this.model.id}`, { geometry_id: null })
       if (res.status === 200) {
         this.geometry = null
+        this.$store.commit('loadDbModel', res.data)
       }
     },
   },
