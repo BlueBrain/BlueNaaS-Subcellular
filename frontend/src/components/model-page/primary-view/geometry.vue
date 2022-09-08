@@ -53,6 +53,10 @@ export default {
     this.getGeometry()
   },
   methods: {
+    async getModels() {
+      const models = await get('models')
+      this.$store.commit('updateDbModels', models.data)
+    },
     async getGeometry() {
       this.loading = true
       if (this.model.geometry_id)
@@ -73,6 +77,7 @@ export default {
       if (res.status === 200) {
         this.geometry = null
         this.$store.commit('loadDbModel', res.data)
+        this.getModels()
       }
     },
   },
