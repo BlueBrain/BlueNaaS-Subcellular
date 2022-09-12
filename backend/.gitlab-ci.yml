@@ -1,0 +1,29 @@
+include:
+  - project: cs/gitlabci-templates
+    file: /build-image-using-kaniko.yml
+
+stages:
+  - lint
+  - build
+
+pylint:
+  image: python:3.9-slim
+  stage: lint
+  before_script:
+    - cd proxy
+    - pip install pylint
+  script:
+    - pylint *.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    - if: $CI_MERGE_REQUEST_ID
+
+build-proxy-img-prod:
+  extends: .build-image-using-kaniko
+  stage: build
+  variables:
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/nse/subcellular/backend
+    REGISTRY_IMAGE_TAG: latest
+    CI_PROJECT_DIR: /builds/nse/subcellular/backend
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
