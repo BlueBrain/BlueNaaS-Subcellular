@@ -1,7 +1,7 @@
 <template>
   <header>
     <div class="title">
-      <span>Subcellular app</span>
+      <span>BlueNaaS-Subcellular</span>
       <span v-if="modelName">| Model: {{ modelName }}</span>
     </div>
 
