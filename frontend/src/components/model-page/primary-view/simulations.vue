@@ -401,7 +401,6 @@ export default Vue.extend({
   }),
   watch: {
     modelId() {
-      console.log('getting sims')
       this.$store.dispatch('getSimulations')
     },
   },

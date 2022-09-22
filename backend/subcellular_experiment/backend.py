@@ -320,6 +320,19 @@ class RunSimulationHandler(RequestHandler):
         await sim_manager.schedule_sim(sim_conf)
 
 
+class GetSimHandler(RequestHandler):
+    async def get(self) -> None:
+        sim_id = self.get_argument("sim_id")
+        sim = await db.db.simulations.find_one({"id": sim_id})
+        self.write(json.dumps(sim, cls=ExtendedJSONEncoder))
+
+
+class CreateSimHandler(RequestHandler):
+    async def post(self) -> None:
+        data = tornado.escape.json_decode(self.request.body)
+        await db.create_simulation(Simulation(**data))
+
+
 class GetSimTracesHandler(RequestHandler):
     async def get(self) -> None:
         sim_id = self.get_argument("sim_id")
@@ -364,7 +377,9 @@ app = Application(
             StaticFileHandler,
             {"path": "/data/traces"},
         ),
+        ("/api/get_sim", GetSimHandler),
         ("/api/run_sim", RunSimulationHandler),
+        ("/api/create_sim", CreateSimHandler),
         ("/api/get_sim_traces", GetSimTracesHandler),
         ("/api/models", ModelsHandler),
     ],

@@ -68,9 +68,8 @@ class SpatialSampling(BaseModel):
 class SolverConfig(BaseModel):
     dt: float
     spatialSampling: Optional[SpatialSampling]
-    stimulation: Stimulation
+    stimulation: Any
     tEnd: float
-    valid: bool
 
 
 class Simulation(BaseModel):
@@ -83,7 +82,6 @@ class Simulation(BaseModel):
     solver: SimSolver
     solverConf: SolverConfig
     status: SimStatus
-    valid: str
 
 
 class UpdateSimulation(BaseModel):
