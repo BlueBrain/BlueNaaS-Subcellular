@@ -30,7 +30,6 @@ export default {
 
     if (myModelsRes) this.$store.commit('updateDbModels', myModelsRes.data)
     this.dbData[1].children = res.data.map(this.model)
-    console.log(this.dbData)
   },
   data() {
     return {
