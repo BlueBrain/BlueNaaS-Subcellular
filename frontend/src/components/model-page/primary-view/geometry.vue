@@ -85,6 +85,7 @@ export default {
 
     downloadGeometry() {
       if (!this.geometry) return
+
       const geometry = {
         scale: this.geometry.scale,
         freeDiffusionBoundaries: [],
@@ -93,6 +94,12 @@ export default {
 
       saveAs(new Blob([JSON.stringify(geometry)]), `${this.geometry.name}.json`)
 
+      this.saveNodeFile()
+      this.saveEleFile()
+      this.saveFaceFile()
+    },
+
+    saveNodeFile() {
       const nodes = []
 
       for (let i = 0; i <= this.geometry.nodes.length - 3; i += 3) {
@@ -103,6 +110,31 @@ export default {
         `\t${nodes.length}\t3\t0\t0\n` + nodes.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}`).join('\n')
 
       saveAs(new Blob([nFile]), `${this.geometry.name}.node`)
+    },
+
+    saveEleFile() {
+      const eles = []
+
+      for (let i = 0; i <= this.geometry.tets.length - 4; i += 4) {
+        eles.push(this.geometry.tets.slice(i, i + 4))
+      }
+
+      const nFile =
+        `\t${eles.length}\t4\t0\n` + eles.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}\t${n[3]}`).join('\n')
+
+      saveAs(new Blob([nFile]), `${this.geometry.name}.ele`)
+    },
+
+    saveFaceFile() {
+      const eles = []
+
+      for (let i = 0; i <= this.geometry.tris.length - 3; i += 3) {
+        eles.push(this.geometry.tris.slice(i, i + 3))
+      }
+
+      const nFile = `\t${eles.length}\t0\n` + eles.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}`).join('\n')
+
+      saveAs(new Blob([nFile]), `${this.geometry.name}.face`)
     },
   },
   computed: {
