@@ -92,6 +92,17 @@ export default {
       }
 
       saveAs(new Blob([JSON.stringify(geometry)]), `${this.geometry.name}.json`)
+
+      const nodes = []
+
+      for (let i = 0; i <= this.geometry.nodes.length - 3; i += 3) {
+        nodes.push(this.geometry.nodes.slice(i, i + 3))
+      }
+
+      const nFile =
+        `\t${nodes.length}\t3\t0\t0\n` + nodes.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}`).join('\n')
+
+      saveAs(new Blob([nFile]), `${this.geometry.name}.node`)
     },
   },
   computed: {
