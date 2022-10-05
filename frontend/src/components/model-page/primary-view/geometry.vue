@@ -24,6 +24,7 @@
       <i-button v-if="geometry" type="warning" @click="removeGeometry" :disabled="isPublicModel">
         Remove geometry
       </i-button>
+      <i-button v-if="geometry" type="primary" @click="downloadGeometry" style="margin-left: 10px"> Download </i-button>
     </div>
   </div>
 </template>
@@ -31,8 +32,9 @@
 <script lang="ts">
 import NewGeometryForm from '@/components/shared/new-geometry-form.vue'
 import GeometryViewer from '@/components/shared/geometry-viewer.vue'
-import { get, del, patch } from '@/services/api'
+import { get, patch } from '@/services/api'
 import { PUBLIC_USER_ID } from '@/constants'
+import saveAs from 'file-saver'
 
 export default {
   name: 'geometry-component',
@@ -79,6 +81,17 @@ export default {
         this.$store.commit('loadDbModel', res.data)
         this.getModels()
       }
+    },
+
+    downloadGeometry() {
+      if (!this.geometry) return
+      const geometry = {
+        scale: this.geometry.scale,
+        freeDiffusionBoundaries: [],
+        structures: this.geometry.structures.map((s) => ({ name: s.name, type: s.type, idxs: s.idxs })),
+      }
+
+      saveAs(new Blob([JSON.stringify(geometry)]), `${this.geometry.name}.json`)
     },
   },
   computed: {
