@@ -4,8 +4,8 @@ import { User } from '@/types'
 
 import { PUBLIC_USER_ID } from '@/constants'
 
-// const API_URL = 'http://localhost:8001'
-const API_URL = 'https://subcellular-rest-bsp-epfl.apps.hbp.eu'
+const API_URL = 'http://localhost:8001'
+// const API_URL = 'https://subcellular-rest-bsp-epfl.apps.hbp.eu'
 
 export async function get<T>(endpoint: string, params = {}) {
   const user = await storage.getItem<User>('user')
