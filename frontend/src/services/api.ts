@@ -22,7 +22,7 @@ export async function post<T>(endpoint: string, data: any, config?: AxiosRequest
   try {
     return await axios.post<T>(`${API_URL}/${endpoint}`, data, config)
   } catch (e) {
-    return
+    return e
   }
 }
 
