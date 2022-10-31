@@ -29,7 +29,14 @@ class NfSim:
 
     def generate_rnf(self) -> str:
         solver_conf = self.sim_config["solverConf"]
-        stimuli = decompress_stimulation(solver_conf["stimulation"])
+
+        stimuli = solver_conf.get("stimulation", [])
+
+        if isinstance(stimuli, list):
+            pass
+        else:
+            stimuli = decompress_stimulation(stimuli)
+
         t_end = solver_conf["tEnd"]
         dt = solver_conf["dt"]
         next_step_dt = None
