@@ -17,11 +17,30 @@
     </div>
 
     <user-profile-drawer v-model="userProfileVisible" />
+
+    <div class="menu-item" style="margin-right: 10px">
+      <Icon type="ios-mail-outline" size="22" @click="showModal" />
+    </div>
+
+    <Modal v-model="modal" footer-hide="true">
+      <div v-if="!emailMessage">
+        Subscribe to the BlueNaaS-Subcellular mailing list to receive news and updates.
+        <div style="margin-top: 10px">
+          <Input v-model="email" type="email" placeholder="Enter your email address..." style="width: 300px" />
+        </div>
+
+        <div style="margin-top: 10px">
+          <Button type="primary" @click="onSubscribe">Subscribe</Button>
+        </div>
+      </div>
+      <div v-else>{{ this.emailMessage }}</div>
+    </Modal>
   </header>
 </template>
 
 <script>
 import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue'
+import { post } from '@/services/api'
 
 export default {
   name: 'header-component',
@@ -31,11 +50,37 @@ export default {
   data() {
     return {
       userProfileVisible: false,
+      modal: false,
+      email: '',
+      emailMessage: '',
     }
   },
   methods: {
     showUserProfile() {
       this.userProfileVisible = true
+    },
+    showModal() {
+      this.modal = true
+    },
+    reset() {
+      this.modal = false
+      this.emailMessage = ''
+    },
+    hideModal(){
+      this.modal = false
+      console.log(this.modal)
+    },
+    async onSubscribe() {
+      const res = await post('subscribe', { user: this.user.id, email: this.email })
+      if (res.status === 200 && res.data.status_code !== 400)  {
+        console.log(res)
+        this.emailMessage = `Email sent to ${this.email} for verification`
+        setTimeout(this.reset, 2000)
+      } else if (res.data.status_code == 400) {
+        console.log('error')
+        this.emailMessage = 'User already subscribed to the newsletter'
+        setTimeout(this.hideModal, 2000)
+      }
     },
   },
   computed: {
