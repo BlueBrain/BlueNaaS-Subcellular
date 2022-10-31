@@ -244,3 +244,6 @@ backend/postgres-data
 backend/mongodata
 **/.logs
 pgpass
+backup.sh
+castor.env
+cronjob.yaml
