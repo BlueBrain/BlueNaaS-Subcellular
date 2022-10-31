@@ -53,10 +53,16 @@ OpenShift instance. This target will create OpenShift deployment configs, servic
 routes needed by the app to function.
 See `makefile` for configuration and options; requires OpenShift CLI.
 
-## Copyright
+## Citation
 
-Copyright (c) 2022 Blue Brain Project/EPFL
+When you use this software, we kindly ask you to cite the following DOI (under "Cite as"):
+[![DOI](https://zenodo.org/badge/537068186.svg)](https://zenodo.org/badge/latestdoi/537068186)
+
+
+
 
 ## Funding & Acknowledgment
 
 The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology and from the Human Brain Project's Specific Grant Agreement 3.
+
+Copyright (c) 2022 Blue Brain Project/EPFL
