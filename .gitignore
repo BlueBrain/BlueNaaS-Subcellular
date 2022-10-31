@@ -243,3 +243,4 @@ backend/tmp
 backend/postgres-data
 backend/mongodata
 **/.logs
+pgpass

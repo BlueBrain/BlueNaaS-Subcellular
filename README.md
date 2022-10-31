@@ -1,5 +1,5 @@
-
 # BlueNaaS-Subcellular
+
 BlueNaaS-Subcllular was developed as a software environment for
 simulation of brain molecular networks.
 It was designed to reach several objectives related to major restrictions of currently available
@@ -8,7 +8,7 @@ and low compatibility of different types of models.
 
 ## System design
 
-See [System design document](system-design.md)
+See [System design document](SYSTEM-DESIGN.md)
 
 ## Dev env run
 
@@ -17,23 +17,27 @@ Backend dev setup needs docker image to be present in the system when starting, 
 be build with `make docker_build_latest` from `./backend` directory.
 
 Backend dev environment requires docker engine to be installed and consists of:
-* mongoDB instance
-* backend server
-* sim worker replica with minimum one instance
+
+- mongoDB instance
+- backend server
+- sim worker replica with minimum one instance
 
 Check the `./backend/docker-compose.yml` for more information.
 
 To start:
+
 ```bash
 make run_dev_backend
 ```
 
 Dev frontend env is powered by Webpack and can be started with:
+
 ```bash
 make run_dev_frontend
 ```
 
 To start both dev envs in a single session use:
+
 ```bash
 make run_dev
 ```
@@ -51,8 +55,8 @@ See `makefile` for configuration and options; requires OpenShift CLI.
 
 ## Copyright
 
-Copyright @2022 Blue Brain Project/EPFL
+Copyright (c) 2022 Blue Brain Project/EPFL
 
-## Aknowledgement
+## Funding & Acknowledgment
 
-Funded by HBP SGA3
+The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology and from the Human Brain Project's Specific Grant Agreement 3.
