@@ -66,13 +66,12 @@ export default {
       this.modal = false
       this.emailMessage = ''
     },
-    hideModal(){
+    hideModal() {
       this.modal = false
-      console.log(this.modal)
     },
     async onSubscribe() {
       const res = await post('subscribe', { user: this.user.id, email: this.email })
-      if (res.status === 200 && res.data.status_code !== 400)  {
+      if (res.status === 200 && res.data.status_code !== 400) {
         console.log(res)
         this.emailMessage = `Email sent to ${this.email} for verification`
         setTimeout(this.reset, 2000)
