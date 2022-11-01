@@ -29,9 +29,7 @@
           </i-button>
           <DropdownMenu slot="list">
             <DropdownItem name="bngl">BNGL</DropdownItem>
-            <!-- <DropdownItem name="ebngl" disabled>eBNGL</DropdownItem>
-            <DropdownItem name="pysb_flat" disabled>PySB</DropdownItem>
-            <DropdownItem name="sbml" disabled>SBML</DropdownItem> -->
+            <DropdownItem name="ebngl">eBNGL</DropdownItem>
           </DropdownMenu>
         </Dropdown>
         <i-button
@@ -118,16 +116,24 @@ export default {
       }
     },
 
-    async exportModel() {
+    async exportModel(format: string) {
       let res: AxiosResponse<string> | undefined
+      if (!this.modelId) return
 
-      if (this.modelId) res = await get(`export-model/${this.modelId}`)
+      if (format === 'bngl') res = await get(`export-model/${this.modelId}`)
+      else if (format === 'ebngl') res = await get(`model-detail/${this.modelId}`)
 
-      if (!res)
+      if (!res) {
         this.$Notice.error({
           title: 'Export error',
         })
-      else saveAs(new Blob([res.data]), `${this.name}.bngl`)
+        return
+      }
+
+      let data = res.data
+      if (format === 'ebngl') data = JSON.stringify(data)
+
+      saveAs(new Blob([data]), `${this.name}.${format}`)
     },
     showImportModal() {
       this.importModalVisible = true

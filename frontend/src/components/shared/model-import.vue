@@ -46,21 +46,52 @@ export default {
   methods: {
     async beforeUpload(file) {
       this.loading = true
+      let model: any
 
       const user_id = this.$store.state.user?.id
       if (!user_id) return
 
+      this.modelName = file.name.split('.').slice(0, -1).join('.')
+      const format = file.name.split('.').slice(-1)[0].toLowerCase()
+
+      if (format === 'ebngl') {
+        const reader = new FileReader()
+        reader.addEventListener(
+          'load',
+          async () => {
+            const r = JSON.parse(reader.result as string)
+            const model = await post('clone-model', {
+              model_id: r['id'],
+            })
+            if (!model) {
+              this.$Notice.error({
+                title: 'Import error',
+                desc: 'There was an error importing the model',
+              })
+              this.loading = false
+              this.$emit('import-finish')
+              return
+            }
+
+            this.$store.commit('loadDbModel', model.data)
+
+            this.loading = false
+            this.$emit('import-finish')
+
+            const models = await get('models')
+            this.$store.commit('updateDbModels', models.data)
+          },
+          false
+        )
+        reader.readAsText(file)
+
+        return false
+      }
       const form = new FormData()
       form.append('file', file)
       form.append('user_id', user_id)
 
-      const model = await post('import-bngl', form)
-
-      if (!model)
-        this.$Notice.error({
-          title: 'Import error',
-          desc: 'There was an error importing the model',
-        })
+      model = await post('import-bngl', form)
 
       this.$store.commit('loadDbModel', model.data)
 
