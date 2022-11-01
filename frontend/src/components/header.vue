@@ -68,7 +68,6 @@ export default {
     },
     hideModal() {
       this.modal = false
-      console.log(this.modal)
     },
     async onSubscribe() {
       const res = await post('subscribe', { user: this.user.id, email: this.email })

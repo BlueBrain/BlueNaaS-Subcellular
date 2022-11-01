@@ -217,13 +217,10 @@ export default {
       modelId: state.model.id,
     })
 
-    console.log('here')
-
     commit('setSimulations', simulations)
 
     if (simulations.length === 0 && state.user?.id && state.model?.id) {
       const sim = { ...defaultSim, id: uuidv4(), modelId: state.model.id, userId: state.user.id }
-      console.log(sim)
       dispatch('addSimulation', modelTools.upgradeSimStimulation(sim))
     }
   },
@@ -268,8 +265,6 @@ export default {
       userId: state.user.id,
       ...simulation,
     }
-
-    console.log(simConfig)
 
     socket.send('run_simulation', simConfig)
   },

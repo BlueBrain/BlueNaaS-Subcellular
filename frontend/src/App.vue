@@ -28,6 +28,7 @@ import './server-events'
 import Header from './components/header.vue'
 import ModelMenu from './components/model-page/menu.vue'
 import DbView from './components/model-page/db.vue'
+import * as api from '@/services/api'
 
 export default {
   name: 'app',
@@ -47,6 +48,14 @@ export default {
   },
   async created() {
     await this.$store.dispatch('init')
+
+    const { modelId } = this.$route.query
+
+    if (modelId) {
+      this.$router.replace({ query: {} })
+      const modelRes = await api.get(`models/${modelId}`)
+      if (modelRes) await this.$store.commit('loadDbModel', modelRes.data)
+    }
   },
 }
 </script>
