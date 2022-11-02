@@ -11,8 +11,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file backend/Dockerfile --tag my-image-name:$(date +%s)
+      run: cd backend docker build . --file backend/Dockerfile --tab subcellular-backend
