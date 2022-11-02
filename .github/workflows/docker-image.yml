@@ -31,4 +31,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --tag subcellular
+      run: docker build . --file build.Dockerfile --tag subcellular
