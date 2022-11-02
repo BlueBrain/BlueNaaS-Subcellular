@@ -18,4 +18,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: cd backend docker build . --file backend/Dockerfile --tab subcellular-backend
+      run: cd backend docker build . --tag subcellular-backend
