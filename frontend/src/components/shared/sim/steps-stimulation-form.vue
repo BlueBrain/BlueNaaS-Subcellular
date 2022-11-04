@@ -95,6 +95,10 @@ import constants from '@/constants'
 import tools from '@/tools/model-tools'
 import StepsStimuliImport from './steps-stimulation-import.vue'
 
+import { get as getr } from '@/services/api'
+import { Parameter } from '@/types'
+import { AxiosResponse } from 'axios'
+
 const { StimulusTypeEnum: StimType } = constants
 
 const stimulusTypes = [
@@ -165,17 +169,36 @@ export default {
       },
       stimulus: { ...defaultStimulus },
       importModalVisible: false,
+      parameters:[]
     }
   },
   mounted() {
     this.init()
+
   },
   methods: {
-    init() {
+    async init() {
       this.stimulation = { ...this.value }
       this.largeStimulation = this.value.size > 100
       this.stimuli = this.getStimuli()
+      console.log('here')
+      this.parameters = await this.getParameters()
     },
+
+    async getParameters() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Parameter[]> = await getr('parameters', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
+    },
+
+
     getStimuli() {
       return this.stimulation.size < 100 ? tools.decompressStimulation(this.stimulation) : []
     },
