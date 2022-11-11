@@ -25,11 +25,16 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
 
 import constants from '@/constants'
 import BnglText from '@/components/shared/bngl-text'
+import { Observable } from '@/types'
+import { AxiosResponse } from 'axios'
+import { get as getr } from '@/services/api'
+
+import { StructureBase } from '@/types'
 
 const { defaultSolverConfig } = constants
 const { spatialSampling } = defaultSolverConfig.tetexact
@@ -80,6 +85,11 @@ export default {
     'bngl-text': BnglText, //eslint-disable-line
   },
   props: ['value'],
+  async created() {
+    this.observables_ = await this.getObservables()
+    this.structures_ = await this.getStructures()
+  },
+
   data() {
     return {
       observableColumns,
@@ -88,9 +98,37 @@ export default {
       // sim config saved in older versions of the app
       // doesn't have this property
       conf: Object.assign(cloneDeep(spatialSampling), this.value || {}),
+      observables_: [],
+      structures_: [],
     }
   },
   methods: {
+    async getObservables() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Observable[]> = await getr('observables', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
+    },
+
+    async getStructures() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<StructureBase[]> = await getr('structures', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
+    },
+
     onStructureSelectionChange(structures) {
       this.conf.structures = structures
       this.onChange()
@@ -105,13 +143,13 @@ export default {
   },
   computed: {
     structures() {
-      return this.$store.state.model.structures.map((st) => ({
+      return this.structures_.map((st) => ({
         ...st,
         _checked: !!this.conf.structures.find((s) => s.name === st.name),
       }))
     },
     observables() {
-      return this.$store.state.model.observables.map((ob) => ({
+      return this.observables_.map((ob) => ({
         ...ob,
         _checked: !!this.conf.observables.find((o) => o.name === ob.name),
       }))

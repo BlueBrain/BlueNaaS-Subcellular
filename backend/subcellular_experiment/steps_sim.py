@@ -86,13 +86,6 @@ class StepsSim:
 
         solver_config = self.sim_config["solverConf"]
 
-        def get_geom_struct_by_model_struct_name(model_struct_name):
-            geom_struct_name = next(
-                st["geometryStructureName"] for st in model_dict["structures"] if st["name"] == model_struct_name
-            )
-
-            return next(st for st in geometry["structures"] if st["name"] == geom_struct_name)
-
         def get_comp_name_by_tet_idx(tet_idx):
             geom_comp_name = next(
                 st["name"] for st in geometry["structures"] if st["type"] == COMPARTMENT and tet_idx in st["idxs"]
@@ -674,13 +667,13 @@ class StepsSim:
 
                     spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
 
-                    for structure in solver_config["spatialSampling"]["structures"]:
+                    for structure in model_dict["geometry"]["structures"]:
 
                         structure_name: str = structure["name"]
 
-                        geom_struct = get_geom_struct_by_model_struct_name(structure_name)
-                        geom_idxs_key = "tetIdxs" if geom_struct["type"] == COMPARTMENT else "triIdxs"
-                        geom_idxs_np = np.array(geom_struct[geom_idxs_key], dtype=np.uintc)
+                        
+
+                        geom_idxs_np = np.array(structure["idxs"], dtype=np.uintc)
                         for spatial_observable in spatial_observables:
                             mol_name = spatial_observable.name.replace(SPAT_PREFIX, "")
                             mol_counts = np.zeros(len(geom_idxs_np))
@@ -694,7 +687,7 @@ class StepsSim:
                                 spec_name = pysb_spec.name
                                 spec_counts = np.zeros(len(geom_idxs_np))
 
-                                if geom_struct["type"] == COMPARTMENT:
+                                if structure["type"] == COMPARTMENT:
                                     sim.getBatchTetCountsNP(geom_idxs_np, spec_name, spec_counts)
                                 else:
                                     sim.getBatchTriCountsNP(geom_idxs_np, spec_name, spec_counts)
@@ -704,7 +697,7 @@ class StepsSim:
 
                             if np.any(non_zero_counts):
                                 spatial_trace_data_dict[structure_name][mol_name] = {
-                                    geom_idxs_key: geom_idxs_np[non_zero_counts],
+                                    "idxs": geom_idxs_np[non_zero_counts],
                                     "molCounts": mol_counts[non_zero_counts],
                                 }
 
