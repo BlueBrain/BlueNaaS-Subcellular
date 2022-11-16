@@ -1,6 +1,6 @@
 # BlueNaaS-Subcellular
 
-<img alt="eFEL Banner" src="https://github.com/BlueBrain/eFEL/raw/master/docs/source/logo/eFELBanner.png" width="600"/>
+<img alt="eFEL Banner" src="https://github.com/BlueBrain/BlueNaaS-Subcellular/blob/main/BPP-BlueNaaS-Subcellular-Github.jpg" width="600"/>
 
 BlueNaaS-Subcllular was developed as a software environment for
 simulation of brain molecular networks.
