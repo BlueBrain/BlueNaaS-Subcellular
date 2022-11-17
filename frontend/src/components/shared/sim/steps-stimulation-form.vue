@@ -242,9 +242,6 @@ export default {
     },
   },
   computed: {
-    parameters() {
-      return this.$store.state.model.parameters
-    },
     addStimulusBtnEnabled() {
       const { t, type, target, value } = this.stimulus
 

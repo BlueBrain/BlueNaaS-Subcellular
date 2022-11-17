@@ -88,12 +88,15 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 // TODO: cleanup, refactor
 import sortBy from 'lodash/sortBy'
 
 import constants from '@/constants'
 import tools from '@/tools/model-tools'
+import { get as getr } from '@/services/api'
+import { Parameter } from '@/types'
+import { AxiosResponse } from 'axios'
 
 import NfsimStimuliImport from './nfsim-stimulation-import.vue'
 
@@ -159,16 +162,30 @@ export default {
       },
       stimulus: { ...defaultStimulus },
       importModalVisible: false,
+      parameters: [],
     }
   },
   mounted() {
     this.init()
   },
   methods: {
-    init() {
+    async init() {
       this.stimulation = { ...this.value }
       this.largeStimulation = this.stimulation.size > 100
       this.stimuli = this.getStimuli()
+      this.parameters = await this.getParameters()
+    },
+    async getParameters() {
+      const model = this.$store.state.model
+
+      if (!model?.id) return []
+
+      const res: AxiosResponse<Parameter[]> = await getr('parameters', {
+        user_id: model?.user_id,
+        model_id: model?.id,
+      })
+
+      return res.data
     },
     getStimuli() {
       return this.stimulation.size < 100 ? tools.decompressStimulation(this.stimulation) : []
@@ -215,9 +232,6 @@ export default {
     },
   },
   computed: {
-    parameters() {
-      return this.$store.state.model.parameters
-    },
     addStimulusBtnEnabled() {
       const { t, type, target, value } = this.stimulus
 
