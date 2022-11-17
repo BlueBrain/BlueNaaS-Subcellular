@@ -8,7 +8,12 @@
 
     <temporal-result-viewer v-if="currentViewKey === 'temporal'" id="temporal-result-viewer" :sim-id="simId" />
 
-    <spatial-result-viewer v-else-if="currentViewKey === 'spatial'" id="spatial-result-viewer" :sim-id="simId" />
+    <spatial-result-viewer
+      v-else-if="currentViewKey === 'spatial' && !!this.geometry"
+      id="spatial-result-viewer"
+      :sim-id="simId"
+      :geometry="geometry"
+    />
 
     <Split
       v-else-if="currentViewKey === 'allHorizontal'"
@@ -23,7 +28,7 @@
         <temporal-result-viewer :sim-id="simId" id="temporal-result-viewer" />
       </div>
       <div slot="bottom" class="h-100 pos-relative">
-        <spatial-result-viewer :sim-id="simId" id="spatial-result-viewer" />
+        <spatial-result-viewer :sim-id="simId" id="spatial-result-viewer" :geometry="geometry" />
       </div>
     </Split>
   </div>
@@ -31,6 +36,7 @@
 
 <script>
 import get from 'lodash/get'
+import { get as getr } from '@/services/api'
 
 import TemporalResultViewer from './result-viewer/temporal-result-viewer.vue'
 import SpatialResultViewer from './result-viewer/spatial-result-viewer.vue'
@@ -56,7 +62,11 @@ export default {
         vertical: 0.4,
         horizontal: 0.5,
       },
+      geometry: null,
     }
+  },
+  async created() {
+    await this.getGeometry()
   },
   methods: {
     emitResize() {
@@ -65,6 +75,21 @@ export default {
     },
     onViewChange() {
       setTimeout(() => this.emitResize(), 10)
+    },
+    async getGeometry() {
+      const model = this.$store.state.model
+      this.loading = true
+      if (model.geometry_id)
+        this.geometry = (
+          await getr(`geometries/${model.geometry_id}`, {
+            user_id: model.user_id,
+          })
+        ).data
+      else {
+        this.geometry = null
+      }
+
+      this.loading = false
     },
   },
   mounted() {
@@ -76,9 +101,7 @@ export default {
     sim() {
       return this.$store.state.model.simulations.find((sim) => sim.id === this.simId)
     },
-    geometry() {
-      return this.$store.state.model.geometry
-    },
+
     spatialViewerAvailable() {
       return this.sim.solver === 'tetexact' && get(this.sim, 'solverConf.spatialSampling.enabled') && !!this.geometry
     },

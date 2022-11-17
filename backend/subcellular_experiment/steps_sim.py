@@ -671,8 +671,6 @@ class StepsSim:
 
                         structure_name: str = structure["name"]
 
-                        
-
                         geom_idxs_np = np.array(structure["idxs"], dtype=np.uintc)
                         for spatial_observable in spatial_observables:
                             mol_name = spatial_observable.name.replace(SPAT_PREFIX, "")

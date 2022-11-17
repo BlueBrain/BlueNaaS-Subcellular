@@ -29,6 +29,7 @@
 import cloneDeep from 'lodash/cloneDeep'
 
 import constants from '@/constants'
+//@ts-ignore
 import BnglText from '@/components/shared/bngl-text'
 import { Observable } from '@/types'
 import { AxiosResponse } from 'axios'
@@ -37,6 +38,7 @@ import { get as getr } from '@/services/api'
 import { StructureBase } from '@/types'
 
 const { defaultSolverConfig } = constants
+//@ts-ignore
 const { spatialSampling } = defaultSolverConfig.tetexact
 
 const observableColumns = [

@@ -144,7 +144,7 @@ const { SimStatus } = constants
 
 export default {
   name: 'spatial-result-viewer',
-  props: ['simId'],
+  props: ['simId', 'geometry'],
   data() {
     return {
       displayConf: {
@@ -204,8 +204,11 @@ export default {
   },
   methods: {
     initGeometry() {
+      console.log(this.geometry)
+
       this.renderer.initGeometry(this.geometry, this.displayConf)
-      const structure = (this.geometry.meta.structures || []).map((st, idx) => ({
+
+      const structure = (this.geometry.structures || []).map((st, idx) => ({
         name: st.name,
         color: this.renderer.colors[idx].css(),
         visible: true,
@@ -318,7 +321,6 @@ export default {
       }
 
       this.lastSpatialStepTrace = spatialStepTrace
-      console.log(this.lastSpatialStepTrace)
       this.renderer.renderMolecules(this.lastSpatialStepTrace)
     },
     onStructureVisibilityChange(comp) {
@@ -351,9 +353,6 @@ export default {
   computed: {
     fileUrl() {
       return `https://${window.location.host}/data/spatial-traces/${this.simId}.json`
-    },
-    geometry() {
-      return this.$store.state.model.geometry
     },
 
     sim() {

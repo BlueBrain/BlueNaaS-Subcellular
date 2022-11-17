@@ -169,19 +169,18 @@ export default {
       },
       stimulus: { ...defaultStimulus },
       importModalVisible: false,
-      parameters:[]
+      parameters: [],
     }
   },
   mounted() {
     this.init()
-
   },
   methods: {
     async init() {
       this.stimulation = { ...this.value }
       this.largeStimulation = this.value.size > 100
       this.stimuli = this.getStimuli()
-      console.log('here')
+
       this.parameters = await this.getParameters()
     },
 
@@ -197,7 +196,6 @@ export default {
 
       return res.data
     },
-
 
     getStimuli() {
       return this.stimulation.size < 100 ? tools.decompressStimulation(this.stimulation) : []

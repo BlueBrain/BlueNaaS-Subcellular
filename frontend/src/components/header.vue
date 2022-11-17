@@ -72,11 +72,9 @@ export default {
     async onSubscribe() {
       const res = await post('subscribe', { user: this.user.id, email: this.email })
       if (res.status === 200 && res.data.status_code !== 400) {
-        console.log(res)
         this.emailMessage = `Email sent to ${this.email} for verification`
         setTimeout(this.reset, 2000)
       } else if (res.data.status_code == 400) {
-        console.log('error')
         this.emailMessage = 'User already subscribed to the newsletter'
         setTimeout(this.hideModal, 2000)
       }

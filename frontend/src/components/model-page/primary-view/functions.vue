@@ -206,10 +206,5 @@ export default {
       return this.searchStr ? 'No matching functions' : 'Create a function by using buttons below'
     },
   }),
-  watch: {
-    currentFunction() {
-      console.log(this.currentFunction)
-    },
-  },
 }
 </script>

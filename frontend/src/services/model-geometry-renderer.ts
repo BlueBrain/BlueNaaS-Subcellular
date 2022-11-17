@@ -364,19 +364,18 @@ class ModelGeometryRenderer {
     }
 
     Object.keys(spatialSample.data).forEach((structureName) => {
-      const structureType = this.modelGeometry.meta.structures.find(
+      const structureType = this.modelGeometry.structures.find(
         (st) => st.name.toLowerCase() === structureName.toLowerCase()
       )?.type
 
       if (!structureType) return
 
-      const simplexIdxProp = structureType === 'compartment' ? 'tetIdxs' : 'triIdxs'
       const structCount = spatialSample.data[structureName]
       Object.keys(structCount).forEach((moleculeName) => {
         if (!this.moleculeConfig[moleculeName].visible) return
 
         const molCountObj = structCount[moleculeName]
-        molCountObj[simplexIdxProp].forEach((simplexIdx, idx) =>
+        molCountObj.idxs.forEach((simplexIdx, idx) =>
           processCount(moleculeName, structureType, simplexIdx, molCountObj.molCounts[idx])
         )
       })
@@ -390,12 +389,8 @@ class ModelGeometryRenderer {
   }
 
   genRandTetPoint(tetIdx) {
-    const tetPnts = Array.from(
-      this.modelGeometry.mesh.volume.elements.slice(tetIdx * 4, tetIdx * 4 + 4)
-    ).map((vertexIdx) =>
-      this.modelGeometry.mesh.volume.nodes
-        .slice(vertexIdx * 3, vertexIdx * 3 + 3)
-        .map((coord) => coord * this.normScalar)
+    const tetPnts = Array.from(this.modelGeometry.tets.slice(tetIdx * 4, tetIdx * 4 + 4)).map((vertexIdx) =>
+      this.modelGeometry.nodes.slice(vertexIdx * 3, vertexIdx * 3 + 3).map((coord) => coord * this.normScalar)
     )
 
     let s = Math.random()
@@ -431,11 +426,11 @@ class ModelGeometryRenderer {
   }
 
   genRandTriPoint(triIdx) {
-    const volumeMesh = this.modelGeometry.mesh.volume
+    const volumeMesh = this.modelGeometry
 
     const normalize = (coord) => coord * this.normScalar
 
-    const triPnts = Array.from(volumeMesh.faces.slice(triIdx * 3, triIdx * 3 + 3)).map((vertexIdx) =>
+    const triPnts = Array.from(volumeMesh.tris.slice(triIdx * 3, triIdx * 3 + 3)).map((vertexIdx) =>
       volumeMesh.nodes.slice(vertexIdx * 3, vertexIdx * 3 + 3).map(normalize)
     )
 

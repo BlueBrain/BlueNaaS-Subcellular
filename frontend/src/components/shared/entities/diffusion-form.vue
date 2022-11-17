@@ -69,7 +69,6 @@ export default {
         user_id: this.$store.state.model.user_id,
       })
     ).data
-    console.log(this.structures)
   },
   methods: {
     onDiffusionChange() {

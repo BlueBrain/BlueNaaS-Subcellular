@@ -80,7 +80,6 @@ export default {
   },
   watch: {
     value(val, oldVal) {
-      console.log('val', val)
       if (val.id !== oldVal.id) {
         this.modifiedParam = val
         this.oParam = val

@@ -321,7 +321,6 @@ export default Vue.extend({
     },
     onOk() {
       this.newSimulationModalVisible = false
-      console.log(this.newSimulation)
       this.$store.dispatch('addSimulation', this.newSimulation)
 
       this.$store.commit('setEntitySelection', {
