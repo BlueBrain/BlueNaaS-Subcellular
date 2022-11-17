@@ -100,10 +100,12 @@ export default {
     },
 
     saveNodeFile() {
+      const scaledNodes = this.geometry.nodes.map((n) => n / this.geometry.scale)
+
       const nodes = []
 
-      for (let i = 0; i <= this.geometry.nodes.length - 3; i += 3) {
-        nodes.push(this.geometry.nodes.slice(i, i + 3))
+      for (let i = 0; i <= scaledNodes.length - 3; i += 3) {
+        nodes.push(scaledNodes.slice(i, i + 3))
       }
 
       const nFile =
