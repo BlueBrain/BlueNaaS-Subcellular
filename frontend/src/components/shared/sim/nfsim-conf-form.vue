@@ -21,7 +21,7 @@
       <Collapse class="small-collapse">
         <Panel>
           <span class="grey-text">
-            {{ conf.stimulation.length ? `${conf.stimulation.length} operation(s)` : 'Not set' }}
+            {{ conf.stimulation.size ? `${conf.stimulation.size} operation(s)` : 'Not set' }}
           </span>
           <div slot="content">
             <nfsim-stimulation-form v-model="conf.stimulation" @input="onChange" />
@@ -50,6 +50,7 @@ export default {
   },
   methods: {
     onChange() {
+      console.log(this.conf)
       this.$emit('input', { ...this.conf, valid: this.isValid })
     },
   },
