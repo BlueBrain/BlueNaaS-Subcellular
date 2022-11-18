@@ -122,7 +122,8 @@ export default {
       }
 
       const nFile =
-        `\t${eles.length}\t4\t0\n` + eles.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}\t${n[3]}`).join('\n')
+        `\t${eles.length}\t4\t0\n` +
+        eles.map((n, i) => `\t${i + 1}\t${n[0] + 1}\t${n[1] + 1}\t${n[2] + 1}\t${n[3] + 1}`).join('\n')
 
       saveAs(new Blob([nFile]), `${this.geometry.name}.ele`)
     },
@@ -134,7 +135,8 @@ export default {
         eles.push(this.geometry.tris.slice(i, i + 3))
       }
 
-      const nFile = `\t${eles.length}\t0\n` + eles.map((n, i) => `\t${i + 1}\t${n[0]}\t${n[1]}\t${n[2]}`).join('\n')
+      const nFile =
+        `\t${eles.length}\t0\n` + eles.map((n, i) => `\t${i + 1}\t${n[0] + 1}\t${n[1] + 1}\t${n[2] + 1}`).join('\n')
 
       saveAs(new Blob([nFile]), `${this.geometry.name}.face`)
     },
