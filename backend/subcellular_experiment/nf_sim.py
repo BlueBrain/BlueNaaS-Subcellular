@@ -136,9 +136,10 @@ class NfSim:
             return
 
         sim_traces = pd.read_csv("model.gdat")
-        observables = list(sim_traces.columns.tolist()[1:])
+        observables = list(map(str.lstrip, sim_traces.columns.tolist()[1:]))
 
         times = np.array(sim_traces.values.tolist())[:, 0]
+
         values = np.array(sim_traces.values.tolist())[:, 1:]
 
         times_size_bytes = times.itemsize * len(times)
@@ -152,9 +153,11 @@ class NfSim:
 
         for i in range(0, len(times), elements_per_chunk):
             times_chunk = times[i : i + elements_per_chunk]
+
             values_chunk = values[i : i + elements_per_chunk].T
 
             values_by_observable = {observables[i]: values_chunk[i].tolist() for i in range(len(observables))}
+
             self.send_progress(
                 SimTrace(
                     index=i,
