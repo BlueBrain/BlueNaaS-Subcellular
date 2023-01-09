@@ -120,7 +120,7 @@
       >
         Live
       </i-button>
-      <a :href="fileUrl">Download</a>
+      <a :href="fileUrl" download>Download</a>
     </div>
 
     <canvas ref="canvas" />
