@@ -174,6 +174,7 @@ class StepsSim:
 
         self.log("load mesh id: {}".format(model_dict["geometry_id"]))
         mesh = Tetmesh(geometry["nodes"], geometry["tets"], geometry["tris"])
+        print(mesh)
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}
@@ -237,6 +238,10 @@ class StepsSim:
         self.log("about to create STEPS membrane (TmPatch)")
         patch_dicts = []
         membranes = [structure for structure in geometry["structures"] if structure["type"] == MEMBRANE]
+        st = [s for s in geometry["structures"] if s["type"] == COMPARTMENT]
+        idxs = [id_ for s in st for id_ in s["idxs"]]
+        max_id = max(idxs)
+
         for membrane in membranes:
             name = membrane["name"]
             self.log(f"add STEPS membrane (TmPatch) for {name}")
@@ -244,7 +249,7 @@ class StepsSim:
             # from one side
             triIdxs = membrane["idxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in triIdxs]).flatten()
-            neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
+            neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs <= max_id]
 
             compartment_names = list({get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered})
 

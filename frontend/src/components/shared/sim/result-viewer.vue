@@ -103,7 +103,7 @@ export default {
     },
 
     spatialViewerAvailable() {
-      return this.sim.solver === 'tetexact' && get(this.sim, 'solverConf.spatialSampling.enabled') && !!this.geometry
+      return (this.sim.solver === 'tetexact' || this.sim.solver == 'tetopsplit') && get(this.sim, 'solverConf.spatialSampling.enabled') && !!this.geometry
     },
   },
 }
