@@ -1,7 +1,7 @@
 import requests
 
-URL = "https://subcellular-rest-bsp-epfl.apps.hbp.eu"
-# URL = "http://api:8001"
+# URL = "https://subcellular-rest-bsp-epfl.apps.hbp.eu"
+URL = "http://api:8001"
 
 
 def fetch_model(model_id: str, user_id: str):

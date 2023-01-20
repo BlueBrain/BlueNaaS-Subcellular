@@ -1,10 +1,7 @@
 tornado==6.0.3
-wsaccel==0.6.2
 pandas==0.25.3
-numpy==1.17.2
 pymongo==3.11.2
 pysb==1.9.1
-Cython==0.29.13
 sympy==1.5.1
 msgpack==0.6.2
 xlrd==1.2.0
@@ -13,8 +10,6 @@ typing-extensions>=3.7.4.3
 wrapt==1.12.1
 sentry-sdk==0.19.5
 motor==2.3.0
-python-libsbml==5.19.0
 networkx==2.5
-pygraphviz==1.7
 requests>=2.28.1
 types-requests>=2.28.9
