@@ -12,7 +12,6 @@ def reserved_unit(unit_name: str):
 
 
 def parse_unit(unit_definition: UnitDefinition) -> str:
-
     value = 1.0
     for unit in unit_definition.getListOfUnits():
         value = (value * unit.getMultiplier() * 10 ** unit.getScale()) ** unit.getExponent()

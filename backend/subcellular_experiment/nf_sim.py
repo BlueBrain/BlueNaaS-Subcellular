@@ -81,7 +81,6 @@ class NfSim:
 
     @tempdir()
     def run(self) -> None:
-
         model_dict = fetch_model(self.sim_config["modelId"], self.sim_config["userId"])
 
         bngl = model_to_bngl(model_dict, write_xml_op=True)
