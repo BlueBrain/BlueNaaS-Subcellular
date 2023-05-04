@@ -75,7 +75,6 @@ class SimManager:
         self.log_workers_status()
 
     async def process_worker_message(self, worker: SimWorker, msg: SimWorkerMessage) -> None:
-
         if msg.message == "worker_connect":
             if msg.data:
                 L.info("worker_reconnected")
@@ -104,7 +103,6 @@ class SimManager:
             sim_trace = SimTrace(**msg.data)
             await self.process_sim_trace(worker.sim_conf, sim_trace)
         elif msg.message == "simStatus":
-
             sim_status = SimStatus(**msg.data)
 
             await self.process_sim_status(
@@ -144,7 +142,6 @@ class SimManager:
             await self.send_message(worker.sim_conf.userId, "tmp_sim_log", tmp_sim_log, cmdid=msg.cmdid)
 
     async def schedule_sim(self, sim_conf: SimConfig) -> None:
-
         L.debug("scheduling a simulation")
         self.sim_conf_queue.append(sim_conf)
 

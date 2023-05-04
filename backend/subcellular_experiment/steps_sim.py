@@ -616,7 +616,6 @@ class StepsSim:
 
         tidx = 0
         for tpnt in tpnts:
-
             sim.run(tpnt)
 
             if tpnt in stim_tpnt_set:
@@ -664,7 +663,6 @@ class StepsSim:
                     and solver_config["spatialSampling"] is not None
                     and solver_config["spatialSampling"]["enabled"]
                 ):
-
                     # make a small pause not to flood a client in case of fast simulation
                     # TODO: implement subscriptions and send spatial step traces only when
                     # client requires them, waiting for ack for each of them.
@@ -673,7 +671,6 @@ class StepsSim:
                     spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
 
                     for structure in model_dict["geometry"]["structures"]:
-
                         structure_name: str = structure["name"]
 
                         geom_idxs_np = np.array(structure["idxs"], dtype=np.uintc)
