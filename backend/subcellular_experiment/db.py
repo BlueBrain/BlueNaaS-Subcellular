@@ -83,7 +83,6 @@ async def mongo_autoreconnect(wrapped, instance, args, kwargs):  # pylint: disab
 
 class Db:
     def __init__(self):
-
         uri = f"mongodb://admin:{DB_PASSWORD}@{DB_HOST}:27017/" if DB_PASSWORD else f"mongodb://{DB_HOST}:27017/"
         uri += "?authMode=scram-sha1"
 

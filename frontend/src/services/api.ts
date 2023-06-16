@@ -8,9 +8,10 @@ import { PUBLIC_USER_ID } from '@/constants'
 const API_URL = 'https://subcellular-rest-bsp-epfl.apps.hbp.eu'
 
 export async function get<T>(endpoint: string, params = {}) {
+  console.log('getting')
   const user = await storage.getItem<User>('user')
   try {
-    return await axios.get<T>(`${API_URL}/${endpoint}`, { params: { user_id: user.id, ...params } })
+    return await axios.get<T>(`${API_URL}/${endpoint}`, { params: { user_id: user?.id, ...params } })
   } catch (e) {
     if (e.code === 400) return undefined
   }

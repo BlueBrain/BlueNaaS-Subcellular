@@ -174,6 +174,7 @@ class StepsSim:
 
         self.log("load mesh id: {}".format(model_dict["geometry_id"]))
         mesh = Tetmesh(geometry["nodes"], geometry["tets"], geometry["tris"])
+        print(mesh)
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}
@@ -237,6 +238,10 @@ class StepsSim:
         self.log("about to create STEPS membrane (TmPatch)")
         patch_dicts = []
         membranes = [structure for structure in geometry["structures"] if structure["type"] == MEMBRANE]
+        st = [s for s in geometry["structures"] if s["type"] == COMPARTMENT]
+        idxs = [id_ for s in st for id_ in s["idxs"]]
+        max_id = max(idxs)
+
         for membrane in membranes:
             name = membrane["name"]
             self.log(f"add STEPS membrane (TmPatch) for {name}")
@@ -244,7 +249,7 @@ class StepsSim:
             # from one side
             triIdxs = membrane["idxs"]
             neighbTetIdxs = np.array([mesh.getTriTetNeighb(triIdx) for triIdx in triIdxs]).flatten()
-            neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs >= 0]
+            neighbTetIdxsFiltered = neighbTetIdxs[neighbTetIdxs <= max_id]
 
             compartment_names = list({get_comp_name_by_tet_idx(tetIdx) for tetIdx in neighbTetIdxsFiltered})
 
@@ -615,7 +620,6 @@ class StepsSim:
 
         tidx = 0
         for tpnt in tpnts:
-
             sim.run(tpnt)
 
             if tpnt in stim_tpnt_set:
@@ -663,7 +667,6 @@ class StepsSim:
                     and solver_config["spatialSampling"] is not None
                     and solver_config["spatialSampling"]["enabled"]
                 ):
-
                     # make a small pause not to flood a client in case of fast simulation
                     # TODO: implement subscriptions and send spatial step traces only when
                     # client requires them, waiting for ack for each of them.
@@ -672,7 +675,6 @@ class StepsSim:
                     spatial_trace_data_dict: Dict[str, Dict[str, dict]] = defaultdict(dict)
 
                     for structure in model_dict["geometry"]["structures"]:
-
                         structure_name: str = structure["name"]
 
                         geom_idxs_np = np.array(structure["idxs"], dtype=np.uintc)

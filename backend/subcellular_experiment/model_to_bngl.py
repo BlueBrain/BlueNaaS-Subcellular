@@ -36,13 +36,11 @@ def model_to_bngl(
     artificial_structures=False,
     add_diff_observables=False,
 ) -> str:
-
     bngl_lines: List[str] = []
 
     bngl_lines.append("begin model\n")
 
     for entity_type in ENTITY_TYPES:
-
         section_name = entity_section_name(entity_type)
 
         entity_key = f"{entity_type}{'s' if entity_type != 'species' else ''}"

@@ -4,7 +4,6 @@ import pick from 'lodash/pick'
 import saveAs from 'file-saver'
 import uuidv4 from 'uuid/v4'
 import { decode, encode } from '@msgpack/msgpack'
-import axios from 'axios'
 import { post, get } from '@/services/api'
 
 import * as Sentry from '@sentry/browser'
@@ -17,7 +16,6 @@ import { removeSimulation } from '@/services/sim-data-storage'
 import constants from '@/constants'
 import modelTools from '@/tools/model-tools'
 import arrayBufferToBase64 from '@/tools/array-buffer-to-base64'
-import publicModels from '@/data/public-models'
 import { User } from '@/types'
 import { post } from '@/services/api'
 
@@ -117,26 +115,16 @@ const defaultSim = {
 
 export default {
   async init({ dispatch }) {
-    let user = (await storage.getItem('user')) as User | undefined
-
+    let user = await storage.getItem('user')
     let userId = user?.id
 
-    let dbUser: User | undefined
-
-    if (userId) dbUser = await get<User>(`users/${userId}`)
-
-    if (!userId | !dbUser) {
-      userId = userId || uuidv4()
+    if (!userId) {
+      userId = uuidv4()
       await post<{ success: true }, User>('users', { id: userId })
-      await storage.setItem('user', user)
     }
 
-    user = {
-      id: userId,
-      fullName: '',
-      email: '',
-    }
-
+    user = (await get<User>(`users/${userId}`, { user_id: userId }))?.data
+    await storage.setItem('user', user)
     dispatch('setUser', user)
     socket.userId = user.id
     socket.init()

@@ -162,7 +162,6 @@ class WSHandler(WebSocketHandler):
             await self.send_message("reactivity-network", rn)
 
         if msg.cmd == "get_exported_model":
-
             model_data = GetExportedModel(**msg.data)
 
             model = ""
@@ -180,7 +179,6 @@ class WSHandler(WebSocketHandler):
             )
 
         if msg.cmd == "convert_from_sbml":
-
             sbml = ""
             try:
                 sbml = sbml_to_bngl(msg.data["sbml"])

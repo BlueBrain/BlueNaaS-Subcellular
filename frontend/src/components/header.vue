@@ -23,7 +23,17 @@
     </div>
 
     <Modal v-model="modal" footer-hide="true">
-      <div v-if="!emailMessage">
+      <div v-if="emailMessage">
+        {{ this.emailMessage }}
+      </div>
+
+      <div v-else-if="user.email">
+        You're subscribed to the newsletter as {{ user.email }}
+
+        <div><Button type="primary" @click="onUnsubscribe">Unsubscribe</Button></div>
+      </div>
+
+      <div v-else>
         Subscribe to the BlueNaaS-Subcellular mailing list to receive news and updates.
         <div style="margin-top: 10px">
           <Input v-model="email" type="email" placeholder="Enter your email address..." style="width: 300px" />
@@ -33,14 +43,13 @@
           <Button type="primary" @click="onSubscribe">Subscribe</Button>
         </div>
       </div>
-      <div v-else>{{ this.emailMessage }}</div>
     </Modal>
   </header>
 </template>
 
 <script>
 import UserProfileDrawer from '@/components/shared/user-profile-drawer.vue'
-import { post } from '@/services/api'
+import { post, get } from '@/services/api'
 
 export default {
   name: 'header-component',
@@ -74,10 +83,17 @@ export default {
       if (res.status === 200 && res.data.status_code !== 400) {
         this.emailMessage = `Email sent to ${this.email} for verification`
         setTimeout(this.reset, 2000)
-      } else if (res.data.status_code == 400) {
-        this.emailMessage = 'User already subscribed to the newsletter'
-        setTimeout(this.hideModal, 2000)
       }
+    },
+    async onUnsubscribe() {
+      const res = await post('unsubscribe', { user: this.user.id })
+      if (res.status === 200) {
+        this.emailMessage = "You've been unsubscribed from the newsletter"
+        setTimeout(this.reset, 2000)
+      }
+
+      const user = (await get(`users/${this.user.id}`))?.data
+      if (user) this.$store.dispatch('setUser', user)
     },
   },
   computed: {
