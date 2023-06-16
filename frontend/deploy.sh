@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-make docker_build_latest
-docker tag sc docker-registry.ebrains.eu/bsp-epfl/subcellular
-docker push docker-registry.ebrains.eu/bsp-epfl/subcellular
-oc import-image docker-registry.ebrains.eu/bsp-epfl/subcellular
+env="${1:-latest}"
+
+./build.sh sc "$env"
+docker tag sc docker-registry.ebrains.eu/bsp-epfl/subcellular:"$env"
+docker push docker-registry.ebrains.eu/bsp-epfl/subcellular:"$env"
+oc import-image docker-registry.ebrains.eu/bsp-epfl/subcellular:"$env"

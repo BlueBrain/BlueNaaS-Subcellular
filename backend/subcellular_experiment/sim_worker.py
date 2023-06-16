@@ -15,7 +15,11 @@ import itertools
 
 import sentry_sdk
 from sentry_sdk import capture_message
-from tornado.websocket import websocket_connect, WebSocketClosedError, WebSocketClientConnection
+from tornado.websocket import (
+    websocket_connect,
+    WebSocketClosedError,
+    WebSocketClientConnection,
+)
 
 from .worker_message import WorkerStatus
 from .sim import SimStatus, SimLogMessage, SimData

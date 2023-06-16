@@ -65,6 +65,8 @@ When you use this software, we kindly ask you to cite the following DOI (under "
 
 ## Funding & Acknowledgment
 
-The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology and from the Human Brain Project's Specific Grant Agreement 3.
+The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology.
+
+This  project/research  received  funding  from  the  European  Union’s  Horizon  2020  Framework  Programme  for  Research  and  Innovation  under  the  Framework  Partnership  Agreement  No.  650003  (HBP FPA).
 
 Copyright (c) 2022 Blue Brain Project/EPFL

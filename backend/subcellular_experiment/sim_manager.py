@@ -4,7 +4,14 @@ from typing import Optional, List, Dict, Any
 from collections import defaultdict
 import json
 
-from .sim import SimProgress, SimTrace, SimLogMessage, SimSpatialStepTrace, SimLog, SimStatus
+from .sim import (
+    SimProgress,
+    SimTrace,
+    SimLogMessage,
+    SimSpatialStepTrace,
+    SimLog,
+    SimStatus,
+)
 from .worker_message import Status, SimWorkerMessage
 from .types import (
     SimConfig,
@@ -108,7 +115,10 @@ class SimManager:
             sim_status = SimStatus(**msg.data)
 
             await self.process_sim_status(
-                worker.sim_conf.userId, worker.sim_conf.simId, sim_status.status, sim_status.dict()
+                worker.sim_conf.userId,
+                worker.sim_conf.simId,
+                sim_status.status,
+                sim_status.dict(),
             )
 
         elif msg.message == "simLog":

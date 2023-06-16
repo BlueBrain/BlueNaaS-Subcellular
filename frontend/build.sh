@@ -7,13 +7,14 @@
 set -eu
 
 IMAGE="${1}"
+TAG="${2}"
 
 mkdir -p dist
 rm -rf dist
 
 # env
 echo "Build script started (non multi-stage)"
-echo "-> Image: ${IMAGE}"
+echo "-> Image: ${IMAGE}:${TAG}"
 
 set +u
 
@@ -34,5 +35,5 @@ echo "Building main image..."
 docker build \
     --build-arg=http_proxy=http://bbpproxy.epfl.ch:80/ \
 	--build-arg=https_proxy=http://bbpproxy.epfl.ch:80/ \
-    -t $IMAGE \
+    -t $IMAGE:$TAG \
     .

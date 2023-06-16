@@ -564,7 +564,11 @@ class StepsSim:
                                 f"stim: update surf reacK for {steps_reac.getID()} "
                                 f"from {curr_patch_reac_k} to {rate_val}"
                             )
-                        sim.setPatchSReacK(steps_reac.getSurfsys().getID(), steps_reac.getID(), rate_val)
+                        sim.setPatchSReacK(
+                            steps_reac.getSurfsys().getID(),
+                            steps_reac.getID(),
+                            rate_val,
+                        )
 
             elif stim["type"] == "setConc":
                 observable = next(

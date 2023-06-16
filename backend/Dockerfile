@@ -6,6 +6,11 @@ ARG db_host
 ENV DB_HOST=mongo
 ENV BNGPATH=/BioNetGen
 
+# Update stretch repositories
+RUN sed -i -e 's/deb.debian.org/archive.debian.org/g' \
+    -e 's|security.debian.org|archive.debian.org/|g' \
+    -e '/stretch-updates/d' /etc/apt/sources.list
+
 # Install build deps
 RUN apt-get update && \
     apt-get install -y g++ gcc perl curl rsync wget wait-for-it cmake libopenblas-base mpich libopenblas-dev libmpich-dev git libxslt1-dev zlib1g-dev graphviz graphviz-dev && \

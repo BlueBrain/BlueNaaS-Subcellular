@@ -85,6 +85,7 @@ class Db:
     def __init__(self):
 
         uri = f"mongodb://admin:{DB_PASSWORD}@{DB_HOST}:27017/" if DB_PASSWORD else f"mongodb://{DB_HOST}:27017/"
+        uri += "?authMode=scram-sha1"
 
         self.mongo_client = AsyncIOMotorClient(uri)
         L.debug(uri)
@@ -198,7 +199,8 @@ class Db:
     @mongo_autoreconnect
     async def delete_simulation(self, simulation: SimId):
         await self.db.simulations.update_one(
-            {"id": simulation.id, "userId": simulation.userId}, {"$set": {"deleted": True}}
+            {"id": simulation.id, "userId": simulation.userId},
+            {"$set": {"deleted": True}},
         )
 
     @mongo_autoreconnect

@@ -46,4 +46,8 @@ def gmltojson(gml: str):
     edges = eval(f"[{gml[edges_idx:]}")
     # pyline: enable=eval=used
 
-    return {"nodes": parse_section(nodes), "edges": parse_section(edges), **parse_graph(config)}
+    return {
+        "nodes": parse_section(nodes),
+        "edges": parse_section(edges),
+        **parse_graph(config),
+    }

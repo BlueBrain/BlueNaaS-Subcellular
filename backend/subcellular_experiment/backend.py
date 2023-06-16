@@ -124,7 +124,10 @@ class WSHandler(WebSocketHandler):
             await db.delete_sim_trace(sim)
             await db.delete_sim_log(sim)
 
-            for path in [f"/data/spatial-traces/{sim.id}.json", f"/data/straces/{sim.id}.json"]:
+            for path in [
+                f"/data/spatial-traces/{sim.id}.json",
+                f"/data/straces/{sim.id}.json",
+            ]:
                 if os.path.exists(path):
                     os.remove(path)
 
@@ -295,7 +298,10 @@ class ModelsHandler(RequestHandler):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-        self.set_header("Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type")
+        self.set_header(
+            "Access-Control-Allow-Headers",
+            "access-control-allow-origin,authorization,content-type",
+        )
 
     async def get(self) -> None:
         user_id = self.get_argument("user_id", "")
