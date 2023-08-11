@@ -3,6 +3,8 @@ stages:
 
 lint-backend:
   stage: lint
+  tags:
+    - docker-runner
   script:
     - cd backend
     - pip install -r requirements.txt
