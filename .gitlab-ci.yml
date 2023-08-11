@@ -1,22 +1,10 @@
 stages:
-  - build
+  - lint
 
-build-backend:
-  stage: build
-  tags:
-    - docker-runner
-  before_script:
-    - docker info
+lint-backend:
+  stage: lint
   script:
     - cd backend
-    - docker build -t my-backend-image .
-
-build-frontend:
-  stage: build
-  tags:
-    - docker-runner
-  before_script:
-    - docker info
-  script:
-    - cd frontend
-    - docker build -f .Dockerfile -t my-frontend-image .
+    - pip install -r requirements.txt
+    - pip install pylint
+    - pylint **/*.py  # Adjust as needed based on your directory structure
