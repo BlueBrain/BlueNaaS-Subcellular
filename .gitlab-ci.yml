@@ -9,7 +9,7 @@ stages:
 build-backend:
   stage: build
   tags:
-    - shared-runner-tag # replace this with the actual tag of the shared runner
+    - docker-runner
   before_script:
     - docker info
   script:
@@ -19,7 +19,7 @@ build-backend:
 build-frontend:
   stage: build
   tags:
-    - shared-runner-tag # replace this with the actual tag of the shared runner
+    - docker-runner
   before_script:
     - docker info
   script:
