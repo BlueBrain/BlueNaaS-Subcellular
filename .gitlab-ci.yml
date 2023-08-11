@@ -1,4 +1,23 @@
-build-job:
+image: docker:19.03.12
+
+services:
+  - docker:19.03.12-dind
+
+stages:
+  - build
+
+build-backend:
   stage: build
+  before_script:
+    - docker info
   script:
-    - echo "Hello, $GITLAB_USER_LOGIN!"
+    - cd backend
+    - docker build -t my-backend-image .
+
+build-frontend:
+  stage: build
+  before_script:
+    - docker info
+  script:
+    - cd frontend
+    - docker build -f .Dockerfile -t my-frontend-image .
