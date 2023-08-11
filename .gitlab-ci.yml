@@ -5,8 +5,10 @@ lint-backend:
   stage: lint
   tags:
     - docker-runner
+  
   script:
+    - apt update && apt install -y python3 && apt install -y python3-pip
+    - pip install pylint==2.8.3
     - cd backend
-    - pip install -r requirements.txt
-    - pip install pylint
-    - pylint **/*.py  # Adjust as needed based on your directory structure
+    - pylint *.py
+    
