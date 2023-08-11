@@ -8,6 +8,8 @@ stages:
 
 build-backend:
   stage: build
+  tags:
+    - docker
   before_script:
     - docker info
   script:
@@ -15,9 +17,4 @@ build-backend:
     - docker build -t my-backend-image .
 
 build-frontend:
-  stage: build
-  before_script:
-    - docker info
-  script:
-    - cd frontend
-    - docker build -f .Dockerfile -t my-frontend-image .
+  stage:
