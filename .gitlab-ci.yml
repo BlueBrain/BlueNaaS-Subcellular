@@ -9,7 +9,7 @@ stages:
 build-backend:
   stage: build
   tags:
-    - docker
+    - shared-runner-tag # replace this with the actual tag of the shared runner
   before_script:
     - docker info
   script:
@@ -17,4 +17,11 @@ build-backend:
     - docker build -t my-backend-image .
 
 build-frontend:
-  stage:
+  stage: build
+  tags:
+    - shared-runner-tag # replace this with the actual tag of the shared runner
+  before_script:
+    - docker info
+  script:
+    - cd frontend
+    - docker build -f .Dockerfile -t my-frontend-image .
