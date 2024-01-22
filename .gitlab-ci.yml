@@ -1,4 +1,14 @@
-build-job:
-  stage: build
+stages:
+  - lint
+
+lint-backend:
+  stage: lint
+  tags:
+    - docker-runner
+  
   script:
-    - echo "Hello, $GITLAB_USER_LOGIN!"
+    - apt update && apt install -y python3 && apt install -y python3-pip
+    - pip install pylint==2.8.3
+    - cd backend
+    - pylint *.py
+    
