@@ -69,4 +69,4 @@ The development of this software was supported by funding to the Blue Brain Proj
 
 This  project/research  received  funding  from  the  European  Union’s  Horizon  2020  Framework  Programme  for  Research  and  Innovation  under  the  Framework  Partnership  Agreement  No.  650003  (HBP FPA).
 
-Copyright (c) 2022 Blue Brain Project/EPFL
+Copyright (c) 2022-2024 Blue Brain Project/EPFL
