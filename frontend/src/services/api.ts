@@ -5,7 +5,7 @@ import { User } from '@/types'
 import { PUBLIC_USER_ID } from '@/constants'
 
 // const API_URL = 'http://localhost:8001'
-const API_URL = process.env.REACT_APP_API_URL || 'https://bluenaas-subcellular-rest.apps.tc.humanbrainproject.eu'
+const API_URL = 'https://subcellular-rest-bsp-epfl.apps.hbp.eu'
 
 export async function get<T>(endpoint: string, params = {}) {
   console.log('getting')
