@@ -64,6 +64,7 @@ RUN wget -O bionetgen.tgz https://github.com/RuleWorld/bionetgen/releases/downlo
 # Install STEPS
 RUN git clone https://github.com/CNS-OIST/STEPS.git && \
     cd STEPS && \
+    git checkout 4.1.1 && \
     git submodule update --init --recursive && \
     mkdir build && \
     cd build && \

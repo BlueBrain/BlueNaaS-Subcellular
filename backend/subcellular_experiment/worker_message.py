@@ -1,7 +1,6 @@
-from typing import Any, Optional
-
+from typing import Any, Optional, Literal
 from pydantic import BaseModel
-from typing_extensions import Literal
+
 
 WorkerStatus = Literal["ready", "busy"]
 

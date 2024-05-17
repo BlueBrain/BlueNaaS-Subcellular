@@ -1,6 +1,4 @@
-from typing import Dict, List, Optional, Union
-
-from typing_extensions import Literal
+from typing import Dict, List, Optional, Union, Literal
 from pydantic import BaseModel
 
 from .types import SimStatus as SimStatusLiteral

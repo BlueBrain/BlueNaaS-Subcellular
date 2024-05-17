@@ -1,6 +1,5 @@
-from typing import Optional, Any, List, Union
+from typing import Optional, Any, List, Union, Literal
 
-from typing_extensions import Literal
 from tornado import websocket
 from pydantic import BaseModel
 

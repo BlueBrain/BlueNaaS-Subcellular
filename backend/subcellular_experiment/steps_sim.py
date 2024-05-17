@@ -3,7 +3,7 @@ import re
 import time
 import math
 from datetime import datetime
-from typing import Callable, Any, Dict, List
+from typing import Callable, Any, Dict, List, Literal
 from collections import defaultdict
 
 import numpy as np
@@ -16,7 +16,6 @@ import steps.rng as srng
 import steps.solver as ssolver
 from steps.mpi.solver import TetOpSplit
 from steps.geom import Tetmesh
-from typing_extensions import Literal
 
 from subcellular_experiment.api import fetch_model
 from .model_to_bngl import model_to_bngl, DIFF_PREFIX, STIM_PREFIX, SPAT_PREFIX
