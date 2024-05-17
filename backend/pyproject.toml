@@ -1,7 +1,7 @@
 [tool.black]
 line-length = 120
-target-version = ['py37']
-include = '\.pyi?$'
+target-version = ['py38']
+include = 'subcellular_experiment'
 exclude = '''
 
 (
@@ -17,8 +17,40 @@ exclude = '''
     | build
     | dist
     | tools_venv
+    | __pycache__
   )/
   | foo.py           # also separately exclude a file named foo.py in
                      # the root of the project
 )
 '''
+
+[tool.poetry]
+name = "subcellular-backend"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "subcellular_backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tornado = "6.0.3"
+pandas = "0.25.3"
+pymongo = "3.11.2"
+pysb = "1.9.1"
+sympy = "1.5.1"
+msgpack = "0.6.2"
+xlrd = "1.2.0"
+pydantic = "1.6.1"
+wrapt = "1.12.1"
+sentry-sdk = "0.19.5"
+motor = "2.3.0"
+networkx = "2.5"
+requests = ">=2.28.1"
+types-requests = ">=2.28.9"
+urllib3 = "<2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
