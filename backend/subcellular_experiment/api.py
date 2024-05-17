@@ -1,6 +1,7 @@
 import requests
+import os
 
-URL = "https://subcellular-rest-bsp-epfl.apps.hbp.eu"
+URL = os.getenv("API_URL")
 # URL = "http://api:8001"
 
 
