@@ -58,6 +58,14 @@ class SimWorker:
         signal.signal(signal.SIGTERM, self.on_terminate)
         self.loop.run_until_complete(self.listen())
 
+    def send_message(self, message: str, data: Any, cmdid: Optional[int] = None) -> None:
+        """Schedules a message to be sent, threadsafe."""
+        if not self.loop.is_running():
+            L.warning("No running loop")
+            return
+
+        asyncio.run_coroutine_threadsafe(self._send_message(message, data, cmdid), self.loop)
+
     async def listen(self) -> None:
         await self.ws_connect()
         while True:
@@ -85,8 +93,8 @@ class SimWorker:
 
         self.closed = False
         L.debug("ws connection open")
-        await self.send_message("status", "ready" if self.sim_proc is None else "busy")
-        await self.send_message("worker_connect", self.sim_config)
+        self.send_message("status", "ready" if self.sim_proc is None else "busy")
+        self.send_message("worker_connect", self.sim_config)
 
     def teardown(self) -> None:
         if self.socket is not None:
@@ -105,13 +113,13 @@ class SimWorker:
         L.debug(f"got {msg} from the backend")
 
         if msg == "run_sim":
-            await self.on_run_sim_msg(sim_config)
+            self.on_run_sim_msg(sim_config)
 
         elif msg == "cancel_sim":
             self.on_cancel_sim_msg()
 
         elif msg == "get_tmp_sim_log":
-            await self.send_message("tmp_sim_log", {"log": self.sim_log}, cmdid=cmdid)
+            self.send_message("tmp_sim_log", {"log": self.sim_log}, cmdid=cmdid)
 
     def on_cancel_sim_msg(self) -> None:
         L.debug("send SIGTERM to simulation process")
@@ -159,7 +167,7 @@ class SimWorker:
                 }
 
                 L.debug("sending error status")
-                await self.send_message("simStatus", payload)
+                self.send_message("simStatus", payload)
                 
                 break
 
@@ -173,17 +181,17 @@ class SimWorker:
 
         L.debug("sending ready status")
 
-        await self.send_message("status", "ready")
+        self.send_message("status", "ready")
 
-    async def on_run_sim_msg(self, sim_config: dict) -> None:
-        await self.send_message("status", "busy")
+    def on_run_sim_msg(self, sim_config: dict) -> None:
+        self.send_message("status", "busy")
         self.sim_config = sim_config
 
         L.debug("starting a simulation loop")
         self.sim_thread =  Thread(target=self.wait_for_sim_result)
         self.sim_thread.start()
 
-    async def send_message(self, message: str, data: Any, cmdid=None) -> None:
+    async def _send_message(self, message: str, data: Any, cmdid=None) -> None:
         if self.closed or self.socket is None:
             return
 
