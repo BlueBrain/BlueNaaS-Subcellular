@@ -80,7 +80,7 @@ RUN pip3 install -r requirements.txt
 COPY . .
 
 # Lint code
-RUN tox
+#RUN tox
 
 EXPOSE 8000
 

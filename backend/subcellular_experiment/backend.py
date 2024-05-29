@@ -79,6 +79,7 @@ class WSHandler(WebSocketHandler):
     async def on_message(self, raw_msg: Union[str, bytes]) -> None:
         msg = Message(**json.loads(raw_msg))
         L.debug(f"got {msg.cmd} message")
+        L.debug(msg)
 
         if msg.cmd == "run_simulation":
             sim_conf = SimConfig(**msg.data)

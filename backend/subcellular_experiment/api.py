@@ -6,7 +6,7 @@ URL = os.getenv("API_URL")
 # URL = "http://api:8001"
 
 L = get_logger(__name__)
-L.debug('URL')
+L.debug(URL)
 
 def fetch_model(model_id: str, user_id: str):
     model_r = requests.get(f"{URL}/model-detail/{model_id}?user_id={user_id}")
