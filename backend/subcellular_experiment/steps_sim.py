@@ -173,7 +173,6 @@ class StepsSim:
 
         self.log("load mesh id: {}".format(model_dict["geometry_id"]))
         mesh = Tetmesh(geometry["nodes"], geometry["tets"], geometry["tris"])
-        print(mesh)
 
         self.log("about to prepare STEPS Volume and Surface systems")
         sys_dict = {}

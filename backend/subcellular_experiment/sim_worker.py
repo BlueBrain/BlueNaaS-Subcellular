@@ -118,7 +118,7 @@ class SimWorker:
         if self.sim_proc is not None:
             self.sim_proc.terminate()
 
-    async def wait_for_sim_result(self) -> None:
+    def wait_for_sim_result(self) -> None:
         if not self.sim_config:
             L.warning("No sim config")
             return
@@ -129,10 +129,13 @@ class SimWorker:
         self.sim_proc.start()
         L.debug("start loop to get sim data from MP queue")
 
+        sim_finished = False
+
         while True:
             sim_data: SimData = self.sim_queue.get()
 
             if sim_data is None:
+                sim_finished = True
                 break
 
             if isinstance(sim_data, SimLogMessage):
@@ -143,25 +146,26 @@ class SimWorker:
                 **{"simId": self.sim_config["id"], "userId": self.sim_config["userId"]},
             }
 
-            await self.send_message(sim_data.type, payload)
+            self.send_message(sim_data.type, payload)
 
             if time.time() - initial > TIMEOUT_SECS and self.sim_proc is not None:
                 L.debug("stopping simulation")
                 self.on_cancel_sim_msg()
+                self.send_message("simLog", {"log": self.sim_log})
+
+                payload = {
+                    **SimStatus(status="error").dict(),
+                    **{"simId": self.sim_config["id"], "userId": self.sim_config["userId"]},
+                }
+
+                L.debug("sending error status")
+                await self.send_message("simStatus", payload)
+                
                 break
-        else:
+
+        if sim_finished:
             L.debug("joining simulator process")
             self.sim_proc.join()
-
-        await self.send_message("simLog", {"log": self.sim_log})
-
-        payload = {
-            **SimStatus(status="error").dict(),
-            **{"simId": self.sim_config["id"], "userId": self.sim_config["userId"]},
-        }
-
-        L.debug("sending error status")
-        await self.send_message("simStatus", payload)
 
         self.sim_proc = None
         self.sim_config = {}
@@ -176,7 +180,8 @@ class SimWorker:
         self.sim_config = sim_config
 
         L.debug("starting a simulation loop")
-        await self.wait_for_sim_result()
+        self.sim_thread =  Thread(target=self.wait_for_sim_result)
+        self.sim_thread.start()
 
     async def send_message(self, message: str, data: Any, cmdid=None) -> None:
         if self.closed or self.socket is None:
